@@ -74,7 +74,7 @@ AddOutputFilter DEFLATE css js html htm gif jpg png bmp php
     ServerName test.localweb.com
     ServerAlias 
   <Directory "">
-      Options FollowSymLinks ExecCGI
+      Options Indexes FollowSymLinks ExecCGI
       AllowOverride All
       Order allow,deny
       Allow from all

@@ -86,13 +86,13 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/mrg123/mrg123.github.io/edit/master/my-website/',
+            'https://github.com/mrg123/mrg123.github.io/edit/bak/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/mrg123/mrg123.github.io/edit/master/my-website/blog/',
+            'https://github.com/mrg123/mrg123.github.io/edit/bak/blog/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
