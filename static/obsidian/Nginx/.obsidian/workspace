@@ -1,0 +1,96 @@
+{
+  "main": {
+    "id": "9cf1065359cb89fb",
+    "type": "split",
+    "children": [
+      {
+        "id": "ea173716d8366995",
+        "type": "leaf",
+        "active": true,
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "基本HTTP服务.md",
+            "mode": "source"
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "679887a85b2d70a2",
+    "type": "split",
+    "children": [
+      {
+        "id": "061da3334534ef04",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f4e29eec26babc95",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "efbc41838b6bd709",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "66435d60e62ffb6e",
+    "type": "split",
+    "children": [
+      {
+        "id": "0f244380f94311d2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8565d510e49f43bc",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "基本HTTP服务.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "lastOpenFiles": [
+    "基本HTTP服务.md",
+    "Nginx.md",
+    "邮件服务.md",
+    "高级HTTP服务.md",
+    "正流转量优先级处理.md",
+    "Untitled.md"
+  ]
+}
