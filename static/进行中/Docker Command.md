@@ -30,8 +30,6 @@ docker-compose stop {container-name}
 docker-compose down
 ```
 
-
-
 # 通过命令进入容器
 
 ```docker
@@ -41,4 +39,8 @@ docker-compose exec mysql bash # 进入mysql容器
 exit # 退出容器
 ```
 
+进入workspace,安装xdebug
 
+```bash
+docker-compose exec workspace bash
+```

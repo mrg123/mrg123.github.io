@@ -52,7 +52,3 @@ gitbook update
 ```npm
 gitbook uninstall {version tag}
 ```
-
-
-
-
