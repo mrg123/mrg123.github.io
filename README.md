@@ -1,30 +1,26 @@
-# Website
-
 This website is built using [Docusaurus 2](https://v2.docusaurus.io/), a modern static website generator.
 
-### Installation
+### 安装
 
 ```
 $ yarn
 ```
 
-### Local Development
+### 本地预览
 
 ```
 $ yarn start
 ```
 
-This command starts a local development server and open up a browser window. Most changes are reflected live without having to restart the server.
+访问: http://localhost:3000/
 
-### Build
+### 构建
 
 ```
 $ yarn build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
+### 发布
 
 ```
 $ GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy

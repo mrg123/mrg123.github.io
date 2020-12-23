@@ -5,7 +5,7 @@ title: http转https
 
 ## HTTP to HTTPS
 
-### Scenario 
+### Scenario
 
 You want to force people coming to your site to use HTTPS. Either for the entire site or a small sub-section of it.
 
@@ -13,11 +13,7 @@ You want to force people coming to your site to use HTTPS. Either for the entire
 
 Using mod_rewrite to do this isn't the recommended behavior. See [RedirectSSL](https://wiki.apache.org/httpd/RedirectSSL)
 
-
-
 ### Fix :
-
-
 
 ```
 RewriteEngine On
@@ -41,8 +37,6 @@ RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
 
 *Either put the above solution in a .htaccess file in the directory to be affected, or put the URI prefix in the regex itself.*
 
-
-
 ```
 RewriteEngine On
 # This will enable the Rewrite capabilities
@@ -55,4 +49,3 @@ RewriteRule ^/?secure/(.*) https://%{SERVER_NAME}/secure/$1 [R,L]
 # i.e.  http://www.example.com/secure/ to https://www.example.com/secure/
 # This means if you dont want to force HTTPS for all directories you can force it for a specific sub-section of the site.
 ```
-
