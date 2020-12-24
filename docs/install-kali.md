@@ -33,3 +33,34 @@ sudo apt-get install dbus-x11
 # cannot access 'thinclient_drives': Transport endpoint is not connected
 sudo umount -f thinclient_drives
 ```
+
+安装win-key
+
+```
+sudo apt upgrade && sudo apt install kali-win-kex -y
+```
+
+install zsh
+
+```
+sudo apt install zsh zsh-syntax-highlighting zsh-autosuggestions
+```
+
+BASH to ZSH
+
+```
+cp /etc/skel/.zshrc ~/
+```
+
+win-key常用命令
+
+```base
+# 启动kex 客户端
+kex start
+# 在windows 命令行中输入 kex, F8 可以切换会话
+kex
+# 重新连接会话
+kex --win --start-client
+# 关闭退出kex
+kex --win --stop
+```
