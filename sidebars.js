@@ -5,6 +5,7 @@ module.exports = {
     Case: ['命令行终端设置代理','CLOSE_WAIT案例','精准定位问题'],
     工具: ['安装sonar','JupyterLab','python'],
 	系统: ['安装kali桌面'],
-	Test: ['doc1','doc2','doc3']
+	Test: ['doc1','doc2','doc3'],
+    Tensorflow: ['Keras','ormb']
   },
 };
