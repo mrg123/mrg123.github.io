@@ -1,0 +1,30 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "21:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: "@docusaurus/core"
+    versions:
+    - 2.0.0-alpha.70
+    - 2.0.0-alpha.71
+    - 2.0.0-alpha.72
+    - 2.0.0-alpha.73
+  - dependency-name: "@docusaurus/preset-classic"
+    versions:
+    - 2.0.0-alpha.70
+    - 2.0.0-alpha.71
+    - 2.0.0-alpha.72
+    - 2.0.0-alpha.73
+  - dependency-name: classnames
+    versions:
+    - 2.3.0
+  - dependency-name: y18n
+    versions:
+    - 4.0.1
+  - dependency-name: react
+    versions:
+    - 16.14.0
