@@ -6,7 +6,7 @@ module.exports = {
     工具: ['安装sonar','JupyterLab','python'],
 	  系统: ['安装kali桌面'],
     App: ['隐私政策'],
-	  //Test: ['doc1','doc2','doc3'],
+	  Test: ['doc1','doc2','doc3'],
     Tensorflow: ['Keras','ormb']
   },
 };
