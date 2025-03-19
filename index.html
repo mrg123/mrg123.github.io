@@ -440,6 +440,29 @@
         </div>
     </section>
 
+    <section class="philosophy-section">
+        <div class="container">
+            <h2 class="section-title">设计理念</h2>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🧠</div>
+                    <h3>艺术创造力</h3>
+                    <p>我们相信绘画不仅是一种技能，更是一种表达内心世界的方式，通过创作可以释放压力，找回内心的平静与活力。</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🌱</div>
+                    <h3>抵制荒芜思想</h3>
+                    <p>在快节奏的现代生活中，我们常常感到精神空虚。通过绘画创作，我们可以重新连接内心，抵抗思想的荒芜，培养积极健康的心态。</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">💖</div>
+                    <h3>艺术疗愈</h3>
+                    <p>艺术创作有着强大的治愈力量，能够帮助缓解抑郁、焦虑等情绪问题。Draw Now致力于通过简单易用的绘画工具，让每个人都能体验到艺术创作的治愈效果。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer>
         <div class="container">
             <div class="footer-links">
@@ -479,7 +502,15 @@
                 'terms': 'Terms of Use',
                 'contact': 'Contact Us',
                 'copyright': '© 2025 Draw Now. All rights reserved.',
-                'privacy_url': 'https://github.com/mrg123/Draw-Now/blob/main/README-EN.md'
+                'privacy_url': 'https://github.com/mrg123/Draw-Now/blob/main/README-EN.md',
+                // 新增设计理念部分的翻译
+                'philosophy': 'Design Philosophy',
+                'philosophy1_title': 'Artistic Creativity',
+                'philosophy1_desc': 'We believe that drawing is not just a skill, but a way to express your inner world. Through creation, you can release stress and regain inner peace and vitality.',
+                'philosophy2_title': 'Combating Mental Emptiness',
+                'philosophy2_desc': 'In the fast-paced modern life, we often feel spiritually empty. Through artistic creation, we can reconnect with our inner selves, resist mental barrenness, and cultivate a positive and healthy mindset.',
+                'philosophy3_title': 'Art Therapy',
+                'philosophy3_desc': 'Artistic creation has powerful healing effects that can help alleviate depression, anxiety, and other emotional issues. Draw Now is committed to providing simple and easy-to-use drawing tools, allowing everyone to experience the therapeutic effects of artistic creation.'
             },
             'zh': {
                 'title': 'Draw Now - 创意绘画应用',
@@ -506,7 +537,15 @@
                 'terms': '使用条款',
                 'contact': '联系我们',
                 'copyright': '© 2025 Draw Now. 保留所有权利。',
-                'privacy_url': 'https://github.com/mrg123/Draw-Now'
+                'privacy_url': 'https://github.com/mrg123/Draw-Now',
+                // 新增设计理念部分的翻译
+                'philosophy': '设计理念',
+                'philosophy1_title': '艺术创造力',
+                'philosophy1_desc': '我们相信绘画不仅是一种技能，更是一种表达内心世界的方式，通过创作可以释放压力，找回内心的平静与活力。',
+                'philosophy2_title': '抵制荒芜思想',
+                'philosophy2_desc': '在快节奏的现代生活中，我们常常感到精神空虚。通过绘画创作，我们可以重新连接内心，抵抗思想的荒芜，培养积极健康的心态。',
+                'philosophy3_title': '艺术疗愈',
+                'philosophy3_desc': '艺术创作有着强大的治愈力量，能够帮助缓解抑郁、焦虑等情绪问题。Draw Now致力于通过简单易用的绘画工具，让每个人都能体验到艺术创作的治愈效果。'
             }
         };
 
@@ -529,16 +568,26 @@
                 if (index === 1) el.textContent = translations[currentLang]['screenshots'];
                 if (index === 2) el.textContent = translations[currentLang]['testimonials'];
                 if (index === 3) el.textContent = translations[currentLang]['experience'];
+                if (index === 4) el.textContent = translations[currentLang]['philosophy'];
             });
             
             // Update features
-            const features = document.querySelectorAll('.feature');
+            const features = document.querySelectorAll('.features-section .feature');
             features[0].querySelector('h3').textContent = translations[currentLang]['feature1_title'];
             features[0].querySelector('p').textContent = translations[currentLang]['feature1_desc'];
             features[1].querySelector('h3').textContent = translations[currentLang]['feature2_title'];
             features[1].querySelector('p').textContent = translations[currentLang]['feature2_desc'];
             features[2].querySelector('h3').textContent = translations[currentLang]['feature3_title'];
             features[2].querySelector('p').textContent = translations[currentLang]['feature3_desc'];
+            
+            // Update philosophy section
+            const philosophyFeatures = document.querySelectorAll('.philosophy-section .feature');
+            philosophyFeatures[0].querySelector('h3').textContent = translations[currentLang]['philosophy1_title'];
+            philosophyFeatures[0].querySelector('p').textContent = translations[currentLang]['philosophy1_desc'];
+            philosophyFeatures[1].querySelector('h3').textContent = translations[currentLang]['philosophy2_title'];
+            philosophyFeatures[1].querySelector('p').textContent = translations[currentLang]['philosophy2_desc'];
+            philosophyFeatures[2].querySelector('h3').textContent = translations[currentLang]['philosophy3_title'];
+            philosophyFeatures[2].querySelector('p').textContent = translations[currentLang]['philosophy3_desc'];
             
             // Update testimonials
             const testimonials = document.querySelectorAll('.testimonial');
