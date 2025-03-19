@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Draw Now - Creative Drawing App</title>
+    <title>Draw Now - 专业创意绘画应用 | 释放艺术潜能</title>
+    <meta name="description" content="Draw Now 是一款专业的绘画创作应用，提供丰富画笔工具，帮助您随时随地释放创意，体验艺术创作的治愈力量。">
+    <meta name="keywords" content="绘画应用,数字绘画,艺术创作,画图工具,Draw Now,创意绘画,艺术疗愈">
+    <meta name="author" content="Draw Now Team">
+    <meta property="og:title" content="Draw Now - 专业创意绘画应用">
+    <meta property="og:description" content="释放您的创意潜能，随时随地进行绘画创作，体验艺术的治愈力量。">
+    <meta property="og:image" content="./logo6.png">
+    <meta property="og:url" content="https://mrg123.github.io">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Draw Now - 专业创意绘画应用">
+    <meta name="twitter:description" content="释放您的创意潜能，随时随地进行绘画创作，体验艺术的治愈力量。">
+    <meta name="twitter:image" content="./logo6.png">
+    <link rel="canonical" href="https://mrg123.github.io">
+    <!-- 原有样式代码保持不变 -->
     <style>
         :root {
             --primary-color: #3a86ff;
@@ -478,7 +492,8 @@
         // Language translations
         const translations = {
             'en': {
-                'title': 'Draw Now - Creative Drawing App',
+                'title': 'Draw Now - Professional Creative Drawing App | Unleash Your Artistic Potential',
+                'meta_description': 'Draw Now is a professional drawing creation app offering rich brush tools to help you unleash creativity anytime, anywhere, and experience the healing power of artistic creation.',
                 'tagline': 'Unleash your creative potential, draw anywhere, anytime',
                 'download': 'Download Now',
                 'features': 'Key Features',
@@ -513,7 +528,8 @@
                 'philosophy3_desc': 'Artistic creation has powerful healing effects that can help alleviate depression, anxiety, and other emotional issues. Draw Now is committed to providing simple and easy-to-use drawing tools, allowing everyone to experience the therapeutic effects of artistic creation.'
             },
             'zh': {
-                'title': 'Draw Now - 创意绘画应用',
+                'title': 'Draw Now - 专业创意绘画应用 | 释放艺术潜能',
+                'meta_description': 'Draw Now 是一款专业的绘画创作应用，提供丰富画笔工具，帮助您随时随地释放创意，体验艺术创作的治愈力量。',
                 'tagline': '释放您的创意潜能，随时随地进行绘画创作',
                 'download': '立即下载',
                 'features': '主要特点',
@@ -554,8 +570,13 @@
 
         // Elements that need to be updated
         const updateElements = () => {
-            // Update page title
+            // Update page title and meta description
             document.title = translations[currentLang]['title'];
+            document.querySelector('meta[name="description"]').setAttribute('content', translations[currentLang]['meta_description']);
+            document.querySelector('meta[property="og:title"]').setAttribute('content', translations[currentLang]['title']);
+            document.querySelector('meta[property="og:description"]').setAttribute('content', translations[currentLang]['meta_description']);
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', translations[currentLang]['title']);
+            document.querySelector('meta[name="twitter:description"]').setAttribute('content', translations[currentLang]['meta_description']);
             
             // Update header content
             document.querySelector('h1').textContent = 'Draw Now';
