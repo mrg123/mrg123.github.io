@@ -216,3 +216,7 @@ This app needs to accomplish two things:
 - **艺术创造力**：提供工具让用户表达内心世界，释放压力，找回内心平静与活力
 - **抵制荒芜思想**：通过绘画创作，帮助用户重新连接内心，培养积极健康的心态
 - **艺术疗愈**：利用艺术创作的治愈力量，帮助缓解抑郁、焦虑等情绪问题
+
+- **Artistic Creativity**: Provide tools for users to express their inner world, release pressure, and regain inner peace and vitality
+- **Resist Barren Thoughts**: Help users reconnect with their inner selves and cultivate a positive, healthy mindset through drawing
+- **Art Therapy**: Utilize the healing power of artistic creation to help alleviate depression, anxiety, and other emotional issues
