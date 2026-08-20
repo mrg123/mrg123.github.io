@@ -15,13 +15,20 @@
 | 🎨 Draw Now 绘画 | `/draw-now/` | 应用 | 绘画应用官方落地页 |
 | 🧭 MediaNav 导航 | `/nav/` | 工具 | 个人网站导航系统 |
 
+## 目录规范
+
+**每个项目独立一个子目录**，根目录只保留站点级文件（导航首页、favicon、SEO、广告、域名等）。新增项目 = 新建一个子目录 + 在导航首页的 `PROJECTS` 数组登记一条，不要在根目录堆项目文件。
+
 ## 目录结构
 
 ```
 mrg123.github.io/
 ├── index.html               # 导航首页（项目发射台）
-├── sitemap.xml / robots.txt
-├── CNAME                    # www.mrg123.com
+├── favicon.ico              # 站点图标
+├── CNAME                    # 自定义域名 www.mrg123.com
+├── ads.txt                  # Google AdSense
+├── robots.txt / sitemap.xml # SEO
+├── .gitignore
 ├── adventure-girl/          # 3D 迷宫游戏（含 three.min.js）
 ├── cyber-sleigh-2077/       # 赛博雪橇游戏
 ├── xuegao-cat/              # 雪糕猫生成器

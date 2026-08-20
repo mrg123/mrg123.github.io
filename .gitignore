@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (若项目目录内用到 node_modules)
+node_modules/
