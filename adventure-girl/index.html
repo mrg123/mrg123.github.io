@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冒险的女孩 · 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Orbitron:wght@500;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#05060f}
+body{font-family:'ZCOOL KuaiLe','PingFang SC',sans-serif;user-select:none}
+
+#gameCanvas{display:block;width:100%;height:100%;cursor:grab;background:#05060f}
+#gameCanvas.dragging{cursor:grabbing}
+
+/* 加载遮罩 */
+#loading{
+  position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;gap:18px;background:#05060f;
+  transition:opacity 0.8s;
+}
+#loading.hide{opacity:0;pointer-events:none}
+#loading .logo{
+  font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;letter-spacing:4px;
+  background:linear-gradient(135deg,#c084fc,#818cf8,#22d3ee);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+#loading .spinner{
+  width:44px;height:44px;border-radius:50%;
+  border:3px solid rgba(139,92,246,0.2);border-top-color:#c084fc;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading .tip{font-size:13px;color:#8b8fb3;letter-spacing:2px}
+
+/* HUD */
+.hud{
+  position:fixed;top:18px;left:20px;z-index:20;
+  background:rgba(10,12,25,0.5);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(139,92,246,0.22);border-radius:18px;
+  padding:14px 18px;box-shadow:0 8px 40px rgba(0,0,0,0.45);
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.hud-title{
+  font-family:'Orbitron','ZCOOL KuaiLe',sans-serif;font-size:17px;font-weight:700;letter-spacing:2px;
+  background:linear-gradient(135deg,#c084fc,#818cf8,#22d3ee);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 12px rgba(139,92,246,0.5));
+}
+.hud-title .sub{font-size:10px;color:#8b8fb3;-webkit-text-fill-color:#8b8fb3;letter-spacing:3px}
+.hud-level{
+  background:linear-gradient(135deg,rgba(139,92,246,0.25),rgba(34,211,238,0.12));
+  border:1px solid rgba(139,92,246,0.35);border-radius:10px;
+  padding:4px 14px;color:#c4b5fd;font-size:16px;font-weight:700;letter-spacing:2px;
+  text-shadow:0 0 10px rgba(196,181,253,0.7);width:fit-content;
+}
+.progress-track{width:150px;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,0.06)}
+.progress-fill{height:100%;width:1%;background:linear-gradient(90deg,#c084fc,#818cf8,#22d3ee);border-radius:3px;box-shadow:0 0 12px rgba(129,140,248,0.9);transition:width 0.6s}
+.hud-stats{display:flex;gap:12px;font-size:12px;color:rgba(165,180,252,0.65);letter-spacing:1px}
+.hud-stats .best{color:rgba(251,191,36,0.7)}
+
+/* 关卡进入动画 */
+#levelAnim{
+  position:fixed;left:50%;top:36%;transform:translate(-50%,-50%);z-index:40;
+  font-family:'Orbitron','ZCOOL KuaiLe',sans-serif;font-size:56px;font-weight:700;
+  letter-spacing:10px;text-align:center;pointer-events:none;opacity:0;
+  color:rgba(224,231,255,0.92);
+  text-shadow:0 0 40px rgba(139,92,246,0.95),0 0 80px rgba(34,211,238,0.4);
+}
+#levelAnim .sub{display:block;font-family:'ZCOOL KuaiLe';font-size:18px;letter-spacing:6px;margin-top:6px;color:rgba(196,181,253,0.85)}
+#levelAnim.show{animation:levelIn 1.7s ease forwards}
+@keyframes levelIn{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}
+  20%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  78%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(0.95)}
+}
+
+/* 帮助 */
+.help{
+  position:fixed;right:18px;bottom:16px;z-index:20;
+  font-size:12px;color:rgba(165,180,252,0.4);text-align:right;line-height:2;letter-spacing:1px;
+  pointer-events:none;text-shadow:0 0 10px rgba(0,0,0,0.9);
+}
+.help .keys{color:rgba(196,181,253,0.75)}
+
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:11%;transform:translateX(-50%);z-index:30;
+  font-size:17px;color:#e0e7ff;letter-spacing:2px;
+  background:rgba(10,12,25,0.72);border:1px solid rgba(139,92,246,0.32);
+  border-radius:14px;padding:11px 28px;backdrop-filter:blur(10px);
+  text-shadow:0 0 14px rgba(165,180,252,0.7);
+  opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;
+}
+#toast.show{opacity:1;animation:toastIn 0.35s ease}
+@keyframes toastIn{from{transform:translateX(-50%) translateY(12px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+/* 进门金色暗角 */
+#vignette{
+  position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;transition:opacity 0.6s;
+  background:radial-gradient(ellipse at center,transparent 42%,rgba(245,158,11,0.25) 100%);
+}
+#vignette.show{opacity:1}
+
+/* 结局 */
+#endingOverlay{
+  position:fixed;inset:0;z-index:100;display:none;
+  background:linear-gradient(180deg,rgba(5,6,15,0.65),rgba(20,10,40,0.88));
+  flex-direction:column;justify-content:center;align-items:center;gap:14px;
+  font-family:'ZCOOL KuaiLe',sans-serif;text-align:center;padding:20px;
+  animation:fadeIn 0.8s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#endingOverlay .end-text{font-size:30px;color:#e0e7ff;text-shadow:0 0 26px rgba(99,102,241,0.9);animation:endFloat 2.2s ease infinite}
+@keyframes endFloat{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(-6px);opacity:0.85}}
+#endingOverlay .end-sub{font-size:16px;color:#a5b4fc}
+#endingOverlay .end-restart{margin-top:12px;font-size:15px;color:#c084fc;text-shadow:0 0 10px rgba(147,51,234,0.8);cursor:pointer;padding:10px 26px;border:1px solid rgba(192,132,252,0.4);border-radius:12px;transition:all 0.3s}
+#endingOverlay .end-restart:hover{background:rgba(147,51,234,0.15);transform:scale(1.05)}
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- 加载 -->
+<div id="loading">
+  <div class="logo">冒险的女孩</div>
+  <div class="spinner"></div>
+  <div class="tip">✦ 正在加载暗夜素材…</div>
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="hud-title">冒险的女孩<span class="sub">3D DARK ADVENTURE</span></div>
+  <div class="hud-level" id="levelDisplay">LV 01</div>
+  <div class="hud-stats"><span id="stepsDisplay">0 步</span><span id="bestDisplay"></span></div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div id="vignette"></div>
+<div id="toast"></div>
+<div id="levelAnim"></div>
+
+<div class="help">
+  <span class="keys">WASD</span> / 方向键 移动　<span class="keys">R</span> 重来 · <span class="keys">M</span> 化妆<br>
+  拖拽 旋转视角 · 滚轮 缩放<br>
+  到达终点 → 3 秒后自动进入下一关（点击金门可立即过关）
+</div>
+
+<!-- 结局 -->
+<div id="endingOverlay">
+  <div class="end-text" id="endText">◈ THE END ◈</div>
+  <div class="end-sub" id="endSub"></div>
+  <div class="end-restart" id="endRestart">✦ 点击开启新的冒险 ✦</div>
+</div>
+
+<script src="three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>
+// ================================================================
+//  迷宫生成
+// ================================================================
+function generatePerfectMaze(size){
+  const g=[];
+  for(let r=0;r<size;r++){g[r]=[];
+    for(let c=0;c<size;c++)g[r][c]={n:1,s:1,e:1,w:1,v:0};}
+  const st=[{r:0,c:0}];g[0][0].v=1;
+  while(st.length){
+    const cur=st[st.length-1],nb=[];
+    if(cur.r>0&&!g[cur.r-1][cur.c].v)nb.push({r:cur.r-1,c:cur.c,d:'n',o:'s'});
+    if(cur.r<size-1&&!g[cur.r+1][cur.c].v)nb.push({r:cur.r+1,c:cur.c,d:'s',o:'n'});
+    if(cur.c>0&&!g[cur.r][cur.c-1].v)nb.push({r:cur.r,c:cur.c-1,d:'w',o:'e'});
+    if(cur.c<size-1&&!g[cur.r][cur.c+1].v)nb.push({r:cur.r,c:cur.c+1,d:'e',o:'w'});
+    if(!nb.length){st.pop();continue}
+    const n=nb[Math.floor(Math.random()*nb.length)];
+    g[cur.r][cur.c][n.d]=0;g[n.r][n.c][n.o]=0;g[n.r][n.c].v=1;
+    st.push({r:n.r,c:n.c});
+  }
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++)delete g[r][c].v;
+  return g;
+}
+function hasPath(grid,size,sr,sc,er,ec){
+  const vis=new Set(),q=[{r:sr,c:sc}];vis.add(sr+','+sc);
+  while(q.length){
+    const{r,c}=q.shift();
+    if(r===er&&c===ec)return true;
+    if(!grid[r][c].n&&r>0){const k=(r-1)+','+c;if(!vis.has(k)){vis.add(k);q.push({r:r-1,c})}}
+    if(!grid[r][c].s&&r<size-1){const k=(r+1)+','+c;if(!vis.has(k)){vis.add(k);q.push({r:r+1,c})}}
+    if(!grid[r][c].w&&c>0){const k=r+','+(c-1);if(!vis.has(k)){vis.add(k);q.push({r,c:c-1})}}
+    if(!grid[r][c].e&&c<size-1){const k=r+','+(c+1);if(!vis.has(k)){vis.add(k);q.push({r,c:c+1})}}
+  }
+  return false;
+}
+function generateComplexMaze(size,complexity){
+  let grid=generatePerfectMaze(size);
+  // ① 死胡同墙：堵住部分通道制造迷惑分叉（保持有解）
+  const extraWalls=Math.floor(size*size*0.3*complexity);
+  for(let i=0;i<extraWalls;i++){
+    const r=Math.floor(Math.random()*size),c=Math.floor(Math.random()*size);
+    const dirs=['n','s','e','w'],dir=dirs[Math.floor(Math.random()*4)];
+    if(grid[r][c][dir])continue;
+    const nr=r+(dir==='n'?-1:dir==='s'?1:0),nc=c+(dir==='w'?-1:dir==='e'?1:0);
+    if(nr<0||nr>=size||nc<0||nc>=size)continue;
+    const opp={n:'s',s:'n',e:'w',w:'e'}[dir];
+    grid[r][c][dir]=1;grid[nr][nc][opp]=1;
+    if(!hasPath(grid,size,0,0,size-1,size-1)){grid[r][c][dir]=0;grid[nr][nc][opp]=0;}
+  }
+  // ② 环路：拆除部分墙制造回路，破坏"单路径树"结构
+  // 拆墙只会增加连通性（不可能断路），迷宫不再是树形——
+  // "沿墙走"等简单策略失效，玩家必须真正寻路
+  const loopCount=Math.floor(size*size*0.22*complexity);
+  for(let i=0;i<loopCount;i++){
+    const r=Math.floor(Math.random()*size),c=Math.floor(Math.random()*size);
+    const dirs=['n','s','e','w'],dir=dirs[Math.floor(Math.random()*4)];
+    if(!grid[r][c][dir])continue; // 只拆现存墙
+    const nr=r+(dir==='n'?-1:dir==='s'?1:0),nc=c+(dir==='w'?-1:dir==='e'?1:0);
+    if(nr<0||nr>=size||nc<0||nc>=size)continue;
+    const opp={n:'s',s:'n',e:'w',w:'e'}[dir];
+    grid[r][c][dir]=0;grid[nr][nc][opp]=0;
+  }
+  return grid;
+}
+
+// ================================================================
+//  素材加载
+// ================================================================
+const TEX_URLS={
+  grass :'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/terrain/grasslight-big.jpg',
+  brick :'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/brick/brick_diffuse.jpg',
+  brickN:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/brick/brick_normal.jpg',
+  star  :'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/sprites/snowflake1.png',
+};
+const TEX={grass:null,brick:null,brickN:null,star:null};
+const loadingEl=document.getElementById('loading');
+let texLoaded=0,texTotal=Object.keys(TEX_URLS).length;
+function loadTex(key,url){
+  new THREE.TextureLoader().load(url,t=>{
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;
+    TEX[key]=t;texLoaded++;
+    if(texLoaded>=texTotal)hideLoading();
+    applyTextures();
+  },undefined,()=>{texLoaded++;if(texLoaded>=texTotal)hideLoading()});
+}
+function hideLoading(){setTimeout(()=>loadingEl.classList.add('hide'),400)}
+function makeSkyTexture(){
+  const c=document.createElement('canvas');c.width=c.height=1024;
+  const g=c.getContext('2d');
+  const grad=g.createLinearGradient(0,0,0,1024);
+  grad.addColorStop(0,'#02020a');grad.addColorStop(0.55,'#0a0a22');grad.addColorStop(1,'#12123a');
+  g.fillStyle=grad;g.fillRect(0,0,1024,1024);
+  for(let i=0;i<7;i++){
+    const x=Math.random()*1024,y=Math.random()*1024,rad=140+Math.random()*220;
+    const ng=g.createRadialGradient(x,y,0,x,y,rad);
+    const r=90+Math.random()*90,gc=50+Math.random()*90,b=150+Math.random()*100;
+    ng.addColorStop(0,`rgba(${r},${gc},${b},0.16)`);ng.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=ng;g.fillRect(x-rad,y-rad,rad*2,rad*2);
+  }
+  for(let i=0;i<800;i++){
+    const x=Math.random()*1024,y=Math.random()*1024;
+    const r=Math.random()*1.9+0.3;
+    const warm=Math.random()>0.6;
+    g.fillStyle=warm?`rgba(255,240,200,${Math.random()*0.9+0.1})`:`rgba(220,230,255,${Math.random()*0.9+0.1})`;
+    g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();
+    if(Math.random()>0.85){
+      g.fillStyle='rgba(255,255,255,0.35)';
+      g.fillRect(x-r*3,y-r*0.4,r*6,r*0.8);g.fillRect(x-r*0.4,y-r*3,r*0.8,r*6);
+    }
+  }
+  return new THREE.CanvasTexture(c);
+}
+function makeGlowTexture(){
+  const c=document.createElement('canvas');c.width=c.height=256;
+  const g=c.getContext('2d');
+  const grad=g.createRadialGradient(128,128,10,128,128,128);
+  grad.addColorStop(0,'rgba(255,248,210,0.9)');
+  grad.addColorStop(0.3,'rgba(255,240,180,0.35)');
+  grad.addColorStop(1,'rgba(255,240,180,0)');
+  g.fillStyle=grad;g.fillRect(0,0,256,256);
+  return new THREE.CanvasTexture(c);
+}
+// 生成 🌺 花朵图标纹理：512px 高清 Canvas 绘制 emoji，
+// 在高分屏（retina）与低分屏上均能清晰显示，且自动适配各平台 emoji 字体
+function makeFlowerTexture(){
+  const c=document.createElement('canvas');c.width=c.height=512;
+  const g=c.getContext('2d');
+  g.font='400px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  g.textAlign='center';g.textBaseline='middle';
+  g.fillText('🌺',256,276);
+  const tex=new THREE.CanvasTexture(c);
+  tex.anisotropy=maxAniso; // 提升斜视角下的清晰度
+  return tex;
+}
+
+// ================================================================
+//  DOM
+// ================================================================
+const canvas=document.getElementById('gameCanvas');
+const levelDisplay=document.getElementById('levelDisplay'),progressFill=document.getElementById('progressFill');
+const stepsDisplay=document.getElementById('stepsDisplay'),bestDisplay=document.getElementById('bestDisplay');
+const levelAnim=document.getElementById('levelAnim');
+const endingOverlay=document.getElementById('endingOverlay'),endText=document.getElementById('endText'),endSub=document.getElementById('endSub');
+const vignette=document.getElementById('vignette');
+const toast=document.getElementById('toast');
+let toastTimer=null;
+function msg(text,ms){
+  toast.textContent=text;toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove('show'),ms||2200);
+}
+
+// ================================================================
+//  主题系统（每 20 关换色）
+// ================================================================
+const THEMES=[
+  {name:'暗夜紫', wall:0x8a7d6f, glow:0x8b5cf6, ground:0x8fae7a},
+  {name:'极寒雪地',wall:0x8fa3b8, glow:0x38bdf8, ground:0xcfe4ff},
+  {name:'熔岩之地',wall:0x8a4a3a, glow:0xf97316, ground:0xd9a06b},
+  {name:'翡翠森林',wall:0x3f6b4a, glow:0x34d399, ground:0x6fa87a},
+  {name:'星辉王座',wall:0x4a4a7a, glow:0xfbbf24, ground:0x5a5a8a},
+];
+function currentTheme(){return THEMES[Math.min(Math.floor((currentLevel-1)/20),4)]}
+
+// ================================================================
+//  音效（Web Audio 合成，无需素材）
+// ================================================================
+let audioCtx=null;
+function initAudio(){
+  if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}}
+  if(audioCtx.state==='suspended')audioCtx.resume();
+}
+function playTone(freq,dur,type,vol,delay){
+  if(!audioCtx)return;
+  const t=audioCtx.currentTime+(delay||0);
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vol||0.2,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+(dur||0.2));
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(t);o.stop(t+(dur||0.2)+0.05);
+}
+const sfxWin=()=>{playTone(523,0.15,'triangle',0.22);playTone(659,0.15,'triangle',0.22,0.12);playTone(784,0.32,'triangle',0.22,0.24)};
+const sfxRecord=()=>{playTone(784,0.12,'triangle',0.22);playTone(1047,0.2,'triangle',0.22,0.1);playTone(1319,0.45,'triangle',0.22,0.22)};
+const sfxLevel=()=>{playTone(440,0.09,'sine',0.12);playTone(660,0.12,'sine',0.12,0.08)};
+
+// ================================================================
+//  步数纪录（localStorage）
+// ================================================================
+const BEST_KEY='ag_maze_best';
+let levelSteps=0,totalSteps=0;
+function getBests(){try{return JSON.parse(localStorage.getItem(BEST_KEY)||'{}')}catch(e){return{}}}
+function saveBest(level,steps){
+  const b=getBests();
+  if(!b[level]||steps<b[level]){b[level]=steps;try{localStorage.setItem(BEST_KEY,JSON.stringify(b))}catch(e){}return true}
+  return false;
+}
+function updateStepsHud(){
+  stepsDisplay.textContent=`${levelSteps} 步`;
+  const best=getBests()[currentLevel];
+  bestDisplay.textContent=best?`最佳 ${best} 步`:'';
+}
+
+// ================================================================
+//  通关进度持久化（localStorage，有效期 1 年）
+// ================================================================
+const PROGRESS_KEY='ag_maze_progress';       // 进度缓存键名
+const PROGRESS_TTL=365*24*60*60*1000;        // 缓存有效期：1 年（毫秒）
+// 保存通关进度：记录"下次应从第几关开始"及保存时间戳
+function saveProgress(level){
+  try{localStorage.setItem(PROGRESS_KEY,JSON.stringify({level,ts:Date.now()}))}catch(e){}
+}
+// 读取通关进度：无记录 / 数据损坏 / 超过 1 年有效期 → 返回 1（从第一关开始）
+function loadProgress(){
+  try{
+    const raw=localStorage.getItem(PROGRESS_KEY);
+    if(!raw)return 1;
+    const data=JSON.parse(raw);
+    if(!data||typeof data.level!=='number'||typeof data.ts!=='number')return 1;
+    if(Date.now()-data.ts>PROGRESS_TTL){localStorage.removeItem(PROGRESS_KEY);return 1} // 已过期，清除缓存
+    return Math.min(Math.max(1,Math.floor(data.level)),100); // 关卡范围钳制在 1~100
+  }catch(e){return 1}
+}
+
+// ================================================================
+//  通关倒计时（3 秒后自动进入下一关，无需手动点击）
+// ================================================================
+let countdownTimer=null;
+// 清理倒计时（进入新关卡 / 手动跳关 / 重构迷宫时调用，防止残留计时器）
+function clearCountdown(){
+  if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null}
+}
+// 通关后启动 3 秒倒计时，每秒刷新提示，结束后自动调用 enterDoor()
+function startAutoNext(headline){
+  clearCountdown();
+  let remain=3;
+  // 生成提示文案：最后一关（100 关）提示进入结局，其余提示下一关编号
+  const tip=()=> currentLevel>=100
+    ? `${headline} 恭喜通关！${remain} 秒后进入最终结局…`
+    : `${headline} 恭喜通关！${remain} 秒后自动进入第 ${currentLevel+1} 关…`;
+  msg(tip(),1500);
+  countdownTimer=setInterval(()=>{
+    remain--;
+    if(remain<=0){
+      clearCountdown();
+      enterDoor();          // 倒计时结束：自动进入下一关
+    }else{
+      msg(tip(),1200);      // 每秒更新倒计时数字
+    }
+  },1000);
+}
+
+// ================================================================
+//  金色粒子（到达出口）
+// ================================================================
+let confetti=null;
+function burstParticles(x,y,z,color){
+  const parts=[];
+  for(let i=0;i<26;i++){
+    const p=new THREE.Mesh(new THREE.SphereGeometry(0.05,5,5),new THREE.MeshBasicMaterial({color,transparent:true,opacity:1}));
+    p.position.set(x,y,z);
+    p.userData={vx:(Math.random()-0.5)*4,vy:Math.random()*5+2,vz:(Math.random()-0.5)*4,life:1};
+    scene.add(p);parts.push(p);
+  }
+  confetti=parts;
+  setTimeout(()=>{parts.forEach(p=>{scene.remove(p);p.geometry.dispose();p.material.dispose()});confetti=null},1800);
+}
+
+// 关卡进入动画
+function showLevelAnim(){
+  const theme=currentTheme();
+  levelAnim.innerHTML=`LEVEL ${String(currentLevel).padStart(2,'0')}<span class="sub">✦ ${theme.name} ✦</span>`;
+  levelAnim.classList.remove('show');
+  void levelAnim.offsetWidth;
+  levelAnim.classList.add('show');
+}
+
+// ================================================================
+//  Three.js 场景
+// ================================================================
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const maxAniso=renderer.capabilities.getMaxAnisotropy();
+function resize(){
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+}
+const scene=new THREE.Scene();
+scene.background=makeSkyTexture();
+scene.fog=new THREE.FogExp2(0x0a0a20,0.008);
+const camera=new THREE.PerspectiveCamera(55,1,0.1,400);
+resize();
+window.addEventListener('resize',resize);
+
+scene.add(new THREE.AmbientLight(0x8b5cf6,0.4));
+const moonLight=new THREE.DirectionalLight(0xbfdbfe,0.6);moonLight.position.set(40,30,20);scene.add(moonLight);
+const girlLight=new THREE.PointLight(0xff9ecb,1.2,6);scene.add(girlLight);
+
+const moon=new THREE.Mesh(new THREE.SphereGeometry(7,32,32),new THREE.MeshBasicMaterial({color:0xfff8e0}));
+moon.position.set(85,55,-110);scene.add(moon);
+const glowSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:makeGlowTexture(),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+glowSprite.scale.set(60,60,1);glowSprite.position.copy(moon.position);scene.add(glowSprite);
+
+const starGeo=new THREE.BufferGeometry(),starPos=[],starCol=[];
+for(let i=0;i<900;i++){
+  const theta=Math.random()*Math.PI*2,rad=30+Math.random()*90;
+  starPos.push(Math.cos(theta)*rad,Math.random()*30+2,Math.sin(theta)*rad);
+  const warm=Math.random()>0.5;
+  starCol.push(warm?1:0.85,warm?0.95:0.9,warm?0.75:1);
+}
+starGeo.setAttribute('position',new THREE.Float32BufferAttribute(starPos,3));
+starGeo.setAttribute('color',new THREE.Float32BufferAttribute(starCol,3));
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({size:0.16,vertexColors:true,transparent:true,opacity:0.9,sizeAttenuation:true}));
+scene.add(stars);
+const bigStars=[];
+function addBigStars(){
+  if(!TEX.star)return;
+  for(let i=0;i<26;i++){
+    const theta=Math.random()*Math.PI*2,rad=35+Math.random()*85;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX.star,color:0xc4b5fd,transparent:true,opacity:0.7+Math.random()*0.3,depthWrite:false,blending:THREE.AdditiveBlending}));
+    const s=0.6+Math.random()*1.4;sp.scale.set(s,s,1);
+    sp.position.set(Math.cos(theta)*rad,5+Math.random()*28,Math.sin(theta)*rad);
+    scene.add(sp);bigStars.push(sp);
+  }
+}
+
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(160,160),
+  new THREE.MeshStandardMaterial({color:0x8fae7a,roughness:1}));
+ground.rotation.x=-Math.PI/2;scene.add(ground);
+let wallMat=null;
+function applyTextures(){
+  if(TEX.grass){
+    TEX.grass.repeat.set(14,14);TEX.grass.anisotropy=maxAniso;
+    ground.material.map=TEX.grass;ground.material.needsUpdate=true;
+  }
+  if(TEX.brick&&wallMat){
+    TEX.brick.repeat.set(2,2.4);TEX.brick.anisotropy=maxAniso;
+    wallMat.map=TEX.brick;wallMat.color.set(0x8a7d6f);wallMat.needsUpdate=true;
+  }
+  if(TEX.brickN&&wallMat){
+    TEX.brickN.repeat.set(2,2.4);
+    wallMat.normalMap=TEX.brickN;wallMat.needsUpdate=true;
+  }
+}
+
+// ================================================================
+//  视角系统：orbit（全景）/ fps（第一人称）
+// ================================================================
+const camState={azimuth:Math.PI/4,polar:1.05,dist:10};
+let camTarget=new THREE.Vector3(0,0.5,0);
+const camSmooth={x:0,y:0,z:0};
+
+function updateCamera(dt){
+  camSmooth.x+=(camTarget.x-camSmooth.x)*Math.min(1,dt*4);
+  camSmooth.y+=(camTarget.y-camSmooth.y)*Math.min(1,dt*4);
+  camSmooth.z+=(camTarget.z-camSmooth.z)*Math.min(1,dt*4);
+  const sp=Math.sin(camState.polar);
+  camera.position.set(
+    camSmooth.x+sp*Math.cos(camState.azimuth)*camState.dist,
+    camSmooth.y+Math.cos(camState.polar)*camState.dist,
+    camSmooth.z+sp*Math.sin(camState.azimuth)*camState.dist
+  );
+  camera.lookAt(camSmooth.x,camSmooth.y,camSmooth.z);
+}
+
+let dragging=false,dragMoved=false,lastX=0,lastY=0;
+function onDrag(dx,dy){
+  camState.azimuth-=dx*0.006;camState.polar-=dy*0.006;
+  camState.polar=Math.max(0.05,Math.min(1.45,camState.polar));
+}
+canvas.addEventListener('mousedown',e=>{initAudio();dragging=true;dragMoved=false;lastX=e.clientX;lastY=e.clientY;canvas.classList.add('dragging')});
+window.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  const dx=e.clientX-lastX,dy=e.clientY-lastY;
+  if(Math.abs(dx)+Math.abs(dy)>5)dragMoved=true;
+  onDrag(dx,dy);lastX=e.clientX;lastY=e.clientY;
+});
+window.addEventListener('mouseup',()=>{dragging=false;canvas.classList.remove('dragging')});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  camState.dist*=1+e.deltaY*0.0012;
+  camState.dist=Math.max(3.5,Math.min(30,camState.dist));
+},{passive:false});
+let touchDist=0;
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){dragging=true;dragMoved=false;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY}
+},{passive:true});
+window.addEventListener('touchmove',e=>{
+  if(!dragging)return;
+  if(e.touches.length===1){
+    const dx=e.touches[0].clientX-lastX,dy=e.touches[0].clientY-lastY;
+    if(Math.abs(dx)+Math.abs(dy)>5)dragMoved=true;
+    onDrag(dx,dy);lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;
+  }else if(e.touches.length===2){
+    const t=e.touches,d=Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+    if(touchDist){camState.dist*=touchDist/d;camState.dist=Math.max(3.5,Math.min(30,camState.dist))}
+    touchDist=d;
+  }
+},{passive:true});
+window.addEventListener('touchend',()=>{dragging=false;touchDist=0;canvas.classList.remove('dragging')});
+
+// ================================================================
+//  3D 模型
+// ================================================================
+function box(w,h,d,color,x,y,z,matOpts){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial(Object.assign({color},matOpts||{})));
+  m.position.set(x,y,z);return m;
+}
+const DRESS_COLORS=['#FF6B8A','#6BCB77','#4D96FF','#FFD93D','#FF6B6B','#C084FC','#FF8C42','#FFB3C6'];
+const DRESS_NAMES=['绯红','翡翠','深海','鎏金','烈焰','暗紫','炽橙','樱粉'];
+
+let girlGroup=null,girlDressMat=null,dressIdx=0;
+function buildGirl(colorHex){
+  const g=new THREE.Group();
+  const skinMat={color:'#FFD5B8',roughness:0.6};
+  g.add(box(0.15,0.3,0.15,'#5B3A29',-0.09,0.15,0));
+  g.add(box(0.15,0.3,0.15,'#5B3A29',0.09,0.15,0));
+  g.add(box(0.17,0.08,0.2,'#3d2b1f',-0.09,0.05,0.03));
+  g.add(box(0.17,0.08,0.2,'#3d2b1f',0.09,0.05,0.03));
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.36,0.44,8),new THREE.MeshStandardMaterial({color:colorHex,roughness:0.55,emissive:colorHex,emissiveIntensity:0.08}));
+  skirt.position.set(0,0.55,0);g.add(skirt);
+  girlDressMat=skirt.material;
+  const inner=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.26,0.4,8),new THREE.MeshStandardMaterial({color:'#fff5f0',roughness:0.7}));
+  inner.position.set(0,0.52,0);g.add(inner);
+  g.add(box(0.32,0.22,0.22,colorHex,0,0.88,0,{roughness:0.55}));
+  g.add(box(0.22,0.06,0.24,'#ffffff',0,1.0,0,{roughness:0.7}));
+  g.add(box(0.09,0.28,0.09,'#FFD5B8',-0.24,0.82,0,skinMat));
+  g.add(box(0.09,0.28,0.09,'#FFD5B8',0.24,0.82,0,skinMat));
+  g.add(box(0.36,0.36,0.36,'#FFD5B8',0,1.2,0,skinMat));
+  g.add(box(0.42,0.4,0.38,'#4A2C17',0,1.24,-0.04,{roughness:0.8}));
+  g.add(box(0.42,0.2,0.42,'#4A2C17',0,1.48,0,{roughness:0.8}));
+  g.add(box(0.42,0.08,0.14,'#4A2C17',0,1.34,0.16,{roughness:0.8}));
+  g.add(box(0.08,0.2,0.08,'#4A2C17',-0.24,1.05,0.02));
+  g.add(box(0.08,0.2,0.08,'#4A2C17',0.24,1.05,0.02));
+  g.add(box(0.07,0.09,0.02,'#1a1a2e',-0.1,1.22,0.19));
+  g.add(box(0.07,0.09,0.02,'#1a1a2e',0.1,1.22,0.19));
+  g.add(box(0.02,0.03,0.03,'#ffffff',-0.07,1.24,0.205));
+  g.add(box(0.02,0.03,0.03,'#ffffff',0.13,1.24,0.205));
+  g.add(box(0.08,0.04,0.02,'#ffa8b8',-0.16,1.13,0.2,{transparent:true,opacity:0.65}));
+  g.add(box(0.08,0.04,0.02,'#ffa8b8',0.16,1.13,0.2,{transparent:true,opacity:0.65}));
+  g.add(box(0.09,0.03,0.02,'#E8717A',0,1.09,0.19));
+  const bowMat=new THREE.MeshStandardMaterial({color:0xff3355,roughness:0.5,emissive:0x991122,emissiveIntensity:0.3});
+  const b1=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.08,0.05),bowMat);b1.position.set(-0.24,1.52,0.1);b1.rotation.z=0.25;b1.rotation.y=0.35;g.add(b1);
+  const b2=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.08,0.05),bowMat);b2.position.set(0.24,1.52,0.1);b2.rotation.z=-0.25;b2.rotation.y=-0.35;g.add(b2);
+  const knot=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),bowMat);knot.position.set(0,1.5,0.13);g.add(knot);
+  return g;
+}
+function rebuildGirl(){
+  if(girlGroup){scene.remove(girlGroup);disposeObj(girlGroup)}
+  girlGroup=buildGirl(DRESS_COLORS[dressIdx%DRESS_COLORS.length]);
+  scene.add(girlGroup);
+  girlLight.color.set(DRESS_COLORS[dressIdx%DRESS_COLORS.length]);
+}
+
+let merchantGroup=null;
+function buildMerchant(){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.9),new THREE.MeshStandardMaterial({color:0x3b82f6,emissive:0x1d4ed8,emissiveIntensity:0.5,roughness:0.35}));
+  g.add(body);
+  const faceMat=new THREE.MeshStandardMaterial({color:0x2563eb,emissive:0x1e40af,emissiveIntensity:0.4});
+  const face=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.85,0.1),faceMat);face.position.set(0,0,0.46);g.add(face);
+  const eyeMat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:0.3});
+  const eyeGeo=new THREE.BoxGeometry(0.14,0.17,0.04);
+  const e1=new THREE.Mesh(eyeGeo,eyeMat);e1.position.set(-0.19,0.22,0.5);g.add(e1);
+  const e2=new THREE.Mesh(eyeGeo,eyeMat);e2.position.set(0.19,0.22,0.5);g.add(e2);
+  const pupGeo=new THREE.BoxGeometry(0.07,0.1,0.05);
+  const p1=new THREE.Mesh(pupGeo,new THREE.MeshStandardMaterial({color:0x0a0c19}));p1.position.set(-0.17,0.23,0.53);g.add(p1);
+  const p2=new THREE.Mesh(pupGeo,new THREE.MeshStandardMaterial({color:0x0a0c19}));p2.position.set(0.21,0.23,0.53);g.add(p2);
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.06,0.04),new THREE.MeshStandardMaterial({color:0x000000}));
+  mouth.position.set(0,-0.12,0.51);g.add(mouth);
+  const lamp=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),new THREE.MeshStandardMaterial({color:0xffd700,emissive:0xffaa00,emissiveIntensity:1.5}));
+  lamp.position.set(0,0.58,0);g.add(lamp);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.5,0.66,28),new THREE.MeshBasicMaterial({color:0x60a5fa,transparent:true,opacity:0.45,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=0.03;g.add(ring);
+  return g;
+}
+function placeMerchant(){
+  if(merchantGroup){scene.remove(merchantGroup);disposeObj(merchantGroup)}
+  merchantGroup=buildMerchant();
+  merchantGroup.position.set(-(mazeSize/2)-2.2,0.45,0);
+  scene.add(merchantGroup);
+}
+
+let doorGroup=null;
+function buildDoor(){
+  const g=new THREE.Group();
+  const frameMat=new THREE.MeshStandardMaterial({color:0x78350f,emissive:0xf59e0b,emissiveIntensity:0.9});
+  const f1=new THREE.Mesh(new THREE.BoxGeometry(0.18,2.0,0.5),frameMat);f1.position.set(-0.58,1.0,0);g.add(f1);
+  const f2=new THREE.Mesh(new THREE.BoxGeometry(0.18,2.0,0.5),frameMat);f2.position.set(0.58,1.0,0);g.add(f2);
+  const beam=new THREE.Mesh(new THREE.BoxGeometry(1.34,0.22,0.52),frameMat);beam.position.set(0,2.0,0);g.add(beam);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(1.0,1.85,0.14),
+    new THREE.MeshStandardMaterial({color:0x78350f,emissive:0xffd700,emissiveIntensity:1.3,transparent:true,opacity:0.55}));
+  door.position.set(0,0.92,0);g.add(door);
+  const band=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.06,0.3),new THREE.MeshBasicMaterial({color:0xffd700,transparent:true,opacity:0.5}));
+  band.position.set(0,0.04,0);g.add(band);
+  return g;
+}
+function placeDoor(){
+  if(doorGroup){scene.remove(doorGroup);disposeObj(doorGroup)}
+  doorGroup=buildDoor();
+  const p=cellToWorld(exitR,exitC);
+  doorGroup.position.set(p.x,0,p.z);
+  scene.add(doorGroup);
+}
+function removeDoor(){if(doorGroup){scene.remove(doorGroup);disposeObj(doorGroup);doorGroup=null}}
+
+let exitMarker=null;
+// 终点标记 = 🌺 花朵图标（Sprite 始终面向镜头，任何视角/设备下都清晰）
+// 组合结构：① 地面金色光环 ② 粉色柔光晕 ③ 花朵图标
+function placeExitMarker(){
+  removeExitMarker();
+  const g=new THREE.Group();
+  // ① 地面光环：标示终点格位置，与金色之门/纪录色系呼应
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.38,0.54,32),
+    new THREE.MeshBasicMaterial({color:0xffd700,transparent:true,opacity:0.55,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=0.03;g.add(ring);
+  // ② 柔光晕：暗夜色系中的辨识度衬托，与女孩随身灯光同色（粉）
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:makeGlowTexture(),color:0xff9ecb,
+    transparent:true,opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending}));
+  glow.scale.set(2.4,2.4,1);glow.position.y=1.5;g.add(glow);
+  // ③ 🌺 花朵图标本体
+  const flower=new THREE.Sprite(new THREE.SpriteMaterial({map:makeFlowerTexture(),transparent:true,depthWrite:false}));
+  flower.scale.set(1.35,1.35,1);flower.position.y=1.5;g.add(flower);
+  exitMarker=g;
+  const p=cellToWorld(exitR,exitC);
+  exitMarker.position.set(p.x,0,p.z);
+  scene.add(exitMarker);
+}
+function removeExitMarker(){
+  if(!exitMarker)return;
+  // 自定义销毁：Sprite 的几何体是 three.js 全局共享的，不可 dispose，
+  // 只销毁各自独立的材质与纹理，避免影响星星、月亮等其他 Sprite
+  exitMarker.traverse(o=>{
+    if(o.material){
+      if(o.material.map)o.material.map.dispose();
+      o.material.dispose();
+    }
+    if(o.geometry&&!o.isSprite)o.geometry.dispose();
+  });
+  scene.remove(exitMarker);exitMarker=null;
+}
+
+let wallGroup=null;
+function buildWalls(){
+  if(wallGroup){scene.remove(wallGroup);disposeObj(wallGroup)}
+  wallGroup=new THREE.Group();scene.add(wallGroup);
+  const H=1.1,thick=0.24;
+  const theme=currentTheme();
+  wallMat=new THREE.MeshStandardMaterial({color:theme.wall,roughness:0.9,metalness:0.15});
+  const glowMat=new THREE.MeshStandardMaterial({color:0x000000,emissive:theme.glow,emissiveIntensity:1.8});
+  const horiz=[],vert=[],seen=new Set(),half=(mazeSize-1)/2;
+  function addWall(r,c,dir){
+    const key=r+','+c+','+dir;if(seen.has(key))return;seen.add(key);
+    if(dir==='n'||dir==='s')horiz.push([c-half,(dir==='n')?(r-half-0.5):(r-half+0.5)]);
+    else vert.push([(dir==='w')?(c-half-0.5):(c-half+0.5),r-half]);
+  }
+  for(let r=0;r<mazeSize;r++)
+    for(let c=0;c<mazeSize;c++){
+      const cell=maze[r][c];
+      if(cell.n)addWall(r,c,'n');
+      if(cell.w)addWall(r,c,'w');
+      if(c===mazeSize-1&&cell.e)addWall(r,c,'e');
+      if(r===mazeSize-1&&cell.s)addWall(r,c,'s');
+    }
+  const m4=new THREE.Matrix4(),pos=new THREE.Vector3(),quat=new THREE.Quaternion(),scl=new THREE.Vector3(1,1,1);
+  function mk(geo,geoGlow,list){
+    if(!list.length)return;
+    const im=new THREE.InstancedMesh(geo,wallMat,list.length);
+    const glow=new THREE.InstancedMesh(geoGlow,glowMat,list.length);
+    list.forEach((p,i)=>{
+      pos.set(p[0],H/2,p[1]);m4.compose(pos,quat,scl);im.setMatrixAt(i,m4);
+      pos.set(p[0],H,p[1]);m4.compose(pos,quat,scl);glow.setMatrixAt(i,m4);
+    });
+    im.instanceMatrix.needsUpdate=true;glow.instanceMatrix.needsUpdate=true;
+    wallGroup.add(im);wallGroup.add(glow);
+  }
+  mk(new THREE.BoxGeometry(1,H,thick),new THREE.BoxGeometry(1,0.05,thick+0.01),horiz);
+  mk(new THREE.BoxGeometry(thick,H,1),new THREE.BoxGeometry(thick+0.01,0.05,1),vert);
+  applyTextures();
+}
+
+// 装饰（每关重建，自动避让迷宫区域）
+const decorGroup=new THREE.Group();scene.add(decorGroup);
+function disposeObj(g){
+  if(!g)return;
+  g.traverse(o=>{
+    if(o.geometry)o.geometry.dispose();
+    if(o.material){
+      const mats=Array.isArray(o.material)?o.material:[o.material];
+      mats.forEach(m=>m.dispose());
+    }
+  });
+}
+function clearDecor(){
+  while(decorGroup.children.length){
+    const c=decorGroup.children[0];
+    decorGroup.remove(c);disposeObj(c);
+  }
+}
+function buildDecor(){
+  clearDecor();
+  const minRad=mazeSize/2+5;       // 迷宫半宽 + 5 格余量，装饰不会侵入迷宫
+  const maxRad=minRad+24;
+  // 树（更外围）
+  for(let i=0;i<24;i++){
+    const a=Math.random()*Math.PI*2,rad=minRad+9+Math.random()*(maxRad-minRad-9);
+    const x=Math.cos(a)*rad,z=Math.sin(a)*rad;
+    const s=0.8+Math.random()*1.3;
+    const tree=new THREE.Group();
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.13*s,0.2*s,1.1*s,6),new THREE.MeshStandardMaterial({color:0x4a3222,roughness:0.9}));
+    trunk.position.y=0.55*s;tree.add(trunk);
+    const greens=[0x16382b,0x1e4a38,0x2a5c45];
+    const l1=new THREE.Mesh(new THREE.ConeGeometry(0.75*s,1.7*s,7),new THREE.MeshStandardMaterial({color:greens[0],roughness:0.9}));
+    l1.position.y=1.8*s;tree.add(l1);
+    const l2=new THREE.Mesh(new THREE.ConeGeometry(0.55*s,1.2*s,7),new THREE.MeshStandardMaterial({color:greens[1],roughness:0.9}));
+    l2.position.y=2.3*s;tree.add(l2);
+    const l3=new THREE.Mesh(new THREE.ConeGeometry(0.32*s,0.8*s,7),new THREE.MeshStandardMaterial({color:greens[2],roughness:0.9}));
+    l3.position.y=2.8*s;tree.add(l3);
+    tree.position.set(x,0,z);
+    tree.rotation.y=Math.random()*Math.PI*2;
+    decorGroup.add(tree);
+  }
+  // 花
+  const FLOWER_COLORS=['#FF6B8A','#FFD93D','#C084FC','#22d3ee','#6BCB77','#ff9ecb'];
+  for(let i=0;i<30;i++){
+    const a=Math.random()*Math.PI*2,rad=minRad+Math.random()*(maxRad-minRad-8);
+    const flower=new THREE.Group();
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.03,0.3,5),new THREE.MeshStandardMaterial({color:0x2d5a45}));
+    stem.position.y=0.15;flower.add(stem);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.07,7,7),new THREE.MeshStandardMaterial({color:FLOWER_COLORS[Math.floor(Math.random()*FLOWER_COLORS.length)]}));
+    head.position.y=0.33;flower.add(head);
+    flower.position.set(Math.cos(a)*rad,0,Math.sin(a)*rad);
+    decorGroup.add(flower);
+  }
+  // 石头
+  for(let i=0;i<12;i++){
+    const a=Math.random()*Math.PI*2,rad=minRad+3+Math.random()*(maxRad-minRad-7);
+    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.25+Math.random()*0.35,0),new THREE.MeshStandardMaterial({color:0x3a3f5c,roughness:1}));
+    rock.position.set(Math.cos(a)*rad,0.1+Math.random()*0.15,Math.sin(a)*rad);
+    rock.rotation.set(Math.random()*3,Math.random()*3,Math.random()*3);
+    rock.scale.set(1,0.6+Math.random()*0.6,1);
+    decorGroup.add(rock);
+  }
+}
+
+// ================================================================
+//  状态
+// ================================================================
+function cellToWorld(r,c){const half=(mazeSize-1)/2;return{x:c-half,z:r-half}}
+let currentLevel=1,mazeSize=10,maze=[];
+let playerR=0,playerC=0;
+let mode='maze'; // maze | door | ending
+let exitR=0,exitC=0;
+let girlPos=new THREE.Vector3(0,0,0);
+let moveFrom=null,moveTo=null,moveT=0,heldDir=null;
+
+function currentDir(){
+  if(keyMap['arrowup']||keyMap['w'])return{dr:-1,dc:0};
+  if(keyMap['arrowdown']||keyMap['s'])return{dr:1,dc:0};
+  if(keyMap['arrowleft']||keyMap['a'])return{dr:0,dc:-1};
+  if(keyMap['arrowright']||keyMap['d'])return{dr:0,dc:1};
+  return null;
+}
+
+// ================================================================
+//  游戏逻辑
+// ================================================================
+function initLevel(){
+  clearCountdown(); // 进入新关卡时清除可能残留的通关倒计时
+  mazeSize=Math.min(16+Math.floor((currentLevel-1)/6),22);
+  const complexity=0.3+(currentLevel/100)*0.5;
+  maze=generateComplexMaze(mazeSize,complexity);
+  playerR=0;playerC=0;
+  exitR=mazeSize-1;exitC=mazeSize-1;
+  mode='maze';
+  moveFrom=null;moveTo=null;moveT=0;heldDir=null;
+  levelSteps=0;updateStepsHud();
+  const theme=currentTheme();
+  ground.material.color.set(theme.ground); // 主题地面色调
+  removeDoor();removeExitMarker();
+  buildWalls();placeExitMarker();placeMerchant();rebuildGirl();buildDecor();
+  showLevelAnim();
+  const p=cellToWorld(playerR,playerC);
+  girlGroup.position.set(p.x,0,p.z);
+  girlPos.copy(girlGroup.position);
+  girlLight.position.copy(girlPos).setY(1.5);
+  camTarget.set(0,0.5,0);                 // 开局镜头对准迷宫中心（完整鸟瞰）
+  camSmooth.x=0;camSmooth.y=0.5;camSmooth.z=0;
+  camState.azimuth=Math.PI/2;             // 方位摆正：迷宫北=上、西=左，起点在左上角
+  camState.polar=0.1;                     // 接近正上方俯视
+  camState.dist=Math.max(14,mazeSize*1.15);
+  vignette.classList.remove('show');
+  levelDisplay.textContent=`LV ${String(currentLevel).padStart(2,'0')}`;
+  progressFill.style.width=(currentLevel/100*100)+'%';
+  msg(`第 ${currentLevel}/100 关 · ${mazeSize}×${mazeSize} ${theme.name}迷宫 → 抵达 🌺 出口`,2600);
+}
+
+function tryMove(dr,dc){
+  if(mode!=='maze'||moveFrom)return;
+  const nr=playerR+dr,nc=playerC+dc;
+  if(nr<0||nr>=mazeSize||nc<0||nc>=mazeSize)return;
+  if(dr===-1&&(maze[playerR][playerC].n||maze[nr][nc].s))return;
+  if(dr===1&&(maze[playerR][playerC].s||maze[nr][nc].n))return;
+  if(dc===-1&&(maze[playerR][playerC].w||maze[nr][nc].e))return;
+  if(dc===1&&(maze[playerR][playerC].e||maze[nr][nc].w))return;
+  moveFrom={r:playerR,c:playerC};moveTo={r:nr,c:nc};moveT=0;
+  levelSteps++;totalSteps++;updateStepsHud();
+  const rotY=dc===1?-Math.PI/2:dc===-1?Math.PI/2:0;
+  girlGroup.rotation.y=(dc!==0)?rotY:(dr===1?Math.PI:0);
+}
+function onArrive(){
+  playerR=moveTo.r;playerC=moveTo.c;
+  moveFrom=null;moveTo=null;moveT=0;
+  if(playerR===exitR&&playerC===exitC){openDoor();return}
+  heldDir=currentDir();
+  if(heldDir)tryMove(heldDir.dr,heldDir.dc);
+}
+
+function openDoor(){
+  mode='door';
+  placeDoor();
+  // 女孩退到门口侧面，面向金色之门
+  const half=(mazeSize-1)/2;
+  const gx=exitC-half,gz=exitR-half;
+  girlGroup.position.set(gx+1.4,0,gz);
+  girlPos.copy(girlGroup.position);
+  girlGroup.rotation.y=Math.PI/2; // 面朝门（-x 方向）
+  vignette.classList.add('show');
+  camTarget.set(doorGroup.position.x,1,doorGroup.position.z);
+  // 过关结算：步数 + 纪录 + 特效 + 音效
+  const best=getBests()[currentLevel];
+  const isNew=!best||levelSteps<best;
+  const saved=saveBest(currentLevel,levelSteps);
+  // headline 作为通关倒计时提示的开头文案
+  let headline;
+  if(saved||isNew){
+    headline=`🏆 新纪录 ${levelSteps} 步！`;
+    sfxRecord();
+  }else{
+    headline=`🎉 本关 ${levelSteps} 步！`;
+    sfxWin();
+  }
+  burstParticles(doorGroup.position.x,1.6,doorGroup.position.z,0xffd700);
+  burstParticles(girlPos.x,1.2,girlPos.z,0xc084fc);
+  // 持久化通关进度：下次打开游戏时从下一关继续（第 100 关封顶）
+  saveProgress(Math.min(currentLevel+1,100));
+  // 启动 3 秒倒计时，结束后自动进入下一关（点击金门仍可立即跳关）
+  startAutoNext(headline);
+}
+function enterDoor(){
+  if(mode!=='door')return;
+  clearCountdown(); // 手动点击金门跳关时，取消自动倒计时，避免重复触发
+  if(currentLevel>=100){startEnding();return}
+  currentLevel++;sfxLevel();initLevel();
+}
+
+// ================================================================
+//  结局
+// ================================================================
+const END_TEXTS=[
+  ['小可做了一个好长好长的梦……','她穿越了100座 3D 暗夜迷宫…'],
+  ['「醒醒，该去上学了！」','—— 妈妈的声音从耳边传来'],
+  ['原来……是一场梦啊 🌸','冒险结束了，但梦里的勇气还在！'],
+];
+function startEnding(){
+  mode='ending';
+  removeDoor();removeExitMarker();
+  vignette.classList.remove('show');
+  girlGroup.rotation.x=Math.PI/2;girlGroup.rotation.z=0;
+  girlGroup.position.set(0,0.1,0);
+  girlGroup.visible=true;
+  girlLight.color.set(0xff9ecb);
+  camTarget.set(0,0.5,0);
+  camState.azimuth=0;camState.polar=0.7;camState.dist=12;
+  sfxWin();sfxRecord();
+  let idx=0;
+  endText.textContent=END_TEXTS[0][0];endSub.textContent=END_TEXTS[0][1];
+  endingOverlay.style.display='flex';
+  endingOverlay.style.animation='none';void endingOverlay.offsetWidth;
+  endingOverlay.style.animation='fadeIn 0.8s ease';
+  const timer=setInterval(()=>{
+    idx++;
+    if(idx<END_TEXTS.length){
+      endText.textContent=END_TEXTS[idx][0];
+      endSub.textContent=idx===2?`全程共 ${totalSteps} 步 · 冒险结束了，但梦里的勇气还在！`:END_TEXTS[idx][1];
+    }
+    else clearInterval(timer);
+  },2800);
+}
+function restartGame(){
+  currentLevel=1;dressIdx=0;totalSteps=0;
+  saveProgress(1); // 重新开始冒险：通关进度同步重置为第 1 关
+  endingOverlay.style.display='none';
+  girlGroup.rotation.set(0,0,0);
+  initLevel();
+  msg('✦ 新的冒险开始了！',1800);
+}
+
+// ================================================================
+//  点击
+// ================================================================
+const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function onCanvasClick(e){
+  if(dragMoved)return;
+  const rect=canvas.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  if(mode==='door'&&doorGroup){
+    const hits=raycaster.intersectObjects(doorGroup.children,true);
+    if(hits.length){enterDoor();return}
+    msg('🚪 点击金色之门过关！',1200);
+    return;
+  }
+}
+canvas.addEventListener('click',onCanvasClick);
+
+// ================================================================
+//  键盘
+// ================================================================
+const keyMap={};
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  initAudio();
+  if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k))e.preventDefault();
+  keyMap[k]=true;
+  if(k==='r'){if(mode!=='ending'){initLevel();msg('↻ 迷宫已重构！',1400)}return}
+  if(k==='m'){if(mode!=='ending'){
+    dressIdx=(dressIdx+1)%DRESS_COLORS.length;
+    rebuildGirl();
+    const p=cellToWorld(playerR,playerC);
+    girlGroup.position.set(p.x,0,p.z);girlPos.copy(girlGroup.position);
+    msg(`✦ ${DRESS_NAMES[dressIdx]}战裙！`,1400);
+  }return}
+  heldDir=currentDir();
+  if(heldDir&&mode==='maze'&&!moveFrom)tryMove(heldDir.dr,heldDir.dc);
+});
+document.addEventListener('keyup',e=>{keyMap[e.key.toLowerCase()]=false;heldDir=currentDir()});
+
+// ================================================================
+//  动画循环
+// ================================================================
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.05),t=clock.elapsedTime;
+  stars.rotation.y+=dt*0.008;
+  bigStars.forEach((s,i)=>{s.material.opacity=0.5+Math.sin(t*1.5+i)*0.4});
+  glowSprite.material.opacity=0.7+Math.sin(t*0.6)*0.15;
+  if(exitMarker){
+    // 终点花朵动效：轻盈浮动 + 微微摇摆 + 光晕呼吸 + 底环缓转
+    const ring=exitMarker.children[0],glow=exitMarker.children[1],flower=exitMarker.children[2];
+    const bob=Math.sin(t*2)*0.15;
+    glow.position.y=1.5+bob;flower.position.y=1.5+bob;
+    flower.material.rotation=Math.sin(t*1.2)*0.12;
+    glow.material.opacity=0.5+Math.sin(t*2)*0.2;
+    ring.rotation.z+=dt*1.2;
+  }
+  if(merchantGroup)merchantGroup.children[8].material.opacity=0.35+Math.sin(t*2.5)*0.15;
+  if(moveFrom&&moveTo){
+    moveT+=dt*6;
+    if(moveT>=1){moveT=1;onArrive()}
+    const from=cellToWorld(moveFrom.r,moveFrom.c),to=cellToWorld(moveTo.r,moveTo.c);
+    const e=1-Math.pow(1-moveT,3);
+    girlGroup.position.x=from.x+(to.x-from.x)*e;
+    girlGroup.position.z=from.z+(to.z-from.z)*e;
+    girlPos.copy(girlGroup.position);
+  }
+  girlLight.position.copy(girlPos).setY(1.5);
+  if(doorGroup)doorGroup.children[3].material.emissiveIntensity=1.2+Math.sin(t*4)*0.6;
+  // 金色粒子动画
+  if(confetti)confetti.forEach(p=>{
+    p.userData.life-=dt*0.7;
+    if(p.userData.life<=0)return;
+    p.position.x+=p.userData.vx*dt;
+    p.position.y+=p.userData.vy*dt;
+    p.position.z+=p.userData.vz*dt;
+    p.userData.vy-=9*dt;
+    p.material.opacity=p.userData.life;
+  });
+  if(mode==='maze'){
+    if(moveFrom)camTarget.set(girlPos.x,0.5,girlPos.z); // 玩家移动时镜头跟随，静止时保持
+  }else if(mode==='door'&&doorGroup)camTarget.set(doorGroup.position.x,1,doorGroup.position.z);
+  updateCamera(dt);
+  renderer.render(scene,camera);
+}
+
+// ================================================================
+//  启动
+// ================================================================
+document.getElementById('endRestart').addEventListener('click',restartGame);
+buildDecor();
+addBigStars();
+for(const key in TEX_URLS)loadTex(key,TEX_URLS[key]);
+// 启动时读取本地缓存的通关进度（1 年有效）：有记录则从上次关卡继续，否则从第 1 关开始
+currentLevel=loadProgress();
+const restoredLevel=currentLevel; // 记录是否为恢复的进度（>1 表示续玩）
+initLevel();
+// 续玩提示：等待关卡介绍 toast 播完后再显示，避免文案互相覆盖
+if(restoredLevel>1)setTimeout(()=>msg(`✦ 已恢复通关进度，从第 ${restoredLevel} 关继续冒险！`,2600),2800);
+animate();
+</script>
+</body>
+</html>

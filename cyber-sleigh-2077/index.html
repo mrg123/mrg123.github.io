@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博雪橇 2077</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="start-screen" class="screen active">
+                <div class="cyber-tree">
+                    <svg viewBox="0 0 100 120" width="100" height="120">
+                        <defs>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <path d="M50 10 L10 90 L35 90 L35 110 L65 110 L65 90 L90 90 Z" fill="none" stroke="#39ff14" stroke-width="3" filter="url(#glow)"/>
+                        <circle cx="50" cy="10" r="5" fill="#ff00ff" filter="url(#glow)">
+                            <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite"/>
+                        </circle>
+                        <path d="M25 70 L75 70 M35 50 L65 50 M45 30 L55 30" stroke="#00f3ff" stroke-width="2" filter="url(#glow)"/>
+                    </svg>
+                </div>
+                <h1 class="glitch" data-text="赛博雪橇 2077" data-i18n="title" data-i18n-target="text,attr:data-text">赛博雪橇 2077</h1>
+                
+                <div class="difficulty-selector">
+                    <button id="diff-easy" class="diff-btn active" data-difficulty="easy" data-i18n="diff_easy">简单 (二段跳)</button>
+                    <button id="diff-hard" class="diff-btn" data-difficulty="hard" data-i18n="diff_hard">困难 (经典)</button>
+                </div>
+
+                <button id="start-btn" data-i18n="start_btn">启动运行 [ENTER]</button>
+            </div>
+            <div id="game-over-screen" class="screen">
+                <h1 class="glitch" data-text="系统故障" data-i18n="game_over" data-i18n-target="text,attr:data-text">系统故障</h1>
+                <p><span data-i18n="score_label">得分: </span><span id="final-score">0</span></p>
+                <button id="restart-btn" data-i18n="restart_btn">重启系统 [ENTER]</button>
+            </div>
+            <div id="win-screen" class="screen">
+                <div class="cyber-tree">
+                    <svg viewBox="0 0 100 120" width="100" height="120">
+                         <defs>
+                            <filter id="glow-win">
+                                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <path d="M50 10 L10 90 L35 90 L35 110 L65 110 L65 90 L90 90 Z" fill="none" stroke="#39ff14" stroke-width="3" filter="url(#glow-win)"/>
+                        <circle cx="50" cy="10" r="5" fill="#ff00ff" filter="url(#glow-win)">
+                            <animate attributeName="opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <path d="M25 70 L75 70 M35 50 L65 50 M45 30 L55 30" stroke="#00f3ff" stroke-width="2" filter="url(#glow-win)"/>
+                    </svg>
+                </div>
+                <h1 class="glitch" data-text="任务完成" data-i18n="win_title" data-i18n-target="text,attr:data-text">任务完成</h1>
+                <p data-i18n="win_msg">祝您圣诞快乐! Merry Christmas!</p>
+                <p><span data-i18n="final_score_label">最终得分: </span><span id="win-score">0</span></p>
+                <button id="win-restart-btn" data-i18n="play_again_btn">再次挑战 [ENTER]</button>
+            </div>
+            <div id="notification" class="hidden"></div>
+            <div id="hud" class="hidden">
+                <div class="score-box"><span data-i18n="hud_score">得分: </span><span id="score">0</span></div>
+                <div class="speed-box"><span data-i18n="hud_speed">速度: </span><span id="speed">100</span>%</div>
+            </div>
+        </div>
+    </div>
+    <script src="globals.js"></script>
+    <script src="i18n.js"></script>
+    <script src="utils.js"></script>
+    <script src="classes.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
