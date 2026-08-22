@@ -12,6 +12,9 @@
 <meta property="og:description" content="网页游戏与设计合集：3D 迷宫、赛博跑酷、手绘猫咪、绘画应用、网站导航。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.mrg123.com">
+<meta property="og:image" content="/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://www.mrg123.com/">
 <meta name="theme-color" content="#0a0a14">
 <link rel="icon" href="/favicon.ico">
 
@@ -32,7 +35,7 @@ crossorigin="anonymous"></script>
     --panel-border: rgba(255, 255, 255, 0.08);
     --ink: #e8e8f2;
     --muted: #8b8ba3;
-    --faint: #55556b;
+    --faint: #6d6d88;
     --cyan: #22d3ee;
     --violet: #c084fc;
     --magenta: #ff2ec4;
@@ -162,6 +165,7 @@ crossorigin="anonymous"></script>
     transition: all .25s ease; min-height: 44px;
   }
   .filter-btn:hover { color: var(--ink); border-color: var(--cyan); }
+  .filter-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   .filter-btn.active {
     color: #041018; background: var(--cyan); border-color: var(--cyan);
     font-weight: 600; box-shadow: 0 0 20px rgba(34,211,238,0.4);
@@ -274,7 +278,7 @@ crossorigin="anonymous"></script>
 
   <section class="hero">
     <div class="eyebrow">Web Games &amp; Design</div>
-    <h1 class="title"><span class="glitch" data-text="我的游乐场">我的游乐场</span></h1>
+    <h1 class="title" aria-label="我的游乐场"><span class="glitch" data-text="我的游乐场">我的游乐场</span></h1>
     <p class="subtitle">一个 <b>网页项目合集</b> —— 3D 迷宫、赛博跑酷、手绘猫咪、绘画应用与网站导航，<br>点开卡片，即可开始体验。</p>
 
     <div class="stats">

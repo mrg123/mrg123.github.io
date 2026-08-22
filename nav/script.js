@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'domesticTitle': '国内媒体',
       'financeTitle': '财经资讯',
       'learningTitle': '学习资源',
+      'gamesTitle': '游戏娱乐',
       // 模态框
       'addSiteTitle': '添加新网站',
       'siteName': '网站名称',
@@ -92,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'categoryDomestic': '国内媒体',
       'categoryFinance': '财经资讯',
       'categoryLearning': '学习资源',
+      'categoryGames': '游戏娱乐',
       // 底部
       'footer': '个人网站导航 © 2025',
       'exportData': '导出数据',
@@ -140,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'domesticTitle': 'Domestic Media',
       'financeTitle': 'Financial News',
       'learningTitle': 'Learning Resources',
+      'gamesTitle': 'Games',
       // 模态框
       'addSiteTitle': 'Add New Website',
       'siteName': 'Website Name',
@@ -155,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'categoryDomestic': 'Domestic Media',
       'categoryFinance': 'Financial News',
       'categoryLearning': 'Learning Resources',
+      'categoryGames': 'Games',
       // 底部
       'footer': 'Personal Navigation © 2025',
       'exportData': 'Export Data',
@@ -216,6 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
       `<i class="fas fa-chart-line" aria-hidden="true"></i> ${translations[lang].financeTitle}`;
     document.getElementById('learning-title').innerHTML = 
       `<i class="fas fa-graduation-cap" aria-hidden="true"></i> ${translations[lang].learningTitle}`;
+    document.getElementById('games-title').innerHTML = 
+      `<i class="fas fa-gamepad" aria-hidden="true"></i> ${translations[lang].gamesTitle}`;
     
     // 更新模态框文本
     document.getElementById('modal-title').textContent = translations[lang].addSiteTitle;
@@ -234,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     categoryOptions[1].textContent = translations[lang].categoryDomestic;
     categoryOptions[2].textContent = translations[lang].categoryFinance;
     categoryOptions[3].textContent = translations[lang].categoryLearning;
+    categoryOptions[4].textContent = translations[lang].categoryGames;
     
     // 更新底部信息
     const footerText = document.querySelector('.footer p');
@@ -279,6 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
       `<i class="fas fa-chart-line" aria-hidden="true"></i> ${translations[lang].financeTitle}`;
     document.getElementById('learning-title').innerHTML = 
       `<i class="fas fa-graduation-cap" aria-hidden="true"></i> ${translations[lang].learningTitle}`;
+    document.getElementById('games-title').innerHTML = 
+      `<i class="fas fa-gamepad" aria-hidden="true"></i> ${translations[lang].gamesTitle}`;
     
     // 更新模态框文本
     document.getElementById('modal-title').textContent = translations[lang].addSiteTitle;
@@ -297,6 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     categoryOptions[1].textContent = translations[lang].categoryDomestic;
     categoryOptions[2].textContent = translations[lang].categoryFinance;
     categoryOptions[3].textContent = translations[lang].categoryLearning;
+    categoryOptions[4].textContent = translations[lang].categoryGames;
     
     // 更新底部信息
     const footerText = document.querySelector('.footer p');
@@ -463,6 +473,9 @@ document.addEventListener('DOMContentLoaded', () => {
       { name: '知网', url: 'https://www.cnki.net/', description: '中国学术文献资源', icon: '📑' },
       { name: 'Google Scholar', url: 'https://scholar.google.com/', description: '学术论文搜索', icon: '🔬' },
       { name: 'Draw Now', url: 'https://mrg123.com/', description: 'Draw Now绘画工具', icon: '🎨' }
+    ],
+    games: [
+      { name: 'BROWSER ARCADE', url: 'https://www.wxiu.com/', description: '在线街机游戏，免安装直接玩', icon: '🕹️' }
     ]
   };
   
@@ -505,6 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
       quickCard.href = site.url;
       quickCard.className = 'quick-card';
       quickCard.target = '_blank';
+      quickCard.rel = 'noopener';
       quickCard.innerHTML = `
         <div class="card-icon">${site.icon}</div>
         <div class="card-name">${site.name}</div>
@@ -517,7 +531,8 @@ document.addEventListener('DOMContentLoaded', () => {
       international: document.querySelector('.category:nth-child(1) .sites-grid'),
       domestic: document.querySelector('.category:nth-child(2) .sites-grid'),
       finance: document.querySelector('.category:nth-child(3) .sites-grid'),
-      learning: document.querySelector('.category:nth-child(4) .sites-grid')
+      learning: document.querySelector('.category:nth-child(4) .sites-grid'),
+      games: document.querySelector('.category:nth-child(5) .sites-grid')
     };
     
     Object.keys(categories).forEach(key => {
@@ -527,6 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         siteCard.href = site.url;
         siteCard.className = 'site-card';
         siteCard.target = '_blank';
+        siteCard.rel = 'noopener';
         siteCard.innerHTML = `
           <div class="site-icon">${site.icon}</div>
           <div class="site-info">
