@@ -331,6 +331,11 @@ const PROJECTS = [
     name: 'MediaNav 导航', en: 'MediaNav',
     desc: '个人网站导航系统，收藏整理新闻媒体、学习资源与财经资讯，一键直达。',
     href: '/nav/', tags: ['工具'], accent: '#22d3ee', icon: '🧭', keys: ''
+  },
+  {
+    name: 'BROWSER ARCADE', en: 'wxiu.com',
+    desc: '在线街机游戏平台，经典街机游戏浏览器直接玩，无需安装注册。',
+    href: 'https://www.wxiu.com/', tags: ['游戏'], accent: '#f59e0b', icon: '🕹️', keys: '', external: true
   }
 ];
 
@@ -343,6 +348,7 @@ function render(list) {
     const a = document.createElement('a');
     a.className = 'card';
     a.href = p.href;
+    if (/^https?:/.test(p.href)) { a.target = '_blank'; a.rel = 'noopener'; }
     a.style.setProperty('--accent', p.accent);
     a.setAttribute('aria-label', p.name + ' — ' + p.en);
     a.innerHTML = `
