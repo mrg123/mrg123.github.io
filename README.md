@@ -8,7 +8,7 @@
 
 | 项目 | 路径 | 类型 | 说明 |
 |---|---|---|---|
-| 🏠 导航首页 | `/` | 门户 | 深空霓虹风格的项目发射台 |
+| 🏠 导航首页 | `/` | 门户 | 明亮浅色海报网格，纯静态 HTML/CSS，无 JavaScript |
 | 🌺 冒险的女孩 | `/adventure-girl/` | 游戏 | 3D 暗夜迷宫冒险，100 关 |
 | 🛷 赛博雪橇 2077 | `/cyber-sleigh-2077/` | 游戏 | 赛博朋克风跑酷，收集礼物躲避防火墙 |
 | 🐱 雪糕猫 | `/xuegao-cat/` | 创意 | 手绘马卡龙风猫咪生成器 |
@@ -39,15 +39,23 @@ mrg123.github.io/
 ## 如何新增一个项目
 
 1. 把项目文件放进一个新目录（例如 `my-game/`）。
-2. 打开根目录 `index.html`，在脚本里的 `PROJECTS` 数组末尾加一条：
+2. 打开根目录 `index.html`，复制一个已有的 `<a class="card">…</a>` 区块到末尾并修改内容：
 
-```js
-{
-  name: '我的新游戏', en: 'My New Game',
-  desc: '一句话介绍这个项目。',
-  href: '/my-game/', tags: ['游戏'], accent: '#ff8800', icon: '🎮', keys: ''
-}
+```html
+<a class="card" href="/my-game/">
+  <div class="poster" style="background:linear-gradient(160deg, #ede5f8, #d9c9f1)">
+    <div class="p-head">
+      <span class="p-num">07</span>
+      <span class="p-name">我的新游戏</span>
+    </div>
+    <span class="p-emoji">🎮</span>
+    <span class="p-desc">一句话介绍这个项目。</span>
+    <span class="p-arrow">→</span>
+  </div>
+</a>
 ```
+
+> 外链请加 `target="_blank" rel="noopener"`。
 
 3. （可选）在 `sitemap.xml` 里补一条 `<url>`。
 4. 提交推送即可，导航首页会自动显示新卡片。

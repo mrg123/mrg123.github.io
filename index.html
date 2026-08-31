@@ -15,8 +15,8 @@
 <meta property="og:image" content="/og-cover.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://www.mrg123.com/">
-<meta name="theme-color" content="#0a0a14">
-<link rel="icon" href="/favicon.ico">
+<meta name="theme-color" content="#f7f5f0">
+<link rel="icon" href="favicon.ico">
 
 <!-- Google AdSense -->
 <meta name="google-adsense-account" content="ca-pub-6344293033198481">
@@ -25,24 +25,21 @@ crossorigin="anonymous"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    --bg: #0a0a14;
-    --bg-2: #0e0e1c;
-    --panel: rgba(20, 20, 34, 0.6);
-    --panel-border: rgba(255, 255, 255, 0.08);
-    --ink: #e8e8f2;
-    --muted: #8b8ba3;
-    --faint: #6d6d88;
-    --cyan: #22d3ee;
-    --violet: #c084fc;
-    --magenta: #ff2ec4;
-    --radius: 18px;
-    --font-display: 'Orbitron', ui-monospace, 'SF Mono', 'Menlo', monospace;
-    --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    --bg: #f7f5f0;
+    --ink: #1c1a16;
+    --muted: #85817a;
+    --faint: #b3aea4;
+    --line: #e7e2d8;
+    --gold: #a8790e;
+    --gold-soft: rgba(168, 121, 14, 0.3);
+    --serif: 'Playfair Display', 'Noto Serif SC', 'Songti SC', Georgia, serif;
+    --body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
       'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
+    --radius: 16px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -52,405 +49,179 @@ crossorigin="anonymous"></script>
     min-height: 100vh;
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--font-body);
+    font-family: var(--body);
     line-height: 1.6;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ---------- 背景层 ---------- */
-  #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-  .grid-layer {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
-    background-image:
-      linear-gradient(rgba(120,130,255,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(120,130,255,0.05) 1px, transparent 1px);
-    background-size: 44px 44px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
-  }
-  .blob {
-    position: fixed; z-index: 0; border-radius: 50%;
-    filter: blur(120px); opacity: 0.35; pointer-events: none;
-  }
-  .blob.b1 { width: 520px; height: 520px; background: #4b2bc9; top: -160px; left: -120px; }
-  .blob.b2 { width: 460px; height: 460px; background: #0e6ba8; top: 10%; right: -140px; opacity: 0.28; }
-  .blob.b3 { width: 380px; height: 380px; background: #7a1e6b; bottom: -120px; left: 30%; opacity: 0.22; }
-
-  .wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
 
   /* ---------- 顶栏 ---------- */
-  header.topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 22px 0; font-family: var(--font-display);
-  }
-  .brand { display: flex; align-items: center; gap: 12px; letter-spacing: 3px; font-weight: 900; font-size: 15px; }
-  .brand .dot {
-    width: 11px; height: 11px; border-radius: 50%;
-    background: var(--cyan); box-shadow: 0 0 12px var(--cyan);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-  .brand .dot.alt { background: var(--magenta); box-shadow: 0 0 12px var(--magenta); animation-delay: 1.2s; }
-  .brand em { font-style: normal; color: var(--muted); font-weight: 500; }
-  .clock { font-weight: 500; font-size: 14px; color: var(--muted); letter-spacing: 2px; font-variant-numeric: tabular-nums; }
-  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
-
-  /* ---------- Hero ---------- */
-  .hero { padding: 72px 0 40px; text-align: center; }
-  .eyebrow {
+  header.topbar { padding: 26px 0 22px; }
+  .brand {
     display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--font-display); font-size: 12px; letter-spacing: 5px;
-    color: var(--cyan); text-transform: uppercase; margin-bottom: 22px;
+    font-size: 14px; font-weight: 700; letter-spacing: 4px;
   }
-  .eyebrow::before, .eyebrow::after { content: ''; width: 34px; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan)); }
-  .eyebrow::after { transform: scaleX(-1); }
-
-  h1.title {
-    font-family: var(--font-display); font-weight: 900;
-    font-size: clamp(44px, 9vw, 92px); line-height: 1.02;
-    letter-spacing: 2px;
-    background: linear-gradient(100deg, #fff 0%, #cfe9ff 30%, var(--cyan) 55%, var(--violet) 80%, var(--magenta) 100%);
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 30px rgba(34, 211, 238, 0.25));
-    position: relative;
-  }
-  .title .glitch {
-    position: relative; display: inline-block; -webkit-text-fill-color: transparent;
-  }
-  .glitch::before, .glitch::after {
-    content: attr(data-text); position: absolute; inset: 0;
-    background: inherit; -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .glitch::before { color: #0ff; animation: glitchA 3s infinite steps(1); }
-  .glitch::after { color: #f0f; animation: glitchB 3s infinite steps(1); }
-  @keyframes glitchA {
-    0%, 86%, 100% { transform: translate(0); opacity: 0 }
-    87% { transform: translate(-3px, 2px); opacity: .8 }
-    90% { transform: translate(2px, -1px); opacity: .8 }
-    93% { transform: translate(-2px, 0); opacity: .6 }
-  }
-  @keyframes glitchB {
-    0%, 86%, 100% { transform: translate(0); opacity: 0 }
-    88% { transform: translate(3px, -2px); opacity: .7 }
-    91% { transform: translate(-2px, 1px); opacity: .7 }
-    94% { transform: translate(2px, 0); opacity: .5 }
+  .brand .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft);
   }
 
-  .subtitle {
-    margin: 26px auto 0; max-width: 560px; font-size: 17px; color: var(--muted);
-  }
-  .subtitle b { color: var(--ink); font-weight: 600; }
-
-  .stats {
-    display: flex; gap: 14px; justify-content: center; margin-top: 34px; flex-wrap: wrap;
-  }
-  .stat {
-    font-family: var(--font-display); font-size: 12px; letter-spacing: 1.5px;
-    color: var(--muted); padding: 9px 18px; border-radius: 999px;
-    border: 1px solid var(--panel-border); background: var(--panel);
-    backdrop-filter: blur(8px);
-  }
-  .stat b { color: var(--cyan); font-weight: 700; }
-
-  /* ---------- 筛选 ---------- */
-  .filters {
-    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
-    margin: 48px 0 30px;
-  }
-  .filter-btn {
-    font-family: var(--font-body); font-size: 14px; color: var(--muted);
-    background: transparent; border: 1px solid var(--panel-border);
-    padding: 9px 20px; border-radius: 999px; cursor: pointer;
-    transition: all .25s ease; min-height: 44px;
-  }
-  .filter-btn:hover { color: var(--ink); border-color: var(--cyan); }
-  .filter-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-  .filter-btn.active {
-    color: #041018; background: var(--cyan); border-color: var(--cyan);
-    font-weight: 600; box-shadow: 0 0 20px rgba(34,211,238,0.4);
-  }
-
-  /* ---------- 项目卡片 ---------- */
+  /* ---------- 海报网格 ---------- */
   .grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px; padding-bottom: 30px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 18px; padding-bottom: 26px;
   }
   .card {
-    --accent: #22d3ee;
-    position: relative; display: flex; flex-direction: column; gap: 14px;
-    padding: 26px 24px 22px; border-radius: var(--radius);
-    background: linear-gradient(160deg, rgba(28,28,46,0.75), rgba(14,14,24,0.85));
-    border: 1px solid var(--panel-border);
+    position: relative; display: block;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius); overflow: hidden;
     text-decoration: none; color: var(--ink);
-    overflow: hidden; transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
-    will-change: transform;
+    border: 1px solid var(--line);
+    transition: transform .3s ease, box-shadow .3s ease;
   }
-  .card::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%),
-      color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%);
-    opacity: 0; transition: opacity .35s ease; pointer-events: none;
+  .card:hover { transform: translateY(-4px); box-shadow: 0 18px 36px -20px rgba(28, 26, 22, .25); }
+  .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .poster {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
   }
-  .card::after {
-    content: ''; position: absolute; left: 0; top: 0; height: 2px; width: 100%;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0; transition: opacity .3s ease;
+  .p-head {
+    position: absolute; top: 11px; left: 13px; right: 13px; z-index: 1;
+    display: flex; align-items: baseline; gap: 7px; min-width: 0;
   }
-  .card:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: 0 18px 50px -20px color-mix(in srgb, var(--accent) 45%, transparent); }
-  .card:hover::before { opacity: 1; }
-  .card:hover::after { opacity: 1; }
-  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .p-num {
+    font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 15px;
+    color: var(--gold); flex: none;
+  }
+  .p-name {
+    font-family: var(--serif); font-size: 14.5px; font-weight: 700; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .p-emoji {
+    font-size: 44px; z-index: 1;
+    filter: drop-shadow(0 6px 14px rgba(28, 26, 22, .18));
+    transition: transform .35s ease;
+  }
+  .card:hover .p-emoji { transform: scale(1.1) rotate(-3deg); }
+  .p-desc {
+    position: absolute; left: 13px; right: 13px; bottom: 10px; z-index: 1;
+    font-size: 11.5px; line-height: 1.55; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .p-arrow {
+    position: absolute; top: 10px; right: 13px; z-index: 1;
+    color: var(--gold); font-size: 14px;
+    opacity: 0; transform: translateX(-6px);
+    transition: transform .3s ease, opacity .3s ease;
+  }
+  .card:hover .p-arrow { opacity: 1; transform: translateX(0); }
 
-  .card-top { display: flex; align-items: flex-start; justify-content: space-between; }
-  .card-icon {
-    width: 58px; height: 58px; border-radius: 15px; display: grid; place-items: center;
-    font-size: 30px; background: color-mix(in srgb, var(--accent) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-    box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent);
-    transition: transform .3s ease;
+  .card.ghost { border: 1px dashed #d4cec2; cursor: default; }
+  .card.ghost:hover { transform: none; box-shadow: none; }
+  .card.ghost .plus {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-family: var(--serif); font-size: 34px; font-weight: 400; color: var(--faint);
   }
-  .card:hover .card-icon { transform: scale(1.08) rotate(-4deg); }
-  .card-tag {
-    font-family: var(--font-display); font-size: 10px; letter-spacing: 2px;
-    color: var(--accent); padding: 5px 12px; border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-    white-space: nowrap;
-  }
-  .card-title { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-  .card-en { display: block; font-family: var(--font-display); font-size: 11px; letter-spacing: 3px; color: var(--muted); font-weight: 500; margin-top: 3px; text-transform: uppercase; }
-  .card-desc { font-size: 14px; color: var(--muted); line-height: 1.7; flex: 1; }
-  .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-  .card-cta {
-    font-family: var(--font-display); font-size: 12px; letter-spacing: 2px; color: var(--accent);
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .card-cta .arrow { transition: transform .3s ease; }
-  .card:hover .card-cta .arrow { transform: translateX(5px); }
-  .card-keys { font-size: 11px; color: var(--faint); font-family: var(--font-display); letter-spacing: 1px; }
-
-  /* 占位卡（敬请期待） */
-  .card.ghost {
-    align-items: center; justify-content: center; text-align: center;
-    border: 1px dashed rgba(255,255,255,0.12); background: transparent; min-height: 240px;
-    color: var(--faint); cursor: default;
-  }
-  .card.ghost:hover { transform: none; border-color: rgba(255,255,255,0.2); box-shadow: none; }
-  .card.ghost .plus { font-family: var(--font-display); font-size: 44px; font-weight: 300; line-height: 1; }
-  .card.ghost p { font-size: 13px; letter-spacing: 1px; }
 
   /* ---------- 底部 ---------- */
-  footer.site {
-    margin-top: 50px; padding: 40px 0 60px; text-align: center;
-    border-top: 1px solid var(--panel-border);
-  }
-  footer.site a { color: var(--cyan); text-decoration: none; }
-  footer.site a:hover { text-decoration: underline; }
-  .footer-note { color: var(--faint); font-size: 13px; margin-top: 10px; }
+  footer.site { padding: 22px 0 52px; }
+  footer.site a { color: var(--faint); font-size: 13px; text-decoration: none; letter-spacing: 2px; transition: color .25s ease; }
+  footer.site a:hover { color: var(--gold); }
 
-  @media (max-width: 640px) {
-    .hero { padding: 56px 0 28px; }
-    .grid { grid-template-columns: 1fr; }
-    .clock { display: none; }
-    header.topbar { justify-content: center; }
+  /* ---------- 响应式 ---------- */
+  @media (max-width: 560px) {
+    header.topbar { padding: 20px 0 16px; }
+    .grid { gap: 14px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; scroll-behavior: auto !important; }
+    * { scroll-behavior: auto !important; transition: none !important; }
     .card, .card:hover { transform: none !important; }
   }
 </style>
 </head>
 <body>
 
-<canvas id="stars" aria-hidden="true"></canvas>
-<div class="grid-layer" aria-hidden="true"></div>
-<div class="blob b1" aria-hidden="true"></div>
-<div class="blob b2" aria-hidden="true"></div>
-<div class="blob b3" aria-hidden="true"></div>
-
 <div class="wrap">
 
   <header class="topbar">
-    <div class="brand"><span class="dot"></span><span class="dot alt"></span> MRG <em>· PLAYGROUND</em></div>
-    <div class="clock" id="clock">--:--:--</div>
+    <div class="brand"><span class="dot"></span> MRG</div>
   </header>
 
-  <section class="hero">
-    <div class="eyebrow">Web Games &amp; Design</div>
-    <h1 class="title" aria-label="我的游乐场"><span class="glitch" data-text="我的游乐场">我的游乐场</span></h1>
-    <p class="subtitle">一个 <b>网页项目合集</b> —— 3D 迷宫、赛博跑酷、手绘猫咪、绘画应用与网站导航，<br>点开卡片，即可开始体验。</p>
+  <main class="grid">
 
-    <div class="stats">
-      <span class="stat"><b id="count">0</b> 个项目</span>
-      <span class="stat">持续更新中</span>
-      <span class="stat">无需下载 · 浏览器即玩</span>
+    <a class="card" href="adventure-girl/">
+      <div class="poster" style="background:linear-gradient(160deg, #ede5f8, #d9c9f1)">
+        <div class="p-head">
+          <span class="p-num">01</span>
+          <span class="p-name">冒险的女孩</span>
+        </div>
+        <span class="p-emoji" role="img" aria-label="冒险的女孩">🌺</span>
+        <span class="p-desc">3D 暗夜迷宫冒险，100 关层层推进。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="cyber-sleigh-2077/">
+      <div class="poster" style="background:linear-gradient(160deg, #ddf2e0, #bfe4c8)">
+        <div class="p-head">
+          <span class="p-num">02</span>
+          <span class="p-name">赛博雪橇 2077</span>
+        </div>
+        <span class="p-emoji" role="img" aria-label="赛博雪橇 2077">🛷</span>
+        <span class="p-desc">赛博朋克跑酷，收集礼物躲避防火墙。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="xuegao-cat/">
+      <div class="poster" style="background:linear-gradient(160deg, #fde7ef, #f6cddd)">
+        <div class="p-head">
+          <span class="p-num">03</span>
+          <span class="p-name">雪糕猫</span>
+        </div>
+        <span class="p-emoji" role="img" aria-label="雪糕猫">🐱</span>
+        <span class="p-desc">输入名字，生成一只专属手绘小猫。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="draw-now/">
+      <div class="poster" style="background:linear-gradient(160deg, #e0ecfc, #c3daf7)">
+        <div class="p-head">
+          <span class="p-num">04</span>
+          <span class="p-name">Draw Now</span>
+        </div>
+        <span class="p-emoji" role="img" aria-label="Draw Now 绘画">🎨</span>
+        <span class="p-desc">极简治愈绘画应用，随手记下灵感。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="/nav/">
+      <div class="poster" style="background:linear-gradient(160deg, #dcf1f6, #b9e3ec)">
+        <div class="p-head">
+          <span class="p-num">05</span>
+          <span class="p-name">MediaNav</span>
+        </div>
+        <span class="p-emoji" role="img" aria-label="MediaNav 导航">🧭</span>
+        <span class="p-desc">个人导航系统，媒体与资讯一键直达。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <div class="card ghost">
+      <span class="plus">+</span>
     </div>
-  </section>
 
-  <nav class="filters" id="filters" aria-label="项目筛选">
-    <button class="filter-btn active" data-filter="all">全部</button>
-    <button class="filter-btn" data-filter="游戏">🎮 游戏</button>
-    <button class="filter-btn" data-filter="创意">🎨 创意</button>
-    <button class="filter-btn" data-filter="应用">📱 应用</button>
-    <button class="filter-btn" data-filter="工具">🧭 工具</button>
-  </nav>
-
-  <main class="grid" id="grid"></main>
+  </main>
 
   <footer class="site">
-    <p>源码托管于 <a href="https://github.com/mrg123/mrg123.github.io" target="_blank" rel="noopener">GitHub</a> · 由 GitHub Pages 驱动</p>
-    <p class="footer-note">更多有意思的网页设计与小游戏正在路上，敬请期待 ✦</p>
+    <a href="https://github.com/mrg123/mrg123.github.io" target="_blank" rel="noopener">GITHUB</a>
   </footer>
 </div>
 
-<script>
-/* ============ 项目数据（新增项目只需在这里加一条） ============ */
-const PROJECTS = [
-  {
-    name: '冒险的女孩', en: 'Adventure Girl',
-    desc: '3D 暗夜迷宫冒险游戏，100 关层层推进，WASD 移动、拖拽旋转视角。',
-    href: '/adventure-girl/', tags: ['游戏'], accent: '#c084fc', icon: '🌺', keys: 'WASD'
-  },
-  {
-    name: '赛博雪橇 2077', en: 'Cyber Sleigh 2077',
-    desc: '赛博朋克风跑酷游戏，收集绿色礼物、躲避红色防火墙，挑战最高分。',
-    href: '/cyber-sleigh-2077/', tags: ['游戏'], accent: '#39ff14', icon: '🛷', keys: 'SPACE'
-  },
-  {
-    name: '雪糕猫', en: 'Xuegao Cat',
-    desc: '手绘马卡龙风猫咪生成器，输入任意名字，就能生成一只独一无二的小猫。',
-    href: '/xuegao-cat/', tags: ['创意'], accent: '#f2a8c0', icon: '🐱', keys: ''
-  },
-  {
-    name: 'Draw Now 绘画', en: 'Draw Now',
-    desc: '极简治愈绘画应用官方落地页，随时随地把灵感画下来，还可下载 App。',
-    href: '/draw-now/', tags: ['应用'], accent: '#3a86ff', icon: '🎨', keys: ''
-  },
-  {
-    name: 'MediaNav 导航', en: 'MediaNav',
-    desc: '个人网站导航系统，收藏整理新闻媒体、学习资源与财经资讯，一键直达。',
-    href: '/nav/', tags: ['工具'], accent: '#22d3ee', icon: '🧭', keys: ''
-  },
-  {
-    name: 'BROWSER ARCADE', en: 'wxiu.com',
-    desc: '在线街机游戏平台，经典街机游戏浏览器直接玩，无需安装注册。',
-    href: 'https://www.wxiu.com/', tags: ['游戏'], accent: '#f59e0b', icon: '🕹️', keys: '', external: true
-  }
-];
-
-/* ============ 渲染卡片 ============ */
-const grid = document.getElementById('grid');
-
-function render(list) {
-  grid.innerHTML = '';
-  list.forEach(p => {
-    const a = document.createElement('a');
-    a.className = 'card';
-    a.href = p.href;
-    if (/^https?:/.test(p.href)) { a.target = '_blank'; a.rel = 'noopener'; }
-    a.style.setProperty('--accent', p.accent);
-    a.setAttribute('aria-label', p.name + ' — ' + p.en);
-    a.innerHTML = `
-      <div class="card-top">
-        <div class="card-icon">${p.icon}</div>
-        <span class="card-tag">${p.tags[0]}</span>
-      </div>
-      <h3 class="card-title">${p.name}<span class="card-en">${p.en}</span></h3>
-      <p class="card-desc">${p.desc}</p>
-      <div class="card-foot">
-        <span class="card-cta">启动 <span class="arrow">→</span></span>
-        ${p.keys ? `<span class="card-keys">${p.keys}</span>` : ''}
-      </div>`;
-    a.addEventListener('mousemove', e => {
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      const r = a.getBoundingClientRect();
-      a.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-      a.style.setProperty('--my', (e.clientY - r.top) + 'px');
-    });
-    grid.appendChild(a);
-  });
-
-  // 敬请期待占位卡
-  const ghost = document.createElement('div');
-  ghost.className = 'card ghost';
-  ghost.innerHTML = `<span class="plus">+</span><p>更多项目 · 开发中</p>`;
-  grid.appendChild(ghost);
-
-  document.getElementById('count').textContent = PROJECTS.length;
-}
-
-/* ============ 筛选 ============ */
-const filterBtns = document.querySelectorAll('.filter-btn');
-filterBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    filterBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
-    btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
-    const f = btn.dataset.filter;
-    render(f === 'all' ? PROJECTS : PROJECTS.filter(p => p.tags.includes(f)));
-  });
-});
-
-/* ============ 实时时钟 ============ */
-const clockEl = document.getElementById('clock');
-function tick() {
-  const d = new Date();
-  const p = n => String(n).padStart(2, '0');
-  clockEl.textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}  ${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-}
-tick(); setInterval(tick, 1000);
-
-/* ============ 星空背景 ============ */
-(function starfield() {
-  const c = document.getElementById('stars');
-  const ctx = c.getContext('2d');
-  let stars = [], raf, running = true;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function resize() {
-    c.width = window.innerWidth * (window.devicePixelRatio || 1);
-    c.height = window.innerHeight * (window.devicePixelRatio || 1);
-    ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
-    const w = window.innerWidth, h = window.innerHeight;
-    const n = Math.min(160, Math.floor(w * h / 9000));
-    stars = Array.from({ length: n }, () => ({
-      x: Math.random() * w, y: Math.random() * h,
-      r: Math.random() * 1.4 + 0.3,
-      a: Math.random() * 0.7 + 0.2,
-      tw: Math.random() * Math.PI * 2,
-      vy: Math.random() * 0.12 + 0.02,
-      hue: Math.random() < 0.8 ? 200 : (Math.random() < 0.5 ? 280 : 320)
-    }));
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    for (const s of stars) {
-      if (!reduce) {
-        s.y += s.vy;
-        s.tw += 0.02;
-        if (s.y > window.innerHeight + 2) { s.y = -2; s.x = Math.random() * window.innerWidth; }
-      }
-      const alpha = reduce ? s.a : s.a * (0.55 + 0.45 * Math.sin(s.tw));
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${s.hue}, 80%, 80%, ${alpha})`;
-      ctx.fill();
-    }
-    raf = requestAnimationFrame(draw);
-  }
-
-  resize();
-  draw();
-  window.addEventListener('resize', resize);
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && !reduce) { cancelAnimationFrame(raf); running = false; }
-    else if (!running && !reduce) { running = true; draw(); }
-  });
-})();
-
-render(PROJECTS);
-</script>
 </body>
 </html>
