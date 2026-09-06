@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世纪回响 · 自然灾害与金融危机 — 1926 ⇄ 2026 双轨时间线 | MRG Playground</title>
+<meta name="description" content="自然灾害与金融危机的可视化时间线：三百年间八组灾害-危机配对（1755 里斯本、1906 旧金山、1923 关东、1926 迈阿密、1992 安德鲁、2005 卡特里娜、2011 泰国、2026 台风群），四条传导路径、滞后定律与放大器计分卡，研判 2027—2029 年历史是否重演。">
+<meta name="keywords" content="自然灾害,金融危机,1926迈阿密飓风,2026台风,时间线,大萧条,1907恐慌,关东大地震,昭和金融恐慌,飓风安德鲁,卡特里娜,泰国洪灾,巨灾债券,再保险,预测方法">
+<meta name="author" content="mrg123">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.mrg123.com/century-timeline/">
+<meta property="og:title" content="世纪回响 · 自然灾害与金融危机">
+<meta property="og:description" content="三百年八组配对，四条传导路径，一条滞后定律：灾害不是危机的原因，而是刺破泡沫的针。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.mrg123.com/century-timeline/">
+<meta property="og:image" content="/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f7f5f0">
+<link rel="icon" href="../favicon.ico">
+
+<style>
+  /* ==========================================================
+     世纪回响 · 自然灾害 × 金融危机 可视化时间线
+     风格：纸面编辑排版 · 墨色线稿 + 金色点缀（与主站一致）
+     纯静态自包含：无外部字体 / 图片 / JS 依赖，离线可用
+     ========================================================== */
+  :root {
+    --bg: #f7f5f0;
+    --paper: #fffdf8;
+    --ink: #1c1a16;
+    --muted: #85817a;
+    --faint: #b3aea4;
+    --line: #e7e2d8;
+    --line-2: #d8d2c4;
+    --gold: #a8790e;
+    --gold-soft: rgba(168, 121, 14, .32);
+    --red: #b03a2e;
+    --red-soft: #f9efec;
+    --serif: 'Playfair Display', 'Songti SC', 'Noto Serif SC', Georgia, 'Times New Roman', serif;
+    --body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+      'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15.5px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; }
+  ::selection { background: var(--gold-soft); }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar { padding: 24px 0 6px; }
+  .topbar-in { display: flex; align-items: center; justify-content: space-between; }
+  .back {
+    font-size: 13px; letter-spacing: 2px; text-decoration: none; color: var(--muted);
+    transition: color .25s ease;
+  }
+  .back:hover { color: var(--gold); }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; letter-spacing: 4px; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 52px 0 8px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 4px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::after { content: ''; flex: none; width: 56px; height: 1px; background: var(--line-2); }
+  h1 {
+    font-family: var(--serif); font-weight: 900;
+    font-size: clamp(44px, 8vw, 76px); line-height: 1.08; letter-spacing: 1px;
+  }
+  h1 .gold { color: var(--gold); }
+  .hero-sub {
+    margin-top: 10px; font-family: var(--serif); font-size: clamp(17px, 2.4vw, 21px);
+    color: var(--muted); letter-spacing: 1px;
+  }
+  .thesis {
+    margin-top: 34px; max-width: 720px;
+    font-size: 17px; line-height: 2; color: var(--ink);
+    border-left: 3px solid var(--gold); padding-left: 20px;
+  }
+  .thesis b { font-family: var(--serif); }
+  .hero-meta { margin: 26px 0 40px; font-size: 12.5px; color: var(--faint); letter-spacing: 1px; }
+
+  /* ---------- 章节骨架 ---------- */
+  .sec { padding: 64px 0 8px; }
+  .sec-head { margin-bottom: 34px; }
+  .sec-head .eyebrow { margin-bottom: 10px; }
+  h2 { font-family: var(--serif); font-weight: 900; font-size: clamp(26px, 4vw, 36px); line-height: 1.25; }
+  .sec-lead { margin-top: 12px; max-width: 700px; color: var(--muted); font-size: 15px; }
+
+  /* ---------- 数据带 ---------- */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 44px; }
+  .stat-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px 28px 22px;
+  }
+  .stat-era {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  .stat-era .yr { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 24px; color: var(--gold); }
+  .stat-era .where { font-size: 12.5px; color: var(--muted); letter-spacing: 2px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; }
+  .stat-num { font-family: var(--serif); font-weight: 900; font-size: 26px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .stat-num em { font-style: normal; font-size: .55em; color: var(--muted); margin-left: 2px; }
+  .stat-label { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ---------- 机制流程 ---------- */
+  .flow { margin-top: 40px; }
+  .flow-node { text-align: center; }
+  .pill {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+    border-radius: 999px; padding: 12px 34px;
+    font-family: var(--serif); font-weight: 700; font-size: 17px;
+  }
+  .pill small { font-family: var(--body); font-weight: 400; font-size: 11.5px; letter-spacing: 2px; opacity: .75; }
+  .pill-red { border: 2px solid var(--red); color: var(--red); background: var(--red-soft); }
+  .pill-ink { border: 2px solid var(--ink); background: var(--ink); color: var(--bg); }
+  .pill-ink small { opacity: .6; }
+
+  .fan { display: grid; grid-template-columns: repeat(4, 1fr); height: 36px; position: relative; }
+  .fan::before { content: ''; position: absolute; top: 18px; left: 12.5%; right: 12.5%; height: 2px; background: var(--line-2); }
+  .fan::after { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 18px; background: var(--line-2); transform: translateX(-50%); }
+  .fan i { width: 2px; height: 18px; background: var(--line-2); justify-self: center; margin-top: 18px; }
+  .fan-in i { margin-top: 0; }
+  .fan-in::after { top: 18px; height: 18px; }
+
+  .paths { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .path-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px 20px; transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  }
+  .path-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -20px rgba(28, 26, 22, .22); border-color: var(--line-2); }
+  .path-ico {
+    width: 46px; height: 46px; border-radius: 11px; margin-bottom: 14px;
+    display: grid; place-items: center; background: rgba(168, 121, 14, .1);
+  }
+  .path-ico svg { width: 26px; height: 26px; }
+  .path-card h3 { font-size: 15.5px; font-family: var(--serif); font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .path-era {
+    font-family: var(--body); font-size: 10.5px; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .pe-red { color: var(--red); background: var(--red-soft); border: 1px solid rgba(176, 58, 46, .25); }
+  .pe-gold { color: var(--gold); background: rgba(168, 121, 14, .1); border: 1px solid var(--gold-soft); }
+  .chain { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 4px; }
+  .ch {
+    font-size: 12px; padding: 3px 9px; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--bg); color: var(--ink); white-space: nowrap;
+  }
+  .sep { color: var(--faint); font-size: 12px; }
+  .flow-note {
+    margin-top: 26px; text-align: center; font-size: 13px; color: var(--muted);
+  }
+  .flow-note b { color: var(--gold); font-family: var(--serif); }
+
+  /* ---------- 双轨时间线 ---------- */
+  .tl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 40px; }
+  .tl-wrap { min-width: 920px; padding-bottom: 6px; }
+  .track-head {
+    display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px;
+  }
+  .era-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--bg);
+    background: var(--ink); border-radius: 4px; padding: 3px 10px; white-space: nowrap;
+  }
+  .era-tag.now { background: var(--gold); }
+  .track-head .t { font-family: var(--serif); font-weight: 700; font-size: 16.5px; }
+  .track-head .s { font-size: 12.5px; color: var(--muted); }
+
+  .tl-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .ev {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 11px;
+    padding: 14px 15px 13px; min-height: 118px;
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .ev:hover { transform: translateY(-3px); box-shadow: 0 12px 26px -16px rgba(28, 26, 22, .25); }
+  .ev-year { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 14.5px; color: var(--gold); }
+  .ev-title { margin-top: 3px; font-weight: 700; font-size: 14.5px; line-height: 1.4; }
+  .ev-desc { margin-top: 5px; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .ev.disaster { border-color: rgba(176, 58, 46, .5); background: var(--red-soft); }
+  .ev.disaster .ev-year { color: var(--red); }
+  .ev.disaster .ev-title { color: var(--red); }
+  .ev.pending { border-style: dashed; background: transparent; }
+  .ev.pending .ev-title { color: var(--gold); }
+
+  .tl-cards.above .ev::after {
+    content: ''; display: block; width: 2px; height: 16px; background: var(--line-2); margin: 12px auto -13px;
+  }
+  .tl-cards.below .ev::before {
+    content: ''; display: block; width: 2px; height: 16px; background: var(--line-2); margin: -13px auto 10px;
+  }
+
+  .tl-axis { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); height: 24px; }
+  .tl-axis::before { content: ''; position: absolute; left: 0; right: 26px; top: 50%; height: 2px; background: var(--ink); opacity: .8; }
+  .tl-axis::after {
+    content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    border-left: 10px solid var(--ink); border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+  }
+  .tl-dot {
+    width: 13px; height: 13px; border-radius: 50%; background: var(--ink);
+    border: 3px solid var(--bg); box-shadow: 0 0 0 1.5px var(--ink);
+    justify-self: center; align-self: center; position: relative; z-index: 1;
+  }
+  .tl-dot.disaster { background: var(--red); box-shadow: 0 0 0 1.5px var(--red); }
+  .tl-dot.pending { background: var(--bg); box-shadow: 0 0 0 1.5px var(--gold); }
+  .tl-axis.pending::before { background: var(--gold); opacity: .55; }
+
+  @keyframes dotPulse {
+    0% { box-shadow: 0 0 0 0 rgba(176, 58, 46, .3); }
+    70% { box-shadow: 0 0 0 10px rgba(176, 58, 46, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(176, 58, 46, 0); }
+  }
+  .tl-dot.disaster { animation: dotPulse 2.6s ease-out infinite; }
+
+  .corridor { display: grid; grid-template-columns: repeat(5, 1fr); height: 96px; }
+  .corridor .map { grid-column: 2; position: relative; }
+  .corridor .map::before {
+    content: ''; position: absolute; left: 50%; top: 4px; bottom: 4px;
+    border-left: 2px dashed var(--gold); opacity: .8;
+  }
+  .corridor .badge {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    background: var(--paper); border: 1.5px solid var(--gold); border-radius: 999px;
+    padding: 6px 16px; font-family: var(--serif); font-weight: 700; font-size: 13.5px;
+    color: var(--gold); white-space: nowrap; z-index: 1; letter-spacing: 1px;
+  }
+  .tl-hint { display: none; margin-top: 14px; text-align: center; font-size: 12px; color: var(--faint); }
+
+  /* ---------- 三百年谱系表 ---------- */
+  .gene-wrap { margin-top: 36px; overflow-x: auto; }
+  .gene-table {
+    width: 100%; min-width: 780px; border-collapse: collapse;
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  }
+  .gene-table thead th {
+    font-family: var(--serif); font-weight: 700; font-size: 14.5px; text-align: left;
+    padding: 14px 18px; background: var(--ink); color: var(--bg);
+  }
+  .gene-table td {
+    padding: 13px 18px; border-top: 1px solid var(--line); font-size: 13.5px;
+    vertical-align: top; line-height: 1.65;
+  }
+  .gene-table td:first-child { white-space: nowrap; }
+  .gene-table tbody tr:hover { background: rgba(168, 121, 14, .05); }
+  .g-yr { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 15px; color: var(--gold); }
+  .g-event { font-weight: 700; }
+  .gene-table .disaster-row .g-yr,
+  .gene-table .disaster-row .g-event { color: var(--red); }
+  .gene-table .pending-row td { border-top: 1px dashed var(--line-2); }
+  .gene-table .pending-row .g-yr,
+  .gene-table .pending-row .g-event { color: var(--gold); }
+  .g-lag {
+    white-space: nowrap; font-family: var(--serif); font-weight: 700; font-size: 14px;
+  }
+  .g-lag.sys { color: var(--red); }
+  .g-lag.abs { color: var(--muted); }
+  .g-lag.inst { color: var(--gold); }
+  .g-lag.pend { color: var(--gold); }
+  .gene-note { margin-top: 14px; font-size: 12.5px; color: var(--faint); line-height: 1.7; }
+
+  /* ---------- 滞后图 ---------- */
+  .lag-card {
+    margin-top: 36px; background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 26px 26px 18px;
+  }
+  .lag-title {
+    font-family: var(--serif); font-weight: 700; font-size: 16.5px; margin-bottom: 4px;
+  }
+  .lag-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 18px; }
+  .lag-svg text { font-family: var(--body); }
+  .lag-axis { font-size: 11px; fill: var(--faint); }
+  .lag-name { font-size: 13px; font-weight: 700; fill: var(--ink); }
+  .lag-to { font-size: 11.5px; font-weight: 700; }
+  .lag-mech { font-size: 10.5px; fill: var(--muted); }
+
+  /* ---------- 对照表 ---------- */
+  .vs-wrap { margin-top: 36px; overflow-x: auto; }
+  .vs-table { width: 100%; min-width: 680px; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .vs-table thead th {
+    font-family: var(--serif); font-weight: 700; font-size: 15.5px; text-align: left;
+    padding: 15px 20px; background: var(--ink); color: var(--bg);
+  }
+  .vs-table thead th:nth-child(2), .vs-table thead th:nth-child(3) { color: #e8ddc2; }
+  .vs-table td {
+    padding: 14px 20px; border-top: 1px solid var(--line); font-size: 14px; vertical-align: top; line-height: 1.65;
+  }
+  .vs-table td:first-child { font-weight: 700; white-space: nowrap; color: var(--muted); font-size: 13px; }
+  .vs-table tbody tr:hover { background: rgba(168, 121, 14, .05); }
+  .vs-table td b { color: var(--gold); font-family: var(--serif); }
+
+  .callout {
+    margin-top: 30px; background: var(--paper); border: 1px solid var(--line);
+    border-left: 4px solid var(--gold); border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 22px 26px; font-size: 15px; line-height: 1.9;
+  }
+  .callout b { font-family: var(--serif); color: var(--gold); }
+
+  /* ---------- 预测逻辑 ---------- */
+  .method-block {
+    margin-top: 34px; background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px 30px 26px;
+  }
+  .method-block .m-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--serif); font-weight: 700; font-size: 18px; margin-bottom: 12px;
+  }
+  .m-tag .no {
+    font-style: italic; color: var(--gold); font-size: 15px;
+  }
+  .method-block p { font-size: 14.5px; color: var(--ink); line-height: 1.9; margin-bottom: 12px; }
+  .method-block p:last-child { margin-bottom: 0; }
+  .method-block b { font-family: var(--serif); color: var(--gold); }
+  .m-quote {
+    border-left: 3px solid var(--gold); padding-left: 16px; margin: 14px 0;
+    font-family: var(--serif); font-size: 16.5px; line-height: 1.8; color: var(--ink);
+  }
+  .m-quote small { display: block; font-family: var(--body); font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* 计分卡 */
+  .score-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  .score-table th {
+    font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--muted);
+    text-align: left; padding: 8px 14px; border-bottom: 1.5px solid var(--line-2);
+  }
+  .score-table td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-table td:first-child { font-weight: 700; }
+  .dots { font-size: 15px; letter-spacing: 3px; white-space: nowrap; }
+  .dots .on { color: var(--gold); }
+  .dots .off { color: var(--line-2); }
+  .score-total td {
+    background: rgba(168, 121, 14, .06); font-family: var(--serif);
+    font-weight: 700; font-size: 16px; border-top: 1.5px solid var(--gold-soft);
+  }
+  .score-total .verdict { font-family: var(--body); font-size: 12px; font-weight: 400; color: var(--muted); letter-spacing: 1px; }
+
+  /* 基础概率 */
+  .base-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .base-card { border: 1px solid var(--line); border-radius: 11px; padding: 18px 20px; }
+  .base-card .era { font-family: var(--serif); font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+  .base-card .ratio { font-family: var(--serif); font-weight: 900; font-size: 30px; line-height: 1.1; }
+  .base-card .ratio em { font-style: normal; font-size: .48em; color: var(--muted); }
+  .base-card p { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.65; }
+  .base-card.sys .ratio { color: var(--red); }
+  .base-card.abs .ratio { color: var(--gold); }
+
+  /* ---------- 展望与指标 ---------- */
+  .verdict { margin-top: 30px; max-width: 760px; }
+  .verdict p { margin-bottom: 16px; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .verdict b { font-family: var(--serif); }
+  .verdict .rhyme { font-family: var(--serif); font-size: 19px; color: var(--gold); }
+
+  .indicators { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 34px; }
+  .ind-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px 24px; transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .ind-card:hover { transform: translateY(-3px); box-shadow: 0 14px 28px -18px rgba(28, 26, 22, .22); }
+  .ind-num {
+    font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 15px;
+    color: var(--gold); margin-bottom: 8px; display: block;
+  }
+  .ind-card h3 { font-family: var(--serif); font-size: 16.5px; font-weight: 700; margin-bottom: 6px; }
+  .ind-card p { font-size: 13.5px; color: var(--muted); line-height: 1.7; }
+  .ind-card p b { color: var(--ink); }
+
+  /* ---------- 来源 ---------- */
+  .sources ol { margin: 26px 0 0 18px; }
+  .sources li { margin-bottom: 9px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .sources a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line-2); transition: color .2s ease, border-color .2s ease; word-break: break-all; }
+  .sources a:hover { color: var(--gold); border-color: var(--gold); }
+  .disclaim {
+    margin-top: 30px; padding: 16px 20px; border: 1px dashed var(--line-2); border-radius: var(--radius);
+    font-size: 12.5px; color: var(--faint); line-height: 1.8;
+  }
+
+  /* ---------- 页脚 ---------- */
+  .site-foot {
+    margin-top: 76px; border-top: 1px solid var(--line); padding: 26px 0 60px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    font-size: 12.5px; color: var(--faint); letter-spacing: 1px;
+  }
+  .site-foot a { color: var(--muted); text-decoration: none; transition: color .25s ease; }
+  .site-foot a:hover { color: var(--gold); }
+  .site-foot .sep { margin: 0 4px; color: var(--line-2); }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width: 880px) {
+    .stats { grid-template-columns: 1fr; }
+    .paths { grid-template-columns: repeat(2, 1fr); }
+    .fan, .fan-in { display: none; }
+    .flow-node { margin: 4px 0; }
+    .indicators { grid-template-columns: 1fr; }
+    .base-grid { grid-template-columns: 1fr; }
+    .tl-hint { display: block; }
+  }
+  @media (max-width: 560px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 16px 10px; }
+    .stat-num { font-size: 22px; }
+    .paths { grid-template-columns: 1fr; }
+    .thesis { font-size: 15.5px; }
+    .lag-card { padding: 20px 14px 12px; }
+  }
+
+  /* ---------- 动效降级 ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+    .ev:hover, .path-card:hover, .ind-card:hover { transform: none; box-shadow: none; }
+  }
+</style>
+</head>
+<body id="top">
+
+<div class="wrap">
+
+  <!-- ===== 顶栏 ===== -->
+  <header class="topbar">
+    <div class="topbar-in">
+      <a class="back" href="../">← PLAYGROUND</a>
+      <div class="brand"><span class="dot"></span> MRG</div>
+    </div>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <p class="eyebrow">Visual Essay · Disaster × Finance</p>
+    <h1>世纪回响<span class="gold">。</span></h1>
+    <p class="hero-sub">自然灾害与金融危机 · 1926 ⇄ 2026</p>
+    <p class="thesis">
+      自然灾害从不「造成」金融危机——它只是<b>刺破泡沫的那根针</b>。
+      真正决定灾害被放大还是被吸收的，是灾害降临之前，金融体系里已经埋下了多少杠杆与泡沫。
+      一百年前，一场飓风终结了佛罗里达的地产狂热；一百年后的台风群，正在敲响谁的门？
+    </p>
+    <p class="hero-meta">发布于 2026 年 9 月 · 覆盖 1755—2026 年八组灾害-金融配对 · 数据来源附于文末 · 仅供研究参考</p>
+
+    <!-- 数据带 -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-era"><span class="yr">1926</span><span class="where">佛罗里达 · 迈阿密</span></div>
+        <div class="stat-grid">
+          <div><p class="stat-num">5–6<em>倍</em></p><p class="stat-label">迈阿密房价三年涨幅</p></div>
+          <div><p class="stat-num">13,000<em>栋</em></p><p class="stat-label">飓风摧毁的房屋</p></div>
+          <div><p class="stat-num">$1<em>亿</em></p><p class="stat-label">直接损失 ≈ 2018 年 $2,360 亿</p></div>
+          <div><p class="stat-num">57<em>家</em></p><p class="stat-label">1929 年佛州银行倒闭数</p></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-era"><span class="yr">2026</span><span class="where">中国 / 全球</span></div>
+        <div class="stat-grid">
+          <div><p class="stat-num">3400<em>万</em></p><p class="stat-label">1—7 月全国受灾人次</p></div>
+          <div><p class="stat-num">$1120<em>亿</em></p><p class="stat-label">上半年全球灾害损失，连续六年破千亿</p></div>
+          <div><p class="stat-num">$345.7<em>万亿</em></p><p class="stat-label">全球总债务 = 3.1 × GDP</p></div>
+          <div><p class="stat-num">60<em>%</em></p><p class="stat-label">灾害损失缺乏保险覆盖</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 一、传导机制 ===== -->
+  <section class="sec" id="mechanism">
+    <div class="sec-head">
+      <p class="eyebrow">Chapter 01 · Mechanism</p>
+      <h2>灾害如何变成危机：四条传导路径</h2>
+      <p class="sec-lead">灾害冲击是外生的，但金融体系决定了它被「放大」还是「吸收」。从一场地震到一场恐慌，历史反复走过四条路径。</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-node">
+        <span class="pill pill-red">极端灾害<small>飓风 · 洪水 · 地震</small></span>
+      </div>
+      <div class="fan" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+      <div class="paths">
+        <div class="path-card">
+          <span class="path-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3.5 10.5 12 3.5l8.5 7"/>
+              <path d="M5.5 12v8.5h13V12"/>
+              <path d="M9.5 20.5v-5h5v5"/>
+              <path d="M12 6.2 10.8 7.4" stroke="var(--gold)" stroke-width="2.4"/>
+            </svg>
+          </span>
+          <h3>抵押物路径 <span class="path-era pe-red">1926 主路径</span></h3>
+          <div class="chain">
+            <span class="ch">财产损毁</span><span class="sep">→</span><span class="ch">抵押品贬值</span><span class="sep">→</span><span class="ch">违约坏账</span><span class="sep">→</span><span class="ch">银行倒闭</span>
+          </div>
+        </div>
+
+        <div class="path-card">
+          <span class="path-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3.5c-5 0-9 3.5-9.5 8h19c-.5-4.5-4.5-8-9.5-8Z"/>
+              <path d="M12 11.5v7a2 2 0 0 0 4 0"/>
+              <path d="M12 3.5v-1.5" stroke="var(--gold)" stroke-width="2.4"/>
+            </svg>
+          </span>
+          <h3>保险路径 <span class="path-era pe-gold">1906 与 2026</span></h3>
+          <div class="chain">
+            <span class="ch">巨额赔付</span><span class="sep">→</span><span class="ch">资本外流 / 再保承压</span><span class="sep">→</span><span class="ch">利率冲击</span><span class="sep">→</span><span class="ch">资产重估</span>
+          </div>
+        </div>
+
+        <div class="path-card">
+          <span class="path-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9.5h18M4.5 9.5V20h15V9.5"/>
+              <path d="M3 9.5 12 3l9 6.5"/>
+              <path d="M9.5 20v-5.5h5V20"/>
+              <path d="M17 5.5v3" stroke="var(--gold)" stroke-width="2.4"/>
+            </svg>
+          </span>
+          <h3>财政路径</h3>
+          <div class="chain">
+            <span class="ch">重建支出</span><span class="sep">→</span><span class="ch">债务扩张</span><span class="sep">→</span><span class="ch">利率上行</span><span class="sep">→</span><span class="ch">泡沫承压</span>
+          </div>
+        </div>
+
+        <div class="path-card">
+          <span class="path-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="8.5"/>
+              <path d="M8.5 15.5 15.5 8.5"/>
+              <path d="M15 8.5h-3.5M15.5 8.5V12" stroke="var(--gold)" stroke-width="2.2"/>
+              <path d="M9 15.5h3.5M8.5 15.5v-3.5"/>
+            </svg>
+          </span>
+          <h3>供应链路径</h3>
+          <div class="chain">
+            <span class="ch">工厂停产</span><span class="sep">→</span><span class="ch">关键品短缺</span><span class="sep">→</span><span class="ch">全球产出下滑</span><span class="sep">→</span><span class="ch">盈利重估</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fan fan-in" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="flow-node">
+        <span class="pill pill-ink">系统性金融危机<small>当放大器足够多时</small></span>
+      </div>
+      <p class="flow-note">放大器：<b>资产泡沫</b> × <b>高杠杆</b> × <b>保险缺口</b> × <b>政策空间受限</b> —— 四者越强，针越锋利</p>
+    </div>
+
+    <div class="callout">
+      <b>1906 年的实际剧本（保险路径的第一次完整演出）：</b>旧金山大地震损失 3.5—5 亿美元，相当于美国 GNP 的 1.3—1.8%。英国保险公司承保了城内大部分火险，赔付额高达 £2300 万（约 1.08 亿美元）——这笔钱要从伦敦本土支付。黄金持续外流迫使英格兰银行在 1906 年秋将贴现率上调 250 个基点，并拒绝为美国金融票据贴现。美国应声衰退，次年酿成 1907 年金融恐慌——恐慌催生了国家货币委员会，并最终<b>催生了美联储</b>。NBER 的论文标题一针见血：《真实冲击，货币余震》。
+    </div>
+  </section>
+
+  <!-- ===== 二、双轨时间线 ===== -->
+  <section class="sec" id="timeline">
+    <div class="sec-head">
+      <p class="eyebrow">Chapter 02 · Timeline</p>
+      <h2>百年双轨时间线</h2>
+      <p class="sec-lead">上轨是历史（1923—1933，佛罗里达 → 大萧条），下轨是当代（2020—2029，全球，含推演）。金色虚线连接的，是相隔一百年的两次灾害。</p>
+    </div>
+
+    <div class="tl-scroll">
+      <div class="tl-wrap">
+
+        <!-- 上轨 -->
+        <div class="track-head">
+          <span class="era-tag">历史</span>
+          <span class="t">1923 — 1933</span>
+          <span class="s">佛罗里达 → 大萧条</span>
+        </div>
+        <div class="tl-cards above">
+          <div class="ev">
+            <p class="ev-year">1923</p>
+            <p class="ev-title">土地狂热</p>
+            <p class="ev-desc">10% 首付 + 90% 银行贷款；佛州地价三年涨 3 倍</p>
+          </div>
+          <div class="ev disaster">
+            <p class="ev-year">1926 · 09</p>
+            <p class="ev-title">迈阿密大飓风</p>
+            <p class="ev-desc">4 级，风速 150mph；1.3 万栋房屋被毁，$1 亿损失</p>
+          </div>
+          <div class="ev">
+            <p class="ev-year">1927 — 28</p>
+            <p class="ev-title">地价崩塌</p>
+            <p class="ev-desc">1925 年 $10 亿的地产，1928 年仅值 $1.43 亿</p>
+          </div>
+          <div class="ev">
+            <p class="ev-year">1928 — 29</p>
+            <p class="ev-title">银行倒闭潮</p>
+            <p class="ev-desc">佛州银行倒闭：1928 年 31 家 → 1929 年 57 家</p>
+          </div>
+          <div class="ev">
+            <p class="ev-year">1929 — 33</p>
+            <p class="ev-title">股灾 · 大萧条</p>
+            <p class="ev-desc">黑色星期二；1933 年失业率达 25%</p>
+          </div>
+        </div>
+        <div class="tl-axis">
+          <span class="tl-dot"></span>
+          <span class="tl-dot disaster"></span>
+          <span class="tl-dot"></span>
+          <span class="tl-dot"></span>
+          <span class="tl-dot"></span>
+        </div>
+
+        <!-- 映射走廊 -->
+        <div class="corridor" aria-hidden="true">
+          <div class="map"><span class="badge">1926 ⇄ 2026</span></div>
+        </div>
+
+        <!-- 下轨 -->
+        <div class="tl-axis pending">
+          <span class="tl-dot pending"></span>
+          <span class="tl-dot disaster"></span>
+          <span class="tl-dot"></span>
+          <span class="tl-dot"></span>
+          <span class="tl-dot pending"></span>
+        </div>
+        <div class="tl-cards below">
+          <div class="ev">
+            <p class="ev-year">2020 — 25</p>
+            <p class="ev-title">债务膨胀</p>
+            <p class="ev-desc">全球债务 $345.7 万亿 = 3.1×GDP；AI、地产泡沫积聚</p>
+          </div>
+          <div class="ev disaster">
+            <p class="ev-year">2026</p>
+            <p class="ev-title">台风群 · 洪涝</p>
+            <p class="ev-desc">1—7 月全国 3400 万人次受灾；全球上半年损失 $1120 亿</p>
+          </div>
+          <div class="ev">
+            <p class="ev-year">2026 秋</p>
+            <p class="ev-title">美债置换洪峰</p>
+            <p class="ev-desc">$10 万亿低息旧债到期，融资成本翻 3 倍</p>
+          </div>
+          <div class="ev">
+            <p class="ev-year">2027 — 28E</p>
+            <p class="ev-title">承保错配加深</p>
+            <p class="ev-desc">保障缺口 60%，巨灾再保费率反降 14.7%</p>
+          </div>
+          <div class="ev pending">
+            <p class="ev-year">2027 — 29E</p>
+            <p class="ev-title">危机窗口？</p>
+            <p class="ev-desc">摩根大通「债券危机」概率 35% —— 推演，而非事实</p>
+          </div>
+        </div>
+        <div class="track-head" style="margin: 22px 0 0">
+          <span class="era-tag now">当代</span>
+          <span class="t">2020 — 2029E</span>
+          <span class="s">全球（含推演）</span>
+        </div>
+
+      </div>
+    </div>
+    <p class="tl-hint">← 横向滑动查看完整时间线 →</p>
+  </section>
+
+  <!-- ===== 三、三百年谱系 ===== -->
+  <section class="sec" id="genealogy">
+    <div class="sec-head">
+      <p class="eyebrow">Chapter 03 · Genealogy</p>
+      <h2>三百年谱系：灾害与危机的八次相遇</h2>
+      <p class="sec-lead">1926 并不是孤例。从里斯本到曼谷，灾害与金融体系的每一次相遇，都在四条路径上留下不同的结局——前现代的帝国衰落、金本位下的恐慌、战间期的泡沫崩塌、以及现代保险制度下的「惊而不险」。</p>
+    </div>
+
+    <div class="gene-wrap">
+      <table class="gene-table">
+        <thead>
+          <tr>
+            <th style="width:13%">年份</th>
+            <th style="width:15%">灾害</th>
+            <th style="width:22%">损失规模（占经济体量）</th>
+            <th style="width:36%">金融后果</th>
+            <th style="width:14%">灾害→后果</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="g-yr">1755</span></td>
+            <td class="g-event">里斯本大地震</td>
+            <td>32—48% 葡萄牙 GDP（M8.5 级 + 海啸 + 火灾五日）</td>
+            <td>帝国由盛转衰的转折点；庞巴尔改革借机削弱对英经济依附，开创地震科学，但元气再未恢复</td>
+            <td class="g-lag abs">前现代</td>
+          </tr>
+          <tr>
+            <td><span class="g-yr">1906</span></td>
+            <td class="g-event">旧金山大地震</td>
+            <td>1.3—1.8% 美国 GNP（$3.5—5 亿）</td>
+            <td>英资保险 £2300 万赔付 → 黄金外流 → 英格兰银行加息 250bp → 美国衰退 → 1907 金融恐慌 → 美联储诞生</td>
+            <td class="g-lag sys">1 年</td>
+          </tr>
+          <tr>
+            <td><span class="g-yr">1923</span></td>
+            <td class="g-event">关东大地震</td>
+            <td>35—37% 日本 GNP（¥55—65 亿，10.5 万人遇难）</td>
+            <td>「震灾票据」延期兑付把急性坏账变成慢性沉疴 → 1927 昭和金融恐慌，银行休业潮 → 为 1929 大萧条与军部抬头铺路</td>
+            <td class="g-lag sys">4 年</td>
+          </tr>
+          <tr class="disaster-row">
+            <td><span class="g-yr">1926</span></td>
+            <td class="g-event">迈阿密大飓风</td>
+            <td>佛州地产泡沫整体破灭（$10 亿 → $1.43 亿）</td>
+            <td>31→57 家银行倒闭；加尔布雷思：「让迈阿密提前 3 年进入大萧条，并为 1929 搭好了舞台」</td>
+            <td class="g-lag sys">3 年</td>
+          </tr>
+          <tr>
+            <td><span class="g-yr">1992</span></td>
+            <td class="g-event">飓风「安德鲁」</td>
+            <td>$270 亿损失，$155 亿保险赔付（Cat 5，正面登陆佛州）</td>
+            <td>11—16 家保险公司破产；催生 1997 年巨灾债券市场与百慕大再保险中心——灾害融资从保险资产负债表走向资本市场</td>
+            <td class="g-lag inst">5 年（制度回应）</td>
+          </tr>
+          <tr>
+            <td><span class="g-yr">2005</span></td>
+            <td class="g-event">飓风「卡特里娜」</td>
+            <td>$400—600 亿保险赔付，总损失超 $2000 亿</td>
+            <td>行业依靠准备金整体吸收，但国会报告直言：保险业「根本没有足够资本应对单一超级巨灾」</td>
+            <td class="g-lag abs">被吸收</td>
+          </tr>
+          <tr>
+            <td><span class="g-yr">2011</span></td>
+            <td class="g-event">泰国特大洪灾</td>
+            <td>$465 亿（世界银行估算）</td>
+            <td>全球 43% 硬盘产能停摆 → 全球工业产出 -2.5%，三大财险赔付 $53 亿超过同年东日本大地震——供应链路径首次完整呈现</td>
+            <td class="g-lag abs">未升级</td>
+          </tr>
+          <tr class="pending-row">
+            <td><span class="g-yr">2026</span></td>
+            <td class="g-event">台风群 · 流域洪水</td>
+            <td>上半年全球灾害损失 $1120 亿（待全年）</td>
+            <td>再保险费率降 14.7% vs 风险上升的错配窗口；$10 万亿美债置换洪峰叠加——本轮剧本尚未写完</td>
+            <td class="g-lag pend">1—3 年 E</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="gene-note">滞后 = 灾害发生到金融后果显形的时间。前三次系统性危机（1906 / 1923 / 1926）均发生在「无存款保险、无最后贷款人、金本位约束」的金融体系下；1950 年后的三次均被现代制度吸收或转化为制度创新。E = 估算 / 推演。</p>
+    </div>
+
+    <!-- 滞后图 -->
+    <div class="lag-card">
+      <p class="lag-title">从灾害到危机：滞后年数</p>
+      <p class="lag-sub">危机从不与灾害同时发生——应急政策把冲击推迟，也把它集中</p>
+      <svg class="lag-svg" viewBox="0 0 720 362" width="100%" height="auto" role="img" aria-label="灾害到金融危机的滞后年数图：1906年1年、1926年3年、1923年4年、1992年5年制度回应、2026年推演1至3年">
+        <!-- 年份刻度 -->
+        <g class="lag-axis">
+          <text x="150" y="22" text-anchor="middle">灾害发生</text>
+          <text x="255" y="22" text-anchor="middle">+1 年</text>
+          <text x="360" y="22" text-anchor="middle">+2 年</text>
+          <text x="465" y="22" text-anchor="middle">+3 年</text>
+          <text x="570" y="22" text-anchor="middle">+4 年</text>
+          <text x="675" y="22" text-anchor="middle">+5 年</text>
+        </g>
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="150" y1="32" x2="150" y2="322"/>
+          <line x1="255" y1="32" x2="255" y2="322"/>
+          <line x1="360" y1="32" x2="360" y2="322"/>
+          <line x1="465" y1="32" x2="465" y2="322"/>
+          <line x1="570" y1="32" x2="570" y2="322"/>
+          <line x1="675" y1="32" x2="675" y2="322"/>
+        </g>
+
+        <!-- 1906 → 1907 -->
+        <text class="lag-to" x="150" y="48" fill="var(--red)">→ 1907 金融恐慌</text>
+        <text class="lag-name" x="142" y="69" text-anchor="end">1906 · 旧金山</text>
+        <rect x="150" y="56" width="105" height="16" rx="4" fill="var(--ink)" opacity=".88"/>
+        <circle cx="150" cy="64" r="5" fill="var(--red)"/>
+        <text class="lag-mech" x="263" y="69">黄金外流 · 加息 250bp</text>
+
+        <!-- 1926 → 1929 -->
+        <text class="lag-to" x="150" y="108" fill="var(--red)">→ 1929 大崩盘</text>
+        <text class="lag-name" x="142" y="129" text-anchor="end">1926 · 迈阿密</text>
+        <rect x="150" y="116" width="315" height="16" rx="4" fill="var(--ink)" opacity=".88"/>
+        <circle cx="150" cy="124" r="5" fill="var(--red)"/>
+        <text class="lag-mech" x="473" y="129">地价崩塌 · 银行倒闭</text>
+
+        <!-- 1923 → 1927 -->
+        <text class="lag-to" x="150" y="168" fill="var(--red)">→ 1927 昭和金融恐慌</text>
+        <text class="lag-name" x="142" y="189" text-anchor="end">1923 · 关东</text>
+        <rect x="150" y="176" width="420" height="16" rx="4" fill="var(--ink)" opacity=".88"/>
+        <circle cx="150" cy="184" r="5" fill="var(--red)"/>
+        <text class="lag-mech" x="578" y="189">震灾票据坏账</text>
+
+        <!-- 1992 → 1997 -->
+        <text class="lag-to" x="150" y="228" fill="var(--gold)">→ 1997 巨灾债券诞生</text>
+        <text class="lag-name" x="142" y="249" text-anchor="end">1992 · 安德鲁</text>
+        <rect x="150" y="236" width="525" height="16" rx="4" fill="var(--gold)" opacity=".75"/>
+        <circle cx="150" cy="244" r="5" fill="var(--red)"/>
+        <text class="lag-mech" x="675" y="268" text-anchor="end" fill="var(--gold)">制度回应而非危机</text>
+
+        <!-- 2026 → 2027-29E -->
+        <text class="lag-to" x="150" y="288" fill="var(--gold)">→ 2027—29 危机窗口？</text>
+        <text class="lag-name" x="142" y="309" text-anchor="end">2026 · 台风群</text>
+        <rect x="150" y="296" width="210" height="16" rx="4" fill="var(--gold)" opacity=".14"/>
+        <rect x="150" y="296" width="210" height="16" rx="4" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-dasharray="6 5"/>
+        <circle cx="150" cy="304" r="5" fill="var(--red)"/>
+        <text class="lag-mech" x="368" y="309">推演区间 · 未定</text>
+
+        <!-- 图例 -->
+        <g>
+          <rect x="150" y="338" width="14" height="10" rx="2" fill="var(--ink)" opacity=".88"/>
+          <text class="lag-mech" x="170" y="347">系统性危机</text>
+          <rect x="246" y="338" width="14" height="10" rx="2" fill="var(--gold)" opacity=".75"/>
+          <text class="lag-mech" x="266" y="347">制度回应</text>
+          <rect x="330" y="338" width="14" height="10" rx="2" fill="var(--gold)" opacity=".14" stroke="var(--gold)" stroke-width="1.2" stroke-dasharray="4 3"/>
+          <text class="lag-mech" x="350" y="347">推演</text>
+          <circle cx="424" cy="343" r="4" fill="var(--red)"/>
+          <text class="lag-mech" x="434" y="347">灾害发生</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===== 四、结构对照 ===== -->
+  <section class="sec" id="versus">
+    <div class="sec-head">
+      <p class="eyebrow">Chapter 04 · Versus</p>
+      <h2>1926 ⇄ 2026 结构对照</h2>
+      <p class="sec-lead">灾害「形似」之外，两个年份在金融结构上的差异，才是判断历史是否会重演的关键。</p>
+    </div>
+
+    <div class="vs-wrap">
+      <table class="vs-table">
+        <thead>
+          <tr>
+            <th style="width:16%">维度</th>
+            <th style="width:42%">1926 · 佛罗里达</th>
+            <th style="width:42%">2026 · 全球</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>资产泡沫</td>
+            <td>地价三年涨 3 倍，迈阿密房价涨 <b>5–6 倍</b></td>
+            <td>AI 股 + 商业地产 + 全球房地产多重共振</td>
+          </tr>
+          <tr>
+            <td>杠杆水平</td>
+            <td>10% 首付、90% 银行贷款</td>
+            <td>全球债务 <b>$345.7 万亿</b>，3.1 × GDP</td>
+          </tr>
+          <tr>
+            <td>利率环境</td>
+            <td>低利率助燃投机</td>
+            <td>高利率压制：$10 万亿美债置换，利率翻 <b>3 倍</b></td>
+          </tr>
+          <tr>
+            <td>风险中介</td>
+            <td>区域银行（无存款保险）</td>
+            <td>再保险 + 巨灾债券 + 影子银行 + 主权债务</td>
+          </tr>
+          <tr>
+            <td>政策空间</td>
+            <td>金本位束缚，无最后贷款人</td>
+            <td>有 QE 工具，但利息已占美税收 <b>26%</b></td>
+          </tr>
+          <tr>
+            <td>灾害形态</td>
+            <td>单点极值：一场 4 级飓风正面命中</td>
+            <td>多点复合：台风群、流域洪水、震群活动</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <b>最大的不同：风险载体变了。</b>1926 年的风险堆在佛州区域银行的资产负债表上；今天，灾害风险被证券化分散到了全球资本市场（2025 年巨灾债券发行 $178.5 亿，是十年前的 2.35 倍）。这既是缓冲，也是新的传染通道——再保费率下降与风险上升的错配一旦被一次超大巨灾证伪，冲击将同步传导至债券市场与保险股。
+    </div>
+  </section>
+
+  <!-- ===== 五、预测逻辑 ===== -->
+  <section class="sec" id="method">
+    <div class="sec-head">
+      <p class="eyebrow">Chapter 05 · Method</p>
+      <h2>预测逻辑：三条法则</h2>
+      <p class="sec-lead">「历史重演」不是一个玄学问题，而是一个可拆解的推断问题。我们把三百年谱系压缩成三条可检验的法则，再用它们审视 2026。</p>
+    </div>
+
+    <!-- 法则一：滞后定律 -->
+    <div class="method-block">
+      <p class="m-tag"><span class="no">法则一</span> 滞后定律：盯住窗口，而非时刻</p>
+      <p>灾害与危机之间隔着一个「政策缓冲期」。1923 年关东大地震后，日本央行立刻实施<strong>支付延期 + 特别融资</strong>，把急性破产转化成慢性坏账；佛罗里达的银行也曾用展期维持地产账面价值。应急措施生效之时，恰是风险堆积之时——<b>救助把「急性病」拖成「慢性病」，并在退出时集中发作</b>。</p>
+      <p>历史滞后区间为 <b>1—4 年</b>：1906→1907（1 年）、1926→1929（3 年）、1923→1927（4 年）。因此对 2026 年台风群的观察，重点不在 2026 年本身，而在 <b>2027—2029 的退出窗口</b>——当各国央行的应急流动性开始回收、当再保险合约以错定价率续签满一个周期，错配才会显形。</p>
+      <p class="m-quote">
+        「历史上的危机从不与灾害同时发生；政策回应决定了它何时、以何种形态到来。」
+        <small>—— 本页归纳自 NBER 9176 号工作论文与东京大学冈崎哲二对震灾票据的研究</small>
+      </p>
+    </div>
+
+    <!-- 法则二：放大器计分卡 -->
+    <div class="method-block">
+      <p class="m-tag"><span class="no">法则二</span> 放大器计分卡：针要够长，泡沫才破</p>
+      <p>灾害升级为危机，需要<b>至少四个放大器中的多数同时处于高位</b>。按 0—2 分对两个年份打分（2 = 高危，1 = 中等，0 = 低）：</p>
+      <table class="score-table">
+        <thead>
+          <tr>
+            <th style="width:34%">放大器</th>
+            <th style="width:22%">1926 得分</th>
+            <th style="width:22%">2026 得分</th>
+            <th>2026 依据</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>资产泡沫</td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td>AI 估值 + 商业地产空置 + 全球房价高位</td>
+          </tr>
+          <tr>
+            <td>杠杆水平</td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td>全球债务 3.1 × GDP，创和平年代纪录</td>
+          </tr>
+          <tr>
+            <td>保险 / 保障缺口</td>
+            <td class="dots"><span class="on">●</span><span class="off">○</span></td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td>全球 60% 灾害损失无保险覆盖</td>
+          </tr>
+          <tr>
+            <td>政策空间</td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td class="dots"><span class="on">●</span><span class="off">○</span></td>
+            <td>QE 可用，但高利率 + 财政赤字束缚手脚</td>
+          </tr>
+          <tr>
+            <td>风险集中度</td>
+            <td class="dots"><span class="on">●●</span></td>
+            <td class="dots"><span class="on">●</span><span class="off">○</span></td>
+            <td>风险经巨灾债分散至资本市场——缓冲亦是通道</td>
+          </tr>
+          <tr class="score-total">
+            <td>合计 / 10</td>
+            <td>9 <span class="verdict">→ 大萧条</span></td>
+            <td>7 <span class="verdict">→ 低于临界</span></td>
+            <td><span class="verdict">三次系统性危机案例均 ≥8 分</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px">结论指向本页的核心判断：<b>2026 年放大器总分 7 / 10，与 1926 年同向但未过临界</b>——除非再保险错配在 2027 年前显著恶化（届时第 3、5 项将升至满分，总分 9）。</p>
+    </div>
+
+    <!-- 法则三：基础概率 -->
+    <div class="method-block">
+      <p class="m-tag"><span class="no">法则三</span> 基础概率：制度是分水岭</p>
+      <p>按「灾害是否引发系统性金融后果」统计三百年样本，会看到一条清晰的制度分界线——<b>1950 年前后是两个世界</b>：</p>
+      <div class="base-grid">
+        <div class="base-card sys">
+          <p class="era">1900 — 1940s · 前保险制度时代</p>
+          <p class="ratio">3 / 4 <em>引发系统性危机</em></p>
+          <p>旧金山 → 1907 恐慌；关东 → 1927 昭和恐慌；迈阿密 → 1929 崩盘。唯一直接吸收的里斯本地震发生在前现代金融体系下，以帝国衰落替代金融危机。</p>
+        </div>
+        <div class="base-card abs">
+          <p class="era">1990s — 今 · 现代风险制度时代</p>
+          <p class="ratio">0 / 3 <em>未引发系统性危机</em></p>
+          <p>安德鲁（1992）、卡特里娜（2005）、泰国洪灾（2011）均止步于行业重整或供应链冲击——存款保险、最后贷款人、巨灾债券三层制度吸收了尾部风险。</p>
+        </div>
+      </div>
+      <p style="margin-top:16px">这个基础概率给出的先验是：单凭灾害，2026 年重演 1926 式危机的<b>基础概率约 25—35%</b>——显著低于战间期，但高于 1990 年代以来的零记录，因为 2026 年的债务水平（3.1 × GDP）已超过了 1926 年（彼时美国私人债务约为 GDP 的 1.5 倍）。<b>制度吸收力在债务的重压下正在变形</b>。</p>
+    </div>
+  </section>
+
+  <!-- ===== 六、展望 ===== -->
+  <section class="sec" id="outlook">
+    <div class="sec-head">
+      <p class="eyebrow">Chapter 06 · Outlook</p>
+      <h2>历史会重演吗？2027 — 2029</h2>
+    </div>
+
+    <div class="verdict">
+      <p><span class="rhyme">「机制会押韵，形态不重复。」</span></p>
+      <p><b>「灾害 → 危机」的直接重演（1926 式）概率较低。</b>中国 2026 年灾情虽重，但直接损失占 GDP 比重远低于当年的佛州（其地产估值一度占全国新开工的 12.4%），现代建筑标准与 18 次编号洪水的调度体系，大幅压缩了单点灾害的金融杀伤力。</p>
+      <p><b>真正的危险在「灾害 + 债务周期」的共振窗口（2026 底 — 2027 上半年）。</b>多家机构独立收敛到同一区间：摩根大通给出 2026 年底「债券危机」概率 35%；达里欧判断「三高」环境下 3 年内爆雷；世界经济论坛将「地缘对抗 + 债务危机 + 泡沫破裂」列为未来两年最危险的组合。灾害在这里的角色，很可能与 1926 年一样——不是原因，而是压垮再保险定价纪律与区域地产市场的<b>触发器</b>。</p>
+    </div>
+
+    <div class="indicators">
+      <div class="ind-card">
+        <span class="ind-num">No.01</span>
+        <h3>巨灾债券利差</h3>
+        <p>一旦大幅走阔，说明资本市场开始为「再保险错配」重新定价——这是<b>金融层面对灾害风险的第一反应</b>。</p>
+      </div>
+      <div class="ind-card">
+        <span class="ind-num">No.02</span>
+        <h3>美债置换认购倍数</h3>
+        <p>2026 秋 — 2027 是 <b>$10 万亿</b>低息旧债的置换洪峰，认购疲软将直接推高全球无风险利率。</p>
+      </div>
+      <div class="ind-card">
+        <span class="ind-num">No.03</span>
+        <h3>沿海保费涨幅 vs 房价</h3>
+        <p>1926 式「保险费逼走业主」的现代版——当保费变得不可负担，沿海房产估值会<b>先于危机</b>被重定价。</p>
+      </div>
+      <div class="ind-card">
+        <span class="ind-num">No.04</span>
+        <h3>九月台风季</h3>
+        <p>官方预测生成 5—7 个、登陆 2—3 个。若再有一个「巴威级」正面登陆<b>长三角或珠三角核心资产区</b>，就是对承保错配的现场压力测试。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top: 34px">
+      <b>一句话总结：</b>1926 年的飓风没有「造成」大萧条，它只是揭开了早已存在的杠杆。2026 年的台风群同样不会「造成」金融危机——但全球 345 万亿美元的债务、正在失灵的再保险定价、以及 60% 的保险保障缺口，意味着下一次超级巨灾来临时，金融体系的吸收能力远比表面上脆弱。<b>历史不会照抄，但它正在押韵。</b>
+    </div>
+  </section>
+
+  <!-- ===== 来源 ===== -->
+  <section class="sec sources" id="sources">
+    <div class="sec-head">
+      <p class="eyebrow">Appendix · Sources</p>
+      <h2>数据与资料来源</h2>
+    </div>
+    <ol>
+      <li>应急管理部 · <a href="https://www.mem.gov.cn/xw/yjglbgzdt/202608/t20260814_680668.shtml" target="_blank" rel="noopener">2026 年 7 月全国自然灾害情况</a></li>
+      <li>应急管理部 · <a href="https://www.mem.gov.cn/xw/yjglbgzdt/202609/t20260902_710211.shtml" target="_blank" rel="noopener">2026 年 9 月全国自然灾害风险形势</a></li>
+      <li>中国新闻网 · <a href="http://www.chinanews.com.cn/gn/2026/07-13/10658543.shtml" target="_blank" rel="noopener">2026 年上半年全国自然灾害情况</a></li>
+      <li>NBER 工作论文 9176 · <a href="https://www.nber.org/system/files/working_papers/w9176/w9176.pdf" target="_blank" rel="noopener">Real Shock, Monetary Aftershock: The San Francisco Earthquake and the Panic of 1907</a>（旧金山地震 → 1907 恐慌的传导机制）</li>
+      <li>Wikipedia · <a href="https://en.wikipedia.org/wiki/1926_Miami_hurricane" target="_blank" rel="noopener">1926 Miami Hurricane</a>（4 级 · 损失换算）</li>
+      <li>东京大学 · <a href="https://www.scj.go.jp/ja/int/kaisai/jizoku2012/ja/pdf/Okazaki.pdf" target="_blank" rel="noopener">Lessons from the Great Kanto Earthquake, 1923</a>（冈崎哲二：震灾票据与 1927 昭和金融恐慌）</li>
+      <li>Moody's RMS · <a href="https://www.moodys.com/web/en/us/insights/insurance/the-great-kanto-earthquake-100-year-retrospective.html" target="_blank" rel="noopener">The Great Kanto Earthquake: 100-year retrospective</a>（关东地震损失 = 当年 GDP 35%+，约合今日 $3310 亿）</li>
+      <li>芝加哥联储 · <a href="https://www.chicagofed.org/publications/chicago-fed-letter/2018/405" target="_blank" rel="noopener">Catastrophe Bonds: A Primer and Retrospective</a>（安德鲁飓风与巨灾债券的诞生）</li>
+      <li>Insurance Journal · <a href="https://www.insurancejournal.com/news/national/2026/08/25/882779.htm" target="_blank" rel="noopener">Viewpoint: When Andrew Returns</a>（安德鲁 11—16 家保险公司破产；距迈阿密 20 英里的「险些」）</li>
+      <li>美国国会研究服务处 · <a href="https://www.everycrsreport.com/files/20050915_RL33086_ad330b1de024dd62d0ddb79f0b93fc69601437e0.pdf" target="_blank" rel="noopener">Hurricane Katrina: Insurance Losses and National Capacities</a>（卡特里娜保险赔付与超级巨灾资本缺口）</li>
+      <li>UNCTAD · <a href="https://resilientmaritimelogistics.unctad.org/guidebook/case-study-23-port-laem-chabang-thailand" target="_blank" rel="noopener">Case Study: Port of Laem Chabang, Thailand</a>（泰国洪灾 $465 亿损失评估）</li>
+      <li>哥伦比亚大学气候学院 · <a href="https://news.climate.columbia.edu/2014/11/17/floods-companies-and-supply-chain-risk/" target="_blank" rel="noopener">Floods, Companies and Supply Chain Risk</a>（泰国洪灾致全球工业产出 -2.5%）</li>
+      <li>维基百科 · <a href="https://en.wikipedia.org/wiki/1755_Lisbon_earthquake" target="_blank" rel="noopener">1755 Lisbon Earthquake</a>（损失占葡萄牙 GDP 32—48%）</li>
+      <li>澎湃新闻 · <a href="https://m.thepaper.cn/newsDetail_forward_2799399" target="_blank" rel="noopener">危机反思录｜咆哮的二十年代：炽热的房地产</a></li>
+      <li>FIU 气象学讲义 · <a href="https://faculty.fiu.edu/~willough/met_4532/PDFS/HCN_LEC16&17_17.pdf" target="_blank" rel="noopener">1926 迈阿密飓风与地产泡沫</a>（加尔布雷思评语）</li>
+      <li>上海证券报 · <a href="https://www.cnstock.com/" target="_blank" rel="noopener">全球巨灾风险逼近可保性临界点 再保险步入发展拐点</a>（慕尼黑再保险 / AM Best / Howden 数据）</li>
+      <li>经济日报 · <a href="http://www.ce.cn/xwzx/gnsz/gdxw/202602/t20260209_2760559.shtml" target="_blank" rel="noopener">展望二〇二六：推动全球经济在调整中前行</a>（IIF 全球债务数据）</li>
+      <li>文化纵横 · <a href="http://news.qq.com/rain/a/20260604A06JS300" target="_blank" rel="noopener">当代资本主义危机的新特点</a>（危机周期与 2026—2030 关键期研判）</li>
+    </ol>
+    <p class="disclaim">
+      免责声明：本页为数据可视化研究作品，所引数据来自公开报道与研究文献；「放大器计分卡」「基础概率」为本页基于历史案例的自建分析框架，属定性推演而非量化模型；历史推演部分（标注 E）仅为情景分析，不构成任何投资建议。灾害无情人有情，防灾减灾，人人有责。
+    </p>
+  </section>
+
+  <!-- ===== 页脚 ===== -->
+  <footer class="site-foot">
+    <p>© 2026 MRG PLAYGROUND · 世纪回响</p>
+    <p>
+      <a href="#top">回到顶部</a><span class="sep">·</span><a href="../">返回游乐场</a><span class="sep">·</span><a href="https://github.com/mrg123/mrg123.github.io" target="_blank" rel="noopener">GITHUB</a>
+    </p>
+  </footer>
+
+</div>
+
+</body>
+</html>

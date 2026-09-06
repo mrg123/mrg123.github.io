@@ -123,19 +123,22 @@ crossorigin="anonymous"></script>
   .card:hover .speed { animation: dashMove .45s linear infinite; }
 
   /* 悬停微交互 */
-  .petals, .needle, .eyes { transform-box: fill-box; transform-origin: center; }
+  .petals, .needle, .eyes, .spiral { transform-box: fill-box; transform-origin: center; }
   .petals { transition: transform .7s cubic-bezier(.34, 1.56, .64, 1); }
   .card:hover .petals { transform: rotate(36deg); }
   .needle { transition: transform .9s cubic-bezier(.34, 1.56, .64, 1); }
   .card:hover .needle { transform: rotate(150deg); }
   .eyes { transition: transform .12s ease; }
   .card:hover .eyes { transform: scaleY(.12); }
+  .spiral { transition: transform .8s cubic-bezier(.34, 1.56, .64, 1); }
+  .card:hover .spiral { transform: rotate(48deg); }
 
   .card:nth-child(1) { --d: 0s; }
   .card:nth-child(2) { --d: .12s; }
   .card:nth-child(3) { --d: .24s; }
   .card:nth-child(4) { --d: .36s; }
   .card:nth-child(5) { --d: .48s; }
+  .card:nth-child(6) { --d: .6s; }
 
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes fadeIn { to { opacity: 1; } }
@@ -308,6 +311,28 @@ crossorigin="anonymous"></script>
           </g>
         </svg>
         <span class="p-desc">个人导航系统，媒体与资讯一键直达。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="century-timeline/">
+      <div class="poster" style="background:linear-gradient(160deg, #f5ecd9, #e9d6ac)">
+        <div class="p-head">
+          <span class="p-num">06</span>
+          <span class="p-name">世纪回响</span>
+        </div>
+        <svg class="p-art" viewBox="0 0 80 80" role="img" aria-label="世纪回响 · 灾害与金融危机时间线">
+          <g class="art-inner">
+            <g class="spiral">
+              <path class="draw" pathLength="1" d="M56 24 C56 16 46 12 38 15 C27 19 24 31 30 40 C36 49 50 50 56 42 C62 34 58 24 48 22"/>
+              <circle class="fade gold" cx="41" cy="31" r="2.8"/>
+            </g>
+            <path class="speed" style="stroke:var(--gold)" d="M41 47 V54"/>
+            <path class="draw" pathLength="1" d="M12 50 L22 45 L29 53 L39 44 L46 55 L53 50 L61 60"/>
+            <circle class="fade gold" cx="61" cy="60" r="2.6"/>
+          </g>
+        </svg>
+        <span class="p-desc">自然灾害 × 金融危机：1926 ⇄ 2026 的百年双轨时间线。</span>
         <span class="p-arrow" aria-hidden="true">→</span>
       </div>
     </a>
