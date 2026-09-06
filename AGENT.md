@@ -15,8 +15,8 @@
 | 04 | Draw Now 绘画   | `/draw-now/`            | 创意  | 专业绘画应用落地页                                                     |
 | 05 | MediaNav 导航   | `/nav/`                 | 工具  | 个人网站导航系统                                                      |
 | 06 | 世纪回响          | `/century-timeline/`    | 研究  | 自然灾害 × 金融危机：1926 ⇄ 2026 双轨时间线                                 |
-| 07 | 企业官网模板        | `/enterprise-template/` | 模板  | 通信 / 物流企业可复用单页模板                                              |
 | —  | Melomancy App | `/Melomancy App/`       | 建设中 | iOS AI 音乐应用，目前仅有法务文档（privacy / terms），**暂无导航卡片**，未来完成后再单独做介绍页 |
+| —  | 企业官网模板        | `/enterprise-template/` | 本地  | 通信 / 物流企业可复用单页模板。**已在 `.gitignore`（`/enterprise-template`）：不部署、无导航卡片、不入 sitemap**，仅作本地开发素材 |
 
 ## 硬约束（必须遵守）
 
@@ -24,8 +24,9 @@
 2. **自包含**：子项目尽量不依赖外部资源；导航首页无 JS、无外部图片。
 3. **目录纪律**：每个项目一个子目录，根目录只放站点级文件（首页、favicon、CNAME、ads.txt、robots.txt、sitemap.xml、本手册）。
 4. **设计语言**：导航首页卡片 SVG 采用「墨色线稿 + 金色点缀」风格，配 `draw`（描边动画）/ `fade`（淡入）/ `speed`（虚线流动）class；含悬停微交互与 `prefers-reduced-motion` 降级。
-5. **卡片分类标签**（`p-tag`）只能从既有类别中选：游戏 / 创意 / 工具 / 研究 / 模板。
-6. 外链必须加 `target="_blank" rel="noopener"`。
+5. **卡片分类标签**（`p-tag`）只能从既有类别中选：游戏 / 创意 / 工具 / 研究。
+6. **git 忽略项目不入公开引用**：凡 `.gitignore` 中的本地目录（如 `enterprise-template/`），不得出现在 `index.html` 卡片、`sitemap.xml` 或 meta 描述中——否则线上出现死链。
+7. 外链必须加 `target="_blank" rel="noopener"`。
 
 ## 变更清单（改一处须联动）
 

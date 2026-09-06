@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MRG Playground · 我的游乐场 — 网页实验合集</title>
-<meta name="description" content="MRG 的个人网页游乐场：3D 迷宫冒险、赛博朋克跑酷、手绘猫咪生成器、绘画应用、网站导航、灾害与金融危机数据研究、通信/物流企业官网模板，全部项目一站式入口。">
-<meta name="keywords" content="网页游戏,3D迷宫,赛博朋克,创意工具,网站导航,数据研究,企业模板,网页设计,MRG">
+<meta name="description" content="MRG 的个人网页游乐场：3D 迷宫冒险、赛博朋克跑酷、手绘猫咪生成器、绘画应用、网站导航、灾害与金融危机数据研究，全部项目一站式入口。">
+<meta name="keywords" content="网页游戏,3D迷宫,赛博朋克,创意工具,网站导航,数据研究,网页设计,MRG">
 <meta name="author" content="mrg123">
 <meta name="robots" content="index, follow">
 <meta property="og:title" content="MRG Playground · 我的游乐场">
-<meta property="og:description" content="一个人折腾的网页实验合集：小游戏、创意工具、数据研究与可复用模板。">
+<meta property="og:description" content="一个人折腾的网页实验合集：小游戏、创意工具与数据研究。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.mrg123.com">
 <meta property="og:image" content="/og-cover.png">
@@ -132,7 +132,7 @@ crossorigin="anonymous"></script>
   .card:hover .speed { animation: dashMove .45s linear infinite; }
 
   /* 悬停微交互 */
-  .petals, .needle, .eyes, .spiral, .blocks { transform-box: fill-box; transform-origin: center; }
+  .petals, .needle, .eyes, .spiral { transform-box: fill-box; transform-origin: center; }
   .petals { transition: transform .7s cubic-bezier(.34, 1.56, .64, 1); }
   .card:hover .petals { transform: rotate(36deg); }
   .needle { transition: transform .9s cubic-bezier(.34, 1.56, .64, 1); }
@@ -141,8 +141,6 @@ crossorigin="anonymous"></script>
   .card:hover .eyes { transform: scaleY(.12); }
   .spiral { transition: transform .8s cubic-bezier(.34, 1.56, .64, 1); }
   .card:hover .spiral { transform: rotate(48deg); }
-  .blocks { transition: transform .7s cubic-bezier(.34, 1.56, .64, 1); }
-  .card:hover .blocks { transform: translateX(5px); }
 
   .card:nth-child(1) { --d: 0s; }
   .card:nth-child(2) { --d: .12s; }
@@ -150,7 +148,6 @@ crossorigin="anonymous"></script>
   .card:nth-child(4) { --d: .36s; }
   .card:nth-child(5) { --d: .48s; }
   .card:nth-child(6) { --d: .6s; }
-  .card:nth-child(7) { --d: .72s; }
 
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes fadeIn { to { opacity: 1; } }
@@ -363,32 +360,6 @@ crossorigin="anonymous"></script>
           </g>
         </svg>
         <span class="p-desc">自然灾害 × 金融危机：1926 ⇄ 2026 的百年双轨时间线。</span>
-        <span class="p-arrow" aria-hidden="true">→</span>
-      </div>
-    </a>
-
-    <a class="card" href="enterprise-template/">
-      <div class="poster" style="background:linear-gradient(160deg, #eef0f2, #d8dee4)">
-        <div class="p-head">
-          <div class="p-row">
-            <span class="p-num">07</span>
-            <span class="p-name">企业官网模板</span>
-          </div>
-          <span class="p-tag">模板</span>
-        </div>
-        <svg class="p-art" viewBox="0 0 80 80" role="img" aria-label="企业官网模板">
-          <g class="art-inner">
-            <rect class="draw" pathLength="1" x="15" y="13" width="50" height="54" rx="4"/>
-            <path class="draw" pathLength="1" d="M15 25 H65"/>
-            <circle class="fade gold" cx="23" cy="19" r="2.2"/>
-            <g class="blocks">
-              <rect class="draw" pathLength="1" x="22" y="33" width="16" height="11" rx="2"/>
-              <rect class="draw" pathLength="1" x="42" y="33" width="16" height="11" rx="2"/>
-              <rect class="draw" pathLength="1" x="22" y="49" width="36" height="11" rx="2"/>
-            </g>
-          </g>
-        </svg>
-        <span class="p-desc">通信 / 物流企业可复用模板，替换占位即上线。</span>
         <span class="p-arrow" aria-hidden="true">→</span>
       </div>
     </a>
