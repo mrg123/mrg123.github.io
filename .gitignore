@@ -12,3 +12,4 @@
 
 # Node (若项目目录内用到 node_modules)
 node_modules/
+/enterprise-template
