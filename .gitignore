@@ -13,3 +13,6 @@
 # Node (若项目目录内用到 node_modules)
 node_modules/
 /enterprise-template
+
+# AI 维护工作区：含本机绝对路径与工作日志，不入库、不部署
+.workbuddy/

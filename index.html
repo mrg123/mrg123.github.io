@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MRG Playground · 我的游乐场 — 网页实验合集</title>
-<meta name="description" content="MRG 的个人网页游乐场：3D 迷宫冒险、赛博朋克跑酷、手绘猫咪生成器、绘画应用、网站导航、灾害与金融危机数据研究，全部项目一站式入口。">
-<meta name="keywords" content="网页游戏,3D迷宫,赛博朋克,创意工具,网站导航,数据研究,网页设计,MRG">
+<meta name="description" content="MRG 的个人网页游乐场：3D 迷宫冒险、赛博朋克跑酷、手绘猫咪生成器、绘画应用、网站导航、灾害与金融危机数据研究、AI 演化路径推演，全部项目一站式入口。">
+<meta name="keywords" content="网页游戏,3D迷宫,赛博朋克,创意工具,网站导航,数据研究,AI演化,网页设计,MRG">
 <meta name="author" content="mrg123">
 <meta name="robots" content="index, follow">
 <meta property="og:title" content="MRG Playground · 我的游乐场">
@@ -141,6 +141,8 @@ crossorigin="anonymous"></script>
   .card:hover .eyes { transform: scaleY(.12); }
   .spiral { transition: transform .8s cubic-bezier(.34, 1.56, .64, 1); }
   .card:hover .spiral { transform: rotate(48deg); }
+  .buds { transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.34, 1.56, .64, 1); }
+  .card:hover .buds { transform: scale(1.16); }
 
   .card:nth-child(1) { --d: 0s; }
   .card:nth-child(2) { --d: .12s; }
@@ -148,6 +150,7 @@ crossorigin="anonymous"></script>
   .card:nth-child(4) { --d: .36s; }
   .card:nth-child(5) { --d: .48s; }
   .card:nth-child(6) { --d: .6s; }
+  .card:nth-child(7) { --d: .72s; }
 
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes fadeIn { to { opacity: 1; } }
@@ -360,6 +363,37 @@ crossorigin="anonymous"></script>
           </g>
         </svg>
         <span class="p-desc">自然灾害 × 金融危机：1926 ⇄ 2026 的百年双轨时间线。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="ai-evolution-paths/">
+      <div class="poster" style="background:linear-gradient(160deg, #e6ebf2, #c6d2e0)">
+        <div class="p-head">
+          <div class="p-row">
+            <span class="p-num">07</span>
+            <span class="p-name">碳基 → 硅基</span>
+          </div>
+          <span class="p-tag">研究</span>
+        </div>
+        <svg class="p-art" viewBox="0 0 80 80" role="img" aria-label="碳基 → 硅基 · 四条演化路径">
+          <g class="art-inner">
+            <circle class="draw" pathLength="1" cx="10" cy="40" r="5.5"/>
+            <circle class="fade gold" cx="10" cy="40" r="2.2"/>
+            <path class="draw" pathLength="1" d="M16 40 H28"/>
+            <path class="draw" pathLength="1" d="M28 40 C40 40 46 15 64 14"/>
+            <path class="draw" pathLength="1" d="M28 40 C42 40 48 32 64 32"/>
+            <path class="draw" pathLength="1" d="M28 40 C42 40 48 48 64 48"/>
+            <path class="draw" pathLength="1" d="M28 40 C40 40 46 65 64 66"/>
+            <g class="buds">
+              <circle class="fade gold" cx="64" cy="14" r="3"/>
+              <circle class="fade gold" cx="64" cy="32" r="3"/>
+              <circle class="fade gold" cx="64" cy="48" r="3"/>
+              <circle class="fade gold" cx="64" cy="66" r="3"/>
+            </g>
+          </g>
+        </svg>
+        <span class="p-desc">四条演化路径推演：AI 与人类的可能未来。</span>
         <span class="p-arrow" aria-hidden="true">→</span>
       </div>
     </a>

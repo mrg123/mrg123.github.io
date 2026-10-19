@@ -15,6 +15,7 @@
 | 04 | Draw Now 绘画   | `/draw-now/`            | 创意  | 专业绘画应用落地页                                                     |
 | 05 | MediaNav 导航   | `/nav/`                 | 工具  | 个人网站导航系统                                                      |
 | 06 | 世纪回响          | `/century-timeline/`    | 研究  | 自然灾害 × 金融危机：1926 ⇄ 2026 双轨时间线                                 |
+| 07 | 碳基 → 硅基       | `/ai-evolution-paths/`  | 研究  | AI 与人类关系的四条演化路径推演报告，含科学证据与来源标注                              |
 | —  | Melomancy App | `/Melomancy App/`       | 建设中 | iOS AI 音乐应用，目前仅有法务文档（privacy / terms），**暂无导航卡片**，未来完成后再单独做介绍页 |
 | —  | 企业官网模板        | `/enterprise-template/` | 本地  | 通信 / 物流企业可复用单页模板。**已在 `.gitignore`（`/enterprise-template`）：不部署、无导航卡片、不入 sitemap**，仅作本地开发素材 |
 
