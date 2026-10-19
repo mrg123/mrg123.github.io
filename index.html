@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MRG Playground · 我的游乐场 — 网页实验合集</title>
-<meta name="description" content="MRG 的个人网页游乐场：3D 迷宫冒险、赛博朋克跑酷、手绘猫咪生成器、绘画应用、网站导航、灾害与金融危机数据研究、AI 演化路径推演，全部项目一站式入口。">
-<meta name="keywords" content="网页游戏,3D迷宫,赛博朋克,创意工具,网站导航,数据研究,AI演化,网页设计,MRG">
+<meta name="description" content="MRG 的个人网页游乐场：3D 迷宫冒险、赛博朋克跑酷、手绘猫咪生成器、绘画应用、网站导航，以及灾害史、AI 演化路径、浏览器智能体架构等研究报告，全部项目一站式入口。">
+<meta name="keywords" content="网页游戏,3D迷宫,赛博朋克,创意工具,网站导航,数据研究,AI演化,浏览器智能体,AI智能体,网页设计,MRG">
 <meta name="author" content="mrg123">
 <meta name="robots" content="index, follow">
 <meta property="og:title" content="MRG Playground · 我的游乐场">
@@ -143,6 +143,8 @@ crossorigin="anonymous"></script>
   .card:hover .spiral { transform: rotate(48deg); }
   .buds { transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.34, 1.56, .64, 1); }
   .card:hover .buds { transform: scale(1.16); }
+  .beam { transform-box: fill-box; transform-origin: 50% 0; transition: transform .7s cubic-bezier(.34, 1.56, .64, 1); }
+  .card:hover .beam { transform: rotate(-6deg); }
 
   .card:nth-child(1) { --d: 0s; }
   .card:nth-child(2) { --d: .12s; }
@@ -151,6 +153,8 @@ crossorigin="anonymous"></script>
   .card:nth-child(5) { --d: .48s; }
   .card:nth-child(6) { --d: .6s; }
   .card:nth-child(7) { --d: .72s; }
+  .card:nth-child(8) { --d: .84s; }
+  .card:nth-child(9) { --d: .96s; }
 
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes fadeIn { to { opacity: 1; } }
@@ -394,6 +398,62 @@ crossorigin="anonymous"></script>
           </g>
         </svg>
         <span class="p-desc">四条演化路径推演：AI 与人类的可能未来。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="browser-agent-explained/">
+      <div class="poster" style="background:linear-gradient(160deg, #e7e9ef, #c9cfdb)">
+        <div class="p-head">
+          <div class="p-row">
+            <span class="p-num">08</span>
+            <span class="p-name">浏览器智能体</span>
+          </div>
+          <span class="p-tag">研究</span>
+        </div>
+        <svg class="p-art" viewBox="0 0 80 80" role="img" aria-label="浏览器智能体 · 原理与底层架构">
+          <g class="art-inner">
+            <rect class="draw" pathLength="1" x="8" y="14" width="64" height="52" rx="6"/>
+            <path class="draw" pathLength="1" d="M8 26 H72"/>
+            <circle class="fade" cx="15" cy="20" r="1.5" fill="var(--faint)"/>
+            <circle class="fade" cx="20" cy="20" r="1.5" fill="var(--faint)"/>
+            <g class="spiral">
+              <path class="draw" pathLength="1" d="M52 45 A12 12 0 1 1 40 33"/>
+              <path class="draw" pathLength="1" d="M38.8 29.4 L44.6 33 L38.8 36.6"/>
+            </g>
+            <circle class="fade gold" cx="40" cy="45" r="3.2"/>
+          </g>
+        </svg>
+        <span class="p-desc">从感知投影到 CDP：智能体如何在浏览器里行动。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="who-pays-for-existence/">
+      <div class="poster" style="background:linear-gradient(160deg, #f6e6d8, #e8c6ab)">
+        <div class="p-head">
+          <div class="p-row">
+            <span class="p-num">09</span>
+            <span class="p-name">谁为存在付费</span>
+          </div>
+          <span class="p-tag">研究</span>
+        </div>
+        <svg class="p-art" viewBox="0 0 80 80" role="img" aria-label="谁为存在付费 · 一次对话的整理">
+          <g class="art-inner">
+            <path class="draw" pathLength="1" d="M40 28 V60"/>
+            <path class="draw" pathLength="1" d="M30 60 H50"/>
+            <g class="beam">
+              <path class="draw" pathLength="1" d="M14 28 H66"/>
+              <path class="draw" pathLength="1" d="M14 28 V36"/>
+              <path class="draw" pathLength="1" d="M8 36 C8 43 20 43 20 36"/>
+              <path class="draw" pathLength="1" d="M66 28 V36"/>
+              <path class="draw" pathLength="1" d="M60 36 C60 43 72 43 72 36"/>
+              <circle class="fade gold" cx="66" cy="39.5" r="2.3"/>
+            </g>
+            <circle class="fade gold" cx="40" cy="28" r="2.2"/>
+          </g>
+        </svg>
+        <span class="p-desc">从智能体循环问到病毒、宇宙与硅基生命。</span>
         <span class="p-arrow" aria-hidden="true">→</span>
       </div>
     </a>

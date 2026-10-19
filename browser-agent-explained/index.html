@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>浏览器智能体 · 原理与底层架构</title>
+<meta name="description" content="从零讲清浏览器智能体（browser agent）的工作原理：三层架构、感知投影、CDP 协议层、运行循环、失效模式与成本模型。">
+<meta name="color-scheme" content="light dark">
+<script>
+  (function () {
+    try {
+      var t = null;
+      try { t = localStorage.getItem('evo-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* ============================================================
+   0. 设计令牌 —— 与《碳基→硅基》推演报告同一套语言
+   ============================================================ */
+:root{
+  --paper:#ffffff; --paper-2:#f7f8fa; --paper-3:#eef0f4;
+  --ink:#0e141b; --ink-2:#39454f; --ink-3:#6b7885; --ink-4:#98a3ae;
+  --rule:#e3e7eb; --rule-2:#ccd4dc;
+  --navy:#12305a; --navy-2:#1d4e89; --navy-3:#2f6fb0; --navy-soft:#eaf1f9;
+  --gold:#8f6b16; --gold-2:#b8912b; --gold-bg:#fbf7ea;
+  --p1:#a32e27; --p1-bg:#fbf0ef;
+  --p2:#14615d; --p2-bg:#eaf4f3;
+  --p3:#6b4a8c; --p3-bg:#f3eff8;
+  --p4:#1d4e89; --p4-bg:#ecf2f9;
+  --ok:#1c6b45; --warn:#a55a00; --bad:#992d22;
+  --shadow-1:0 1px 2px rgba(16,24,32,.05), 0 2px 8px rgba(16,24,32,.04);
+  --shadow-2:0 2px 6px rgba(16,24,32,.06), 0 14px 36px rgba(16,24,32,.07);
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --maxw:1080px;
+  --r:10px; --r-sm:6px;
+}
+[data-theme="dark"]{
+  --paper:#0f141a; --paper-2:#151b23; --paper-3:#1c242e;
+  --ink:#edf1f5; --ink-2:#c0cad4; --ink-3:#8d99a6; --ink-4:#6b7885;
+  --rule:#252f3a; --rule-2:#33404d;
+  --navy:#0c1f38; --navy-2:#4d8fd6; --navy-3:#6ba6e6; --navy-soft:#16232f;
+  --gold:#d4ae52; --gold-2:#d4ae52; --gold-bg:#1f1c12;
+  --p1:#e0736a; --p1-bg:#241715;
+  --p2:#4fb3ab; --p2-bg:#10201f;
+  --p3:#a98ad0; --p3-bg:#1d1727;
+  --p4:#6ba6e6; --p4-bg:#131f2c;
+  --ok:#4bbd85; --warn:#e0a13a; --bad:#e0736a;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 2px 6px rgba(0,0,0,.4), 0 14px 36px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  font-variant-numeric:tabular-nums;
+  transition:background-color .25s ease, color .25s ease;
+}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:700; line-height:1.28; margin:0; letter-spacing:-.01em}
+p{margin:0 0 1em}
+a{color:var(--navy-2); text-decoration:none; border-bottom:1px solid color-mix(in srgb, var(--navy-2) 30%, transparent)}
+a:hover{border-bottom-color:var(--navy-2)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--navy-2); outline-offset:2px; border-radius:3px}
+code{font-family:var(--mono); font-size:.88em; background:var(--paper-3);
+  padding:1px 5px; border-radius:4px; color:var(--ink)}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px}
+@media(max-width:640px){.wrap{padding:0 20px}}
+
+/* ---------- 顶栏 ---------- */
+.progress{position:fixed; top:0; left:0; height:2px; width:0; z-index:120;
+  background:linear-gradient(90deg,var(--navy-2),var(--gold-2)); transition:width .1s linear}
+.topbar{position:sticky; top:0; z-index:100;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(14px); -webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--rule)}
+.topbar-in{max-width:var(--maxw); margin:0 auto; padding:0 28px; height:58px; display:flex; align-items:center; gap:18px}
+@media(max-width:640px){.topbar-in{padding:0 20px; gap:10px}}
+.brand{display:flex; align-items:center; gap:10px; min-width:0}
+.brand-mark{width:21px; height:21px; flex:none}
+.brand-txt{font-family:var(--serif); font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.nav{display:flex; gap:1px; margin-left:auto; align-items:center; overflow-x:auto; scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{border:0; font-size:12.3px; color:var(--ink-3); padding:6px 9px; border-radius:var(--r-sm);
+  font-weight:500; white-space:nowrap; letter-spacing:.02em; transition:.16s}
+.nav a:hover{color:var(--ink); background:var(--paper-3)}
+.nav a.active{color:var(--navy-2); background:var(--navy-soft)}
+@media(max-width:1000px){.nav{display:none}}
+.tgl{border:1px solid var(--rule-2); background:transparent; color:var(--ink-2);
+  width:34px; height:34px; border-radius:var(--r-sm); cursor:pointer; flex:none;
+  display:grid; place-items:center; transition:.16s}
+.tgl:hover{background:var(--paper-3); color:var(--ink)}
+.tgl svg{width:16px; height:16px}
+[data-theme="light"] .i-moon,[data-theme="dark"] .i-sun{display:none}
+
+/* ---------- Hero ---------- */
+.hero{position:relative; overflow:hidden;
+  background:
+    radial-gradient(900px 380px at 80% -10%, rgba(47,111,176,.28), transparent 62%),
+    radial-gradient(680px 340px at 6% 106%, rgba(184,145,43,.14), transparent 60%),
+    linear-gradient(168deg,#0a1729 0%,#102542 46%,#0e1f38 100%);
+  color:#eef3f9; border-bottom:1px solid var(--rule)}
+.hero::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.45;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent)}
+.hero-in{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:66px 28px 56px}
+@media(max-width:640px){.hero-in{padding:46px 20px 40px}}
+.eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:11px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:#9dc0e6;
+  border:1px solid rgba(157,192,230,.30); background:rgba(157,192,230,.08);
+  padding:6px 13px; border-radius:100px; margin-bottom:22px}
+.eyebrow .dot{width:5px; height:5px; border-radius:50%; background:var(--gold-2); flex:none;
+  box-shadow:0 0 0 3px rgba(184,145,43,.20)}
+.hero h1{font-size:clamp(28px,4.8vw,50px); font-weight:900; letter-spacing:-.025em;
+  line-height:1.14; color:#fff; margin-bottom:20px; max-width:20ch}
+.hero h1 .accent{background:linear-gradient(100deg,#e8c86a,#c9a227 60%);
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.hero .lede{font-size:clamp(14.5px,1.5vw,17px); color:#b9cade; max-width:60ch;
+  line-height:1.82; font-weight:300; margin-bottom:28px}
+.hero .lede strong{color:#e9f1f9; font-weight:500}
+.hero-meta{display:flex; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,.13); padding-top:20px}
+.hero-meta div{padding-right:32px; margin-right:32px; border-right:1px solid rgba(255,255,255,.13)}
+.hero-meta div:last-child{border-right:0; margin-right:0; padding-right:0}
+@media(max-width:720px){
+  .hero-meta{gap:16px 0}
+  .hero-meta div{padding-right:18px; margin-right:18px}
+  .hero-meta div:nth-child(3){border-right:0}
+}
+.hero-meta dt{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:#7f9cb8; margin-bottom:4px; font-weight:500}
+.hero-meta dd{margin:0; font-size:14px; color:#dee9f4; font-weight:500; font-family:var(--serif)}
+
+/* ---------- 区块 ---------- */
+section.band{padding:64px 0; border-bottom:1px solid var(--rule)}
+@media(max-width:640px){section.band{padding:44px 0}}
+.band.alt{background:var(--paper-2)}
+.sec-head{margin-bottom:34px}
+.sec-num{font-family:var(--mono); font-size:11.5px; font-weight:500; letter-spacing:.18em;
+  color:var(--ink-4); display:block; margin-bottom:9px}
+.sec-head h2{font-size:clamp(22px,2.9vw,30px); margin-bottom:12px; letter-spacing:-.015em}
+.sec-head p{color:var(--ink-3); max-width:72ch; font-size:15px; margin:0}
+.rule-gold{width:36px; height:2px; background:var(--gold-2); margin:18px 0 0; border-radius:2px}
+
+/* ---------- 标签 ---------- */
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500;
+  letter-spacing:.06em; padding:2px 7px; border-radius:4px; white-space:nowrap;
+  border:1px solid transparent; font-family:var(--sans); vertical-align:middle}
+.tag-src{color:var(--navy-2); background:var(--navy-soft); border-color:color-mix(in srgb,var(--navy-2) 24%, transparent)}
+.tag-ours{color:var(--gold); background:var(--gold-bg); border-color:color-mix(in srgb,var(--gold-2) 34%, transparent)}
+.tag-vend{color:var(--warn); background:color-mix(in srgb,var(--warn) 8%, transparent); border-color:color-mix(in srgb,var(--warn) 26%, transparent)}
+
+/* ---------- 引用/提示 ---------- */
+.quote{border-left:3px solid var(--gold-2); background:var(--gold-bg);
+  padding:16px 20px; border-radius:0 var(--r) var(--r) 0; margin:0}
+.quote .qlabel{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; display:block; margin-bottom:6px}
+.quote p{margin:0; font-size:15px; color:var(--ink-2); line-height:1.78}
+.quote p strong{color:var(--ink); font-weight:500}
+
+.note{border:1px solid var(--rule); border-left:3px solid var(--navy-2);
+  background:var(--paper-2); border-radius:0 var(--r) var(--r) 0;
+  padding:15px 20px; font-size:13.8px; line-height:1.74; color:var(--ink-2); margin-top:22px}
+.note b{color:var(--ink); font-weight:600}
+.note.warn{border-left-color:var(--warn); background:color-mix(in srgb,var(--warn) 6%, var(--paper))}
+
+/* ---------- 代码块 ---------- */
+.code{position:relative; margin:18px 0; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper-2); overflow:hidden}
+.code-bar{display:flex; align-items:center; gap:8px; padding:9px 15px;
+  border-bottom:1px solid var(--rule); background:var(--paper-3)}
+.code-bar .dot{width:9px; height:9px; border-radius:50%; background:var(--rule-2); flex:none}
+.code-bar .fn{font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  letter-spacing:.03em; margin-left:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.code-bar .lb{margin-left:auto; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; flex:none}
+pre{margin:0; padding:16px 0 16px 0; overflow-x:auto; counter-reset:ln;
+  font-family:var(--mono); font-size:12.8px; line-height:1.72; tab-size:2}
+pre .l{display:block; padding:0 18px 0 52px; position:relative; white-space:pre}
+pre .l::before{counter-increment:ln; content:counter(ln); position:absolute; left:0; width:38px;
+  text-align:right; color:var(--ink-4); opacity:.6; font-size:11px; user-select:none}
+pre .l.mark{background:color-mix(in srgb,var(--gold-2) 10%, transparent)}
+.cm{color:var(--ink-4); font-style:normal}
+.kw{color:var(--p3); font-weight:500}
+.st{color:var(--p2)}
+.fn2{color:var(--navy-2)}
+.nm{color:var(--p1)}
+[data-theme="dark"] .kw{color:#c9a9ee}
+[data-theme="dark"] .st{color:#7fd8ce}
+[data-theme="dark"] .fn2{color:#7fb6ea}
+[data-theme="dark"] .nm{color:#e79b93}
+
+/* ---------- 分层架构 ---------- */
+.stack{display:grid; gap:10px; margin:8px 0 30px}
+.layer{display:grid; grid-template-columns:56px 1fr auto; gap:18px; align-items:center;
+  padding:20px 22px; background:var(--paper); border:1px solid var(--rule);
+  border-left:3px solid var(--lc); cursor:pointer; transition:.18s; position:relative;
+  width:100%; border-radius:var(--r)}
+.layer:hover{background:color-mix(in srgb,var(--lc) 5%, var(--paper))}
+.layer:focus-visible{outline:2px solid var(--lc); outline-offset:2px}
+.layer.on{background:color-mix(in srgb,var(--lc) 9%, var(--paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 40%, transparent);
+  border-radius:var(--r) var(--r) 0 0; border-bottom-color:transparent}
+.layer-mid{min-width:0}
+.layer-ico{width:40px; height:40px; border-radius:8px; display:grid; place-items:center;
+  background:color-mix(in srgb,var(--lc) 12%, transparent); border:1px solid color-mix(in srgb,var(--lc) 30%, transparent)}
+.layer-ico svg{width:19px; height:19px; stroke:var(--lc); fill:none; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round}
+.layer h4{font-size:16px; margin-bottom:2px; font-family:var(--serif)}
+.layer .role{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono)}
+.layer .io{font-size:13px; color:var(--ink-3); line-height:1.6; margin-top:5px}
+.layer .chev{color:var(--ink-4); font-size:16px; transition:transform .2s; flex:none}
+.layer.on .chev{transform:rotate(90deg); color:var(--lc)}
+@media(max-width:620px){
+  .layer{grid-template-columns:44px 1fr; gap:14px; padding:16px}
+  .layer .chev{display:none}
+  .layer-ico{width:34px;height:34px}
+}
+
+.ldetail{display:none; margin-top:-10px; padding:22px 24px;
+  border:1px solid var(--rule); border-top:0; border-left:3px solid var(--lc);
+  border-radius:0 0 var(--r) var(--r);
+  background:var(--paper-2)}
+.ldetail.show{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){.ldetail.show{animation:none}}
+.ldetail h5{font-family:var(--serif); font-size:14.5px; margin:0 0 8px;
+  color:var(--ink); display:flex; align-items:center; gap:8px}
+.ldetail h5::before{content:""; width:3px; height:14px; background:var(--lc); border-radius:2px; flex:none}
+.ldetail p{font-size:13.8px; color:var(--ink-2); margin:0 0 10px; line-height:1.74}
+.ldetail p:last-child{margin:0}
+.ldetail ul{margin:0 0 12px; padding-left:18px}
+.ldetail li{font-size:13.4px; color:var(--ink-2); line-height:1.72; margin-bottom:5px}
+.ldetail li:last-child{margin-bottom:0}
+.ldetail code{font-size:12px}
+
+/* ---------- 循环图 ---------- */
+.cyc{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:6px 0 8px;
+  position:relative}
+@media(max-width:760px){.cyc{grid-template-columns:repeat(2,1fr)}}
+.cyc-s{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 16px; box-shadow:var(--shadow-1); position:relative; overflow:hidden}
+.cyc-s::before{content:attr(data-n); position:absolute; top:8px; right:11px;
+  font-family:var(--mono); font-size:26px; font-weight:700; color:var(--lc);
+  opacity:.10; line-height:1}
+.cyc-s .ct{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; margin-bottom:7px; font-family:var(--mono)}
+.cyc-s h4{font-size:14.5px; margin-bottom:6px}
+.cyc-s p{font-size:12.6px; color:var(--ink-3); margin:0; line-height:1.62}
+.cyc-s code{font-size:11px; padding:0 3px}
+.cyc-loop{display:flex; align-items:center; gap:10px; justify-content:center;
+  margin:14px 0 0; font-size:12.2px; color:var(--ink-4); font-family:var(--mono)}
+.cyc-loop .arw{flex:1; height:1px; background:var(--rule-2); position:relative; max-width:220px}
+.cyc-loop .arw::after{content:""; position:absolute; right:0; top:-3.5px;
+  border:4px solid transparent; border-left-color:var(--rule-2)}
+
+/* ---------- 表格 ---------- */
+.tbl-wrap{overflow-x:auto; margin:18px 0; border:1px solid var(--rule);
+  border-radius:var(--r); background:var(--paper)}
+table{border-collapse:collapse; width:100%; font-size:13.4px; min-width:560px}
+th,td{text-align:left; padding:11px 15px; border-bottom:1px solid var(--rule);
+  vertical-align:top; line-height:1.64}
+th{background:var(--paper-3); font-weight:600; font-size:11.5px; letter-spacing:.05em;
+  color:var(--ink-2); white-space:nowrap; text-transform:uppercase; font-family:var(--sans)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--navy-2) 3%, transparent)}
+td b{font-weight:600; color:var(--ink)}
+td code{font-size:11.6px; white-space:nowrap}
+.tick{color:var(--ok); font-weight:700}
+.cross{color:var(--bad); font-weight:700}
+.mid{color:var(--warn); font-weight:700}
+
+/* ---------- 感知三选一卡 ---------- */
+.perc{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0}
+@media(max-width:840px){.perc{grid-template-columns:1fr}}
+.pcard{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  box-shadow:var(--shadow-1); overflow:hidden; display:flex; flex-direction:column}
+.pcard-h{padding:15px 18px; border-bottom:1px solid var(--rule);
+  background:color-mix(in srgb,var(--lc) 7%, var(--paper))}
+.pcard-h .pt{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono); margin-bottom:4px}
+.pcard-h h4{font-size:15px}
+.pcard-b{padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:11px}
+.pcard-b p{font-size:13px; color:var(--ink-2); margin:0; line-height:1.7}
+.pcard-b .kv{font-size:12.2px; color:var(--ink-3); line-height:1.6}
+.pcard-b .kv b{color:var(--ink); font-weight:600}
+.pcard-b .cd{font-family:var(--mono); font-size:11px; background:var(--paper-3);
+  padding:6px 8px; border-radius:4px; color:var(--ink-2); word-break:break-all; line-height:1.55}
+.pcard-f{padding:11px 18px; border-top:1px solid var(--rule); background:var(--paper-2);
+  font-size:11.8px; color:var(--ink-3); line-height:1.6}
+.pcard-f b{color:var(--bad); font-weight:600}
+
+/* ---------- 使用分布 ---------- */
+.bars{margin:16px 0 8px}
+.bar-row{display:grid; grid-template-columns:172px 1fr 48px; gap:13px; align-items:center;
+  padding:7px 0; border-bottom:1px solid color-mix(in srgb,var(--rule) 60%, transparent)}
+.bar-row:last-child{border-bottom:0}
+@media(max-width:620px){.bar-row{grid-template-columns:112px 1fr 42px; gap:9px}}
+.bar-lb{font-size:13px; color:var(--ink-2); line-height:1.4}
+.bar-lb small{display:block; font-size:10.5px; color:var(--ink-4); font-family:var(--mono)}
+.bar-tr{height:20px; background:var(--paper-3); border-radius:4px; overflow:hidden}
+.bar-f{height:100%; border-radius:4px; background:var(--bc);
+  width:0; transition:width .9s cubic-bezier(.2,.7,.3,1)}
+.bar-v{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--bc); text-align:right}
+.bar-note{font-size:12px; color:var(--ink-4); margin-top:12px; line-height:1.7}
+
+/* ---------- 失效映射 ---------- */
+.fmap{display:grid; gap:10px; margin-top:16px}
+.fm{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start;
+  padding:16px 18px; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper); border-left:3px solid var(--lc)}
+.fm-n{font-family:var(--mono); font-size:11px; font-weight:700; color:#fff;
+  background:var(--lc); border-radius:4px; padding:2px 7px; height:fit-content; white-space:nowrap; margin-top:2px}
+[data-theme="dark"] .fm-n{color:#0f141a}
+.fm h4{font-size:14.5px; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.fm p{font-size:13.2px; color:var(--ink-2); margin:0 0 7px; line-height:1.7}
+.fm p:last-child{margin:0}
+.fm .diag{font-size:12.4px; color:var(--ink-3); padding-top:7px;
+  border-top:1px dashed var(--rule-2)}
+.fm .diag b{color:var(--lc); font-weight:600}
+
+/* ---------- 步骤清单 ---------- */
+.steps{counter-reset:st; list-style:none; margin:16px 0 0; padding:0}
+.steps li{counter-increment:st; position:relative; padding:0 0 18px 42px; margin:0;
+  border-left:1px solid var(--rule-2); margin-left:13px}
+.steps li:last-child{border-left-color:transparent; padding-bottom:0}
+.steps li::before{content:counter(st); position:absolute; left:-13px; top:1px;
+  width:26px; height:26px; border-radius:50%; background:var(--navy-2); color:#fff;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11.5px;
+  font-weight:700; border:2px solid var(--paper)}
+.steps h4{font-size:14.5px; margin-bottom:4px}
+.steps p{font-size:13.4px; color:var(--ink-2); margin:0; line-height:1.72}
+.steps code{font-size:11.8px}
+
+/* ---------- 公式 ---------- */
+.formula{background:var(--paper-2); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 22px; margin:16px 0; text-align:center; overflow-x:auto}
+.formula .fx{font-family:var(--mono); font-size:14px; color:var(--ink);
+  display:inline-block; white-space:nowrap; letter-spacing:.01em}
+.formula .fx .num{border-bottom:1px solid var(--ink-3); padding:0 6px 3px}
+.formula .fx .den{padding:6px 6px 0}
+.formula .cap{font-size:11.8px; color:var(--ink-4); margin-top:10px; line-height:1.6}
+
+/* ---------- 来源 ---------- */
+.src-list{list-style:none; margin:0; padding:0}
+.src-list li{position:relative; padding-left:30px; margin-bottom:13px;
+  font-size:13px; line-height:1.66; color:var(--ink-2)}
+.src-list li::before{content:"▸"; position:absolute; left:0; top:0;
+  color:var(--gold-2); font-size:12px}
+.src-list li b{color:var(--ink); font-weight:600}
+.src-list li a{word-break:break-all; font-size:12.3px}
+.src-list li .pub{display:block; color:var(--ink-4); font-size:11.8px; margin-top:1px}
+
+footer{background:var(--paper-2); padding:38px 0; border-top:1px solid var(--rule)}
+footer p{font-size:12.4px; color:var(--ink-3); line-height:1.74; margin:0 0 8px}
+footer .fl{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; margin-bottom:9px}
+.disc{border-left:2px solid var(--gold-2); padding-left:14px; font-size:12.2px;
+  color:var(--ink-3); line-height:1.74}
+
+/* ---------- 动效 ---------- */
+.rv{opacity:0; transform:translateY(14px);
+  transition:opacity .55s cubic-bezier(.2,.7,.3,1), transform .55s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1; transform:none; transition:none}
+  .bar-f{transition:none}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  :root{--paper:#fff; --paper-2:#fff; --paper-3:#f4f4f4; --ink:#000; --ink-2:#222;
+    --ink-3:#444; --rule:#bbb; --rule-2:#999; --shadow-1:none; --shadow-2:none}
+  .topbar,.progress,.tgl,.cyc-loop{display:none !important}
+  .hero{background:#fff !important; color:#000}
+  .hero h1{color:#000}
+  .hero h1 .accent{color:#8a6a18; -webkit-text-fill-color:#8a6a18}
+  .hero .lede{color:#333} .hero .lede strong{color:#000}
+  .hero::after{display:none}
+  .eyebrow{color:#333; border-color:#999; background:none}
+  .hero-meta dt{color:#555} .hero-meta dd{color:#000}
+  .hero-meta div{border-color:#bbb}
+  .rv{opacity:1 !important; transform:none !important}
+  .ldetail{display:block !important}
+  section.band{padding:20px 0}
+  .layer,.pcard,.fm,.cyc-s,.tbl-wrap{break-inside:avoid}
+  a{color:#000; border-bottom:0}
+  body{font-size:10pt; line-height:1.45}
+  pre{font-size:9pt}
+  .bar-f{width:var(--w) !important}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="prog" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="2.5" y="4" width="19" height="14" rx="2" stroke="var(--navy-2)" stroke-width="1.6"/>
+        <path d="M2.5 8.2h19" stroke="var(--navy-2)" stroke-width="1.6"/>
+        <circle cx="5.2" cy="6.1" r=".85" fill="var(--gold-2)"/>
+        <circle cx="7.8" cy="6.1" r=".85" fill="var(--rule-2)"/>
+        <path d="M9.6 15.2l-2-2 2-2M14.4 11.2l2 2-2 2" stroke="var(--gold-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-txt">浏览器智能体 · 原理与底层架构</span>
+    </div>
+    <nav class="nav" id="nav" aria-label="章节导航">
+      <a href="#arch">架构</a>
+      <a href="#loop">循环</a>
+      <a href="#perceive">感知</a>
+      <a href="#protocol">协议</a>
+      <a href="#build">实现</a>
+      <a href="#choose">选型</a>
+      <a href="#usage">分布</a>
+      <a href="#fail">失效</a>
+      <a href="#cost">成本</a>
+      <a href="#start">起步</a>
+    </nav>
+    <button class="tgl" id="tgl" type="button" aria-label="切换深色 / 浅色主题" title="切换主题">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.4M12 19.4v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ══════════ HERO ══════════ -->
+<div class="hero">
+  <div class="hero-in">
+    <div class="eyebrow"><span class="dot"></span>技术讲解 · 从概念到协议层</div>
+    <h1>模型<span class="accent">从来没有看见过</span>那张网页</h1>
+    <p class="lede">
+      浏览器智能体（browser agent）常被描述成「AI 自己上网」。但它真正做的事要朴素得多：
+      把页面压缩成一段<strong>文本或图片</strong>交给模型，模型回一个<strong>动作</strong>，
+      然后重复。理解这个「投影—动作」循环，就能推导出它的全部能力边界。
+      本文按 <strong>模型 / harness / 浏览器</strong> 三层拆开，一直讲到 CDP 消息。
+    </p>
+    <dl class="hero-meta">
+      <div><dt>主题</dt><dd>浏览器智能体架构</dd></div>
+      <div><dt>依据</dt><dd>Browser Use 官方博客 2026-10-18</dd></div>
+      <div><dt>深度</dt><dd>到协议层 · 可上手实现</dd></div>
+      <div><dt>阅读</dt><dd>约 12 分钟</dd></div>
+    </dl>
+  </div>
+</div>
+
+<!-- ══════════ 0. 一句话定义 ══════════ -->
+<section class="band">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">00 / 定义</span>
+      <h2>它是什么，以及那个反直觉的关键点</h2>
+      <p>先用严格的一句话把边界划清楚，再引入贯穿全文的洞察。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="quote rv" style="margin-bottom:26px">
+      <span class="qlabel">定义（原文表述）</span>
+      <p>浏览器智能体是<b>一种软件：它用一个 AI 模型，朝着某个目标去操作网页浏览器</b>。你描述任务，它自己去打开页面、导航、选择动作，并在继续之前检查结果。因为能适应意外变化并从错误中恢复，它特别适合<b>无法预先写死步骤</b>的流程。</p>
+    </div>
+
+    <div class="note rv" style="margin-top:0">
+      <b>贯穿全文的洞察：</b>模型并不"看见"浏览器。浏览器是活的、有状态的、持续变化的；
+      而模型只能读 token。所以中间必须有一层做翻译——把页面<b>投影</b>成文本或图像，再把模型的
+      决定<b>翻译</b>回鼠标键盘事件。这一层叫 harness。<b>投影方式是所有取舍的源头</b>：
+      投影得准，它就聪明；投影失真，它就自信地做错事。
+    </div>
+
+    <div class="perc rv" style="margin-top:26px; --lc:var(--navy-2)">
+      <div class="pcard">
+        <div class="pcard-h"><div class="pt">输入</div><h4>一句自然语言目标</h4></div>
+        <div class="pcard-b"><p>「找出这个仓库的 star 数」「把这个月的发票下载下来」。没有选择器，没有步骤，只有意图。</p></div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-h"><div class="pt">过程</div><h4>循环里的判断</h4></div>
+        <div class="pcard-b"><p>每一步都要看当前页面、决定点哪里或输入什么、然后确认这一步是否奏效。</p></div>
+      </div>
+      <div class="pcard">
+        <div class="pcard-h"><div class="pt">输出</div><h4>一个被校验过的结果</h4></div>
+        <div class="pcard-b"><p>结构化数据、一个已提交的表单、或一份带引用的答案。<b>注意：跑完不等于成功。</b></p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 1. 三层架构 ══════════ -->
+<section class="band alt" id="arch">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">01 / 架构</span>
+      <h2>三层：模型、harness、浏览器</h2>
+      <p>原文把浏览器智能体的组成拆成三部分。点击任意一层展开它的职责、输入输出与典型故障点。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="stack rv" id="stack">
+      <div class="layer" role="button" tabindex="0" data-layer="model" style="--lc:var(--p4)" aria-expanded="false" aria-controls="d-model">
+        <span class="layer-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.7 7.6l2.9 8M16.3 7.6l-2.9 8M8.2 6h7.6"/></svg></span>
+        <div class="layer-mid">
+          <div class="role">Layer 1 · 决策</div>
+          <h4>Model（模型）</h4>
+          <div class="io">读页面投影 → 决定下一步做什么。整条链上唯一「会思考」的部分。</div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-model" style="--lc:var(--p4)">
+        <h5>它负责什么</h5>
+        <p>根据任务和当前页面，选出一个动作。它拿到的页面信息可能是文本、结构化数据，也可能是截图——由 harness 决定。</p>
+        <h5>输入 / 输出</h5>
+        <ul>
+          <li><b>输入：</b>系统提示（含工具定义）+ 任务 + 当前页面投影 + 历史动作记录</li>
+          <li><b>输出：</b>一个工具调用，例如 <code>click(index=7)</code>、<code>type(text="…")</code>、<code>done(result=…)</code></li>
+        </ul>
+        <h5>典型故障</h5>
+        <p>选错元素、把页面上的诱导文字当成用户指令（提示注入）、在没真正完成时宣称完成。<b>这类失败表现为「它很自信但结果是错的」。</b></p>
+      </div>
+
+      <div class="layer" role="button" tabindex="0" data-layer="harness" style="--lc:var(--p2)" aria-expanded="false" aria-controls="d-harness">
+        <span class="layer-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.7 4.2v4.3h-4.3"/><circle cx="12" cy="12" r="2.6"/></svg></span>
+        <div class="layer-mid">
+          <div class="role">Layer 2 · 控制</div>
+          <h4>Harness（执行框架）</h4>
+          <div class="io">持有循环、拼装上下文、执行工具调用、把结果回灌给模型、在超限时刹车。</div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-harness" style="--lc:var(--p2)">
+        <h5>它负责什么</h5>
+        <p>让循环继续转下去：给模型上下文，运行模型请求的工具，把结果传回去供模型决定下一步。<b>它是唯一同时看得见「模型」和「浏览器」的一层</b>，也因此承担了绝大多数工程复杂度。</p>
+        <h5>输入 / 输出</h5>
+        <ul>
+          <li><b>输入：</b>模型的动作请求；浏览器的页面状态</li>
+          <li><b>输出：</b>给模型的投影；给浏览器的协议指令</li>
+        </ul>
+        <h5>必须实现的四件事</h5>
+        <ul>
+          <li><b>投影：</b>把页面转成模型能吃的形式（见下一节）</li>
+          <li><b>循环：</b>观察 → 决策 → 执行 → 校验</li>
+          <li><b>限额：</b>时间、步数、成本三个维度的硬刹车</li>
+          <li><b>人在环：</b>遇到登录、验证码、敏感动作时挂起等人</li>
+        </ul>
+        <p style="margin-top:10px">原文提到 Browser Use 的 <b>Browser Harness</b> 走了一条变体路线：它把浏览器能力直接挂到<b>已有的编程智能体</b>上，让那个智能体在运行过程中<b>自己写缺失的辅助函数</b>，而循环仍由编程智能体的 runtime 管理——相当于不给模型新框架，只给它新工具。</p>
+      </div>
+
+      <div class="layer" role="button" tabindex="0" data-layer="browser" style="--lc:var(--p3)" aria-expanded="false" aria-controls="d-browser">
+        <span class="layer-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.4"/><path d="M2.5 8.4h19M6 6.2h.01M8.6 6.2h.01"/></svg></span>
+        <div class="layer-mid">
+          <div class="role">Layer 3 · 状态</div>
+          <h4>Browser（浏览器）</h4>
+          <div class="io">真正加载网站，持有标签页、cookie、登录态；通过协议被外部驱动。</div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-browser" style="--lc:var(--p3)">
+        <h5>它负责什么</h5>
+        <p>加载网站，并跟踪标签页、cookie 和登录状态。它不是「被模拟」的——它是一个真浏览器在真渲染。<b>这是浏览器智能体相对纯 HTTP 抓取的根本优势：它继承了一个真实人类会话的全部上下文。</b></p>
+        <h5>怎么被驱动</h5>
+        <ul>
+          <li>通常通过<b>浏览器协议</b>控制：<code>Chrome DevTools Protocol (CDP)</code> 或 <code>WebDriver BiDi</code></li>
+          <li>也可以通过 <b>MCP server</b> 暴露成工具，例如 <code>Playwright MCP</code> 把 Playwright 包装成模型可调用的工具</li>
+          <li>服务器场景常用<b>无头模式</b>：没有可见窗口，但依然渲染页面、依然能截图</li>
+        </ul>
+        <h5>典型故障</h5>
+        <p>被反爬系统质询或封禁、会话过期、多因素认证需要人介入。<b>这一类失败换更强的模型也解决不了</b>——因为瓶颈不在推理，而在访问权。</p>
+      </div>
+    </div>
+
+    <div class="note rv">
+      <b>为什么必须分成三层？</b>因为三者的失败模式完全不同，而且修法不同。模型变强只改善第一层；harness 写好限额只改善第二层；买住宅代理只改善第三层。
+      把这三件事混成一句「AI 上网」，就没法定位问题。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 2. 运行循环 ══════════ -->
+<section class="band" id="loop">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">02 / 循环</span>
+      <h2>本质就是一个循环</h2>
+      <p>原文的说法很直接：「浏览器智能体基本上就是一个花哨的循环。」这句话是整个架构的骨架。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="cyc rv">
+      <div class="cyc-s" data-n="1" style="--lc:var(--p4)">
+        <div class="ct">Observe</div>
+        <h4>观察</h4>
+        <p>把当前页面投影成模型可读的形式，<code>page = observe()</code></p>
+      </div>
+      <div class="cyc-s" data-n="2" style="--lc:var(--p2)">
+        <div class="ct">Decide</div>
+        <h4>决策</h4>
+        <p>模型根据投影选一个动作，<code>action = pickAction(page)</code></p>
+      </div>
+      <div class="cyc-s" data-n="3" style="--lc:var(--p3)">
+        <div class="ct">Act</div>
+        <h4>执行</h4>
+        <p>通过协议把动作变成真实事件，<code>result = execute(action)</code></p>
+      </div>
+      <div class="cyc-s" data-n="4" style="--lc:var(--gold)">
+        <div class="ct">Verify</div>
+        <h4>校验</h4>
+        <p>检查这一步是否奏效，<code>goalReached = checkResult(result)</code></p>
+      </div>
+    </div>
+    <div class="cyc-loop rv"><span>未达目标</span><span class="arw"></span><span>回到观察</span></div>
+
+    <div class="code rv">
+      <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">loop.pseudo</span><span class="lb">原文伪代码</span></div>
+      <pre><span class="l"><span class="kw">while</span> (!goalReached) {</span><span class="l">    page = <span class="fn2">observe</span>()</span><span class="l">    action = <span class="fn2">pickAction</span>(page)</span><span class="l">    result = <span class="fn2">execute</span>(action)</span><span class="l">    goalReached = <span class="fn2">checkResult</span>(result)</span><span class="l">}</span></pre>
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:34px 0 14px">为什么它<b>必须</b>是循环，而不是一次调用</h3>
+    <p class="rv" style="font-size:14.6px; color:var(--ink-2); max-width:72ch">
+      因为网页是<b>有状态且异步的</b>。这是新手最容易低估的地方，也是绝大多数"明明点对了却没生效"的根因。
+    </p>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th>异步问题</th><th>后果</th><th>harness 该怎么处理</th></tr></thead>
+        <tbody>
+          <tr><td><b>命令成功 ≠ 页面就绪</b></td><td>导航指令返回了，页面可能还在加载；此时读到的内容是旧的</td><td>等导航<b>事件</b>（如 <code>Page.loadEventFired</code>）并加超时，而不是等命令响应</td></tr>
+          <tr><td><b>页面随时会变</b></td><td>菜单弹出、弹窗盖住表单、新结果替换了刚才读的内容</td><td>每次动作后<b>重新观察</b>，不复用上一轮的投影</td></tr>
+          <tr><td><b>旧引用会失效</b></td><td>导航会销毁 JS 执行上下文，之前拿到的对象引用全部作废</td><td>不要缓存元素句柄，用"重新查询"代替"持有引用"</td></tr>
+          <tr><td><b>单页应用延迟渲染</b></td><td>文档加载完成不代表内容就绪</td><td>等到你真正需要的那个元素出现，而不是等 <code>load</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn rv">
+      <b>停止条件同样属于架构的一部分。</b>原文明确要求：harness 应当在触及<b>时间、步数或成本</b>上限时终止运行。没有这三个刹车，一个误判的循环会持续烧钱——因为每多转一圈就多一次模型调用和一段浏览器时长。
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:34px 0 12px">人在环不是退让，是设计</h3>
+    <p class="rv" style="font-size:14.6px; color:var(--ink-2); max-width:72ch; margin:0">
+      循环允许随时<b>挂起等人</b>：让人登录、补一个缺失信息、或批准一个敏感动作。
+      把它当成架构的一等公民，比事后补一个"异常处理"要可靠得多。
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 3. 感知层 ══════════ -->
+<section class="band alt" id="perceive">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">03 / 感知</span>
+      <h2>页面怎么变成模型能读的东西</h2>
+      <p>这是整个架构里最关键的工程决策。原文列出两条路，且可以同时使用：结构化数据，或截图。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">路线 A · 结构化</div><h4>DOM</h4></div>
+        <div class="pcard-b">
+          <p>文档对象模型：表示页面上的元素与文本。它是浏览器解析标记后形成的树。</p>
+          <div class="kv"><b>优点</b>信息最全，能拿到文本、属性、层级</div>
+          <div class="kv"><b>缺点</b>体积极大、噪声极多，塞进上下文很贵</div>
+          <div class="cd">DOM.getDocument / DOM.querySelectorAll</div>
+        </div>
+        <div class="pcard-f"><b>典型失效：</b>页面结构语义混乱，或用了大量无语义 div，模型无法判断哪个能点。</div>
+      </div>
+
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">路线 B · 结构化（语义）</div><h4>无障碍树</h4></div>
+        <div class="pcard-b">
+          <p>浏览器<b>基于 DOM 构建</b>的辅助树，供屏幕阅读器等辅助技术使用。每个对象有四个关键属性。</p>
+          <div class="kv"><b>name</b>怎么称呼它（如「搜索」）· <b>role</b>它是什么（按钮 / 导航 / 列表）</div>
+          <div class="kv"><b>state</b>它的状态（已勾选 / 已展开）· <b>description</b>补充说明</div>
+          <div class="cd">Accessibility.getFullAXTree</div>
+        </div>
+        <div class="pcard-f"><b>核心优势：</b>可以<b>按名字和角色</b>识别控件，不必靠猜它在图片里的位置。</div>
+      </div>
+
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">路线 C · 视觉</div><h4>截图</h4></div>
+        <div class="pcard-b">
+          <p>让具备视觉能力的模型直接读渲染后的页面，并<b>输出坐标</b>去点击。</p>
+          <div class="kv"><b>优点</b>对 canvas 等无标注的可视界面有效</div>
+          <div class="kv"><b>缺点</b>小控件难点准；截图缩放后细节丢失</div>
+          <div class="cd">Page.captureScreenshot → Input.dispatchMouseEvent</div>
+        </div>
+        <div class="pcard-f"><b>典型失效：</b>目标控件只有几个像素宽，或需要精确输入文字。</div>
+      </div>
+    </div>
+
+    <div class="note rv">
+      <b>把两种路线对照着看：</b>无障碍树回答的是「<b>这是什么、叫什么</b>」，截图回答的是「<b>它在哪、长什么样</b>」。
+      前者适合表单、按钮、链接这类有语义的控件；后者适合画布、图表、自绘 UI。实践中通常<b>先取无障碍树</b>，
+      遇到解释不了的部分<b>再退回截图</b>。
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">一个容易被忽略的性能代价</h3>
+    <p class="rv" style="font-size:14.6px; color:var(--ink-2); max-width:72ch; margin:0">
+      CDP 的 <code>Accessibility.enable</code> 官方说明里写着：启用无障碍域后，<b>AXNodeId 才能在多次调用之间保持稳定</b>；
+      但这会<b>给页面带来性能开销，直到你把它关掉</b>。也就是说，"让智能体看得更清楚"是有运行时成本的——
+      这属于典型的架构权衡，不是免费的开关。
+    </p>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th>维度</th><th>DOM</th><th>无障碍树</th><th>截图</th></tr></thead>
+        <tbody>
+          <tr><td><b>定位方式</b></td><td>选择器 / 节点 ID</td><td>角色 + 名称</td><td>像素坐标</td></tr>
+          <tr><td><b>上下文体积</b></td><td class="cross">很大</td><td class="tick">较小</td><td class="mid">中等（含图像）</td></tr>
+          <tr><td><b>语义理解</b></td><td class="mid">需模型自己推断</td><td class="tick">直接给定</td><td class="mid">依赖视觉能力</td></tr>
+          <tr><td><b>自绘 / canvas</b></td><td class="cross">几乎无用</td><td class="cross">几乎无用</td><td class="tick">可用</td></tr>
+          <tr><td><b>精确文字输入</b></td><td class="tick">好</td><td class="tick">好</td><td class="cross">差</td></tr>
+          <tr><td><b>小控件精度</b></td><td class="tick">高</td><td class="tick">高</td><td class="cross">易失准</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4. 协议层 ══════════ -->
+<section class="band" id="protocol">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">04 / 协议</span>
+      <h2>再往下一层：动作是怎么变成真事件的</h2>
+      <p>模型输出的是文本。文本要变成真实的鼠标点击和键盘输入，中间必须有一条被广泛实现的协议通道。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th>方案</th><th>是什么</th><th>跨浏览器</th><th>谁在用</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>CDP</b><br><code>Chrome DevTools Protocol</code></td>
+            <td>Chromium 系浏览器的底层调试 / 控制协议。Chrome DevTools 本身就用它和浏览器通信；也是 Playwright、Puppeteer 的底座。</td>
+            <td class="cross">仅 Chromium</td>
+            <td>绝大多数浏览器智能体 / 自动化库</td>
+          </tr>
+          <tr>
+            <td><b>WebDriver BiDi</b></td>
+            <td>W3C <b>工作草案</b>（Working Draft）阶段的<b>双向</b>协议，目标是跨浏览器提供类似的自动化能力。</td>
+            <td class="tick">是</td>
+            <td>需要多浏览器覆盖的场景</td>
+          </tr>
+          <tr>
+            <td><b>MCP</b><br><code>Model Context Protocol</code></td>
+            <td>不是浏览器协议，而是<b>把浏览器能力包装成模型可调用工具</b>的中间层。底层仍跑真实自动化（如 Playwright MCP 底层就是 Playwright）。</td>
+            <td class="mid">取决于底层</td>
+            <td>已有编程智能体想"外挂"浏览器时</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 14px">CDP 的三个核心概念</h3>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--navy-2)">
+        <div class="pcard-h"><div class="pt">概念 1</div><h4>Domain（域）</h4></div>
+        <div class="pcard-b"><p>把能力分组。常用几个：</p>
+          <div class="kv"><code>Page</code> 导航、截图</div>
+          <div class="kv"><code>Runtime</code> 执行 JavaScript</div>
+          <div class="kv"><code>DOM</code> 节点查询、盒模型</div>
+          <div class="kv"><code>Accessibility</code> 无障碍树</div>
+          <div class="kv"><code>Input</code> 鼠标 / 键盘事件</div>
+          <div class="kv"><code>Network</code> 请求与响应</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--navy-2)">
+        <div class="pcard-h"><div class="pt">概念 2</div><h4>Target（目标）</h4></div>
+        <div class="pcard-b"><p>任何可以被调试或控制的东西：一个页面、标签页、iframe、worker。<b>每个 target 一般有 <code>targetId</code>。</b></p>
+          <div class="kv">要操作某个标签页，先拿到它的 target，再附加上去。</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--navy-2)">
+        <div class="pcard-h"><div class="pt">概念 3</div><h4>Session（会话）</h4></div>
+        <div class="pcard-b"><p>你与<b>某个特定 target</b> 通信的连接。附加成功后 Chrome 给你一个 <code>sessionId</code>，用于指明后续命令发给谁。</p>
+          <div class="cd">Target.attachToTarget</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note rv">
+      <b>结构可以这样记：</b>浏览器下面挂多个 target，每个 target 对应一条 session，命令都在 session 里发。
+      所以「一个标签页点不动」的第一反应应该是<b>检查 session 有没有附加到正确的 target</b>，而不是怀疑模型。
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">消息长什么样</h3>
+    <p class="rv" style="font-size:14.6px; color:var(--ink-2); max-width:72ch">
+      CDP 用的是<b>改造过的 JSON-RPC</b>。命令带 <code>id</code>、<code>method</code> 和可选的 <code>params</code>；
+      响应重复同一个 <code>id</code> 并带上 <code>result</code> 或 <code>error</code>；
+      事件只有 <code>method</code>，没有 <code>id</code>——靠这个区分"这是回我的"还是"这是浏览器自己发生的"。
+    </p>
+
+    <div class="code rv">
+      <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">cdp / 命令 → 响应 → 事件</span><span class="lb">真实消息格式</span></div>
+      <pre><span class="l"><span class="cm">// 1) 命令：带 id，等待匹配的响应</span></span><span class="l">{ <span class="st">"id"</span>: 2, <span class="st">"method"</span>: <span class="st">"Page.navigate"</span>,</span><span class="l">  <span class="st">"params"</span>: { <span class="st">"url"</span>: <span class="st">"https://example.com"</span> } }</span><span class="l"></span><span class="l"><span class="cm">// 2) 响应：id 对上了，说明这是命令回执</span></span><span class="l">{ <span class="st">"id"</span>: 2, <span class="st">"result"</span>: { <span class="st">"frameId"</span>: <span class="st">"A7789DDD…"</span> } }</span><span class="l"></span><span class="l"><span class="cm">// 3) 事件：没有 id，是浏览器主动通知</span></span><span class="l">{ <span class="st">"method"</span>: <span class="st">"Page.loadEventFired"</span>,</span><span class="l">  <span class="st">"params"</span>: { <span class="st">"timestamp"</span>: 181921.758 } }</span></pre>
+    </div>
+
+    <div class="note warn rv">
+      <b>这张图里有整个架构最重要的一条纪律：</b>收到 <code>id: 2</code> 的响应，<b>只说明命令被接受了，不说明页面加载完了</b>。
+      真正代表"就绪"的是那条<b>没有 id 的</b> <code>Page.loadEventFired</code>。所以必须<b>先</b>开监听、<b>再</b>发导航，
+      并加上超时。顺序错了就会稳定地读到旧页面——一个非常经典的时序 bug。
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">三种感知路线对应的真实命令</h3>
+    <p class="rv" style="font-size:14.6px; color:var(--ink-2); max-width:72ch">
+      把上一节的抽象概念落到具体调用，这张表就是"底层架构"最实在的部分：
+    </p>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th>要做的事</th><th>CDP 命令</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>取整页无障碍树</td><td><code>Accessibility.enable</code><br><code>Accessibility.getFullAXTree</code></td><td>「取根文档的整棵无障碍树」，可带 <code>depth</code>、<code>frameId</code> 限制范围</td></tr>
+          <tr><td>按名字查控件</td><td><code>Accessibility.queryAXTree</code></td><td>在无障碍树里查询，而不是在 DOM 里猜选择器</td></tr>
+          <tr><td>取 DOM 根节点</td><td><code>DOM.getDocument</code></td><td>拿到根节点后可用 <code>querySelectorAll</code> 继续查</td></tr>
+          <tr><td>把节点变成坐标</td><td><code>DOM.getBoxModel</code><br><code>DOM.resolveNode</code></td><td>无障碍节点带 <code>backendDOMNodeId</code>，据此取盒模型算出可点中心</td></tr>
+          <tr><td>点一下</td><td><code>Input.dispatchMouseEvent</code></td><td><code>type</code> / <code>x</code> / <code>y</code> / <code>button</code> / <code>clickCount</code></td></tr>
+          <tr><td>输入文字</td><td><code>Input.insertText</code></td><td>直接插入文本，不必逐字符模拟按键</td></tr>
+          <tr><td>截图</td><td><code>Page.captureScreenshot</code></td><td>可调 <code>format</code> / <code>quality</code> / <code>clip</code></td></tr>
+          <tr><td>存整页快照</td><td><code>Page.captureSnapshot</code></td><td>MHTML 格式，<b>包含 iframe、shadow DOM、外部资源与内联样式</b></td></tr>
+          <tr><td>给智能体用的专用接口</td><td><code>Page.getAnnotatedPageContent</code></td><td>实验性，带 <code>includeActionableInformation</code> 参数——可见 Chromium 已在协议层直接为智能体铺路</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note rv">
+      <b>注意最后一行。</b>它说明"给模型读页面"已经不再是第三方库自己拼的土办法，而是开始进入浏览器协议本身。
+      这也是为什么理解 CDP 比记住某个库的 API 更持久：<b>库会换，协议层不会。</b>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 5. 最小实现 ══════════ -->
+<section class="band alt" id="build">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">05 / 实现</span>
+      <h2>把它拼起来：一个最小骨架</h2>
+      <p>把前四节合起来，一个可运行的浏览器智能体只需要大约这些。下面是结构示意，不是完整可运行代码——但每一行的职责都是真实的。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="code rv">
+      <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">mini_agent.py</span><span class="lb">骨架示意</span></div>
+      <pre><span class="l"><span class="kw">import</span> json, asyncio, websockets</span><span class="l"></span><span class="l"><span class="kw">class</span> <span class="fn2">MiniAgent</span>:</span><span class="l">    <span class="kw">def</span> <span class="fn2">__init__</span>(self, ws_url, llm, task, max_steps=<span class="nm">25</span>):</span><span class="l">        self.ws_url   = ws_url</span><span class="l">        self.llm      = llm</span><span class="l">        self.task     = task</span><span class="l">        self.max_steps = max_steps   <span class="cm"># 刹车之一：步数上限</span></span><span class="l">        self._id = <span class="nm">0</span></span><span class="l"></span><span class="l">    <span class="kw">async</span> <span class="kw">def</span> <span class="fn2">send</span>(self, ws, method, params=<span class="kw">None</span>):</span><span class="l">        <span class="cm"># CDP：命令带 id，响应回来时靠 id 配对</span></span><span class="l">        self._id += <span class="nm">1</span></span><span class="l">        msg = {<span class="st">"id"</span>: self._id, <span class="st">"method"</span>: method}</span><span class="l">        <span class="kw">if</span> params: msg[<span class="st">"params"</span>] = params</span><span class="l">        <span class="kw">await</span> ws.send(json.dumps(msg))</span><span class="l">        <span class="kw">while</span> <span class="kw">True</span>:                       <span class="cm"># 跳过无 id 的事件，直到等到响应</span></span><span class="l">            r = json.loads(<span class="kw">await</span> ws.recv())</span><span class="l">            <span class="kw">if</span> r.get(<span class="st">"id"</span>) == self._id:</span><span class="l">                <span class="kw">return</span> r</span><span class="l"></span><span class="l">    <span class="kw">async</span> <span class="kw">def</span> <span class="fn2">observe</span>(self, ws):</span><span class="l">        <span class="cm"># 投影：取无障碍树，而不是整个 DOM</span></span><span class="l">        <span class="kw">await</span> self.send(ws, <span class="st">"Accessibility.enable"</span>)</span><span class="l">        tree = <span class="kw">await</span> self.send(ws, <span class="st">"Accessibility.getFullAXTree"</span>,</span><span class="l">                                {<span class="st">"depth"</span>: <span class="nm">8</span>})</span><span class="l">        <span class="kw">return</span> self.<span class="fn2">flatten</span>(tree)     <span class="cm"># 压成「角色+名字」的紧凑列表</span></span><span class="l"></span><span class="l">    <span class="kw">async</span> <span class="kw">def</span> <span class="fn2">act</span>(self, ws, a):</span><span class="l">        <span class="kw">if</span> a[<span class="st">"type"</span>] == <span class="st">"click"</span>:</span><span class="l">            <span class="cm"># 无障碍节点带 backendDOMNodeId → 盒模型 → 中心点</span></span><span class="l">            box = <span class="kw">await</span> self.send(ws, <span class="st">"DOM.getBoxModel"</span>,</span><span class="l">                                     {<span class="st">"backendNodeId"</span>: a[<span class="st">"nodeId"</span>]})</span><span class="l">            x, y = self.<span class="fn2">center</span>(box)</span><span class="l">            <span class="kw">for</span> t <span class="kw">in</span> (<span class="st">"mousePressed"</span>, <span class="st">"mouseReleased"</span>):</span><span class="l">                <span class="kw">await</span> self.send(ws, <span class="st">"Input.dispatchMouseEvent"</span>,</span><span class="l">                    {<span class="st">"type"</span>: t, <span class="st">"x"</span>: x, <span class="st">"y"</span>: y,</span><span class="l">                     <span class="st">"button"</span>: <span class="st">"left"</span>, <span class="st">"clickCount"</span>: <span class="nm">1</span>})</span><span class="l">        <span class="kw">elif</span> a[<span class="st">"type"</span>] == <span class="st">"type"</span>:</span><span class="l">            <span class="kw">await</span> self.send(ws, <span class="st">"Input.insertText"</span>, {<span class="st">"text"</span>: a[<span class="st">"text"</span>]})</span><span class="l"></span><span class="l">    <span class="kw">async</span> <span class="kw">def</span> <span class="fn2">run</span>(self):</span><span class="l">        <span class="kw">async</span> <span class="kw">with</span> websockets.<span class="fn2">connect</span>(self.ws_url) <span class="kw">as</span> ws:</span><span class="l">            <span class="kw">for</span> step <span class="kw">in</span> <span class="fn2">range</span>(self.max_steps):</span><span class="l">                page   = <span class="kw">await</span> self.<span class="fn2">observe</span>(ws)          <span class="cm"># 1 观察</span></span><span class="l">                action = self.llm.<span class="fn2">decide</span>(self.task, page)  <span class="cm"># 2 决策</span></span><span class="l">                <span class="kw">if</span> action[<span class="st">"type"</span>] == <span class="st">"done"</span>:</span><span class="l">                    <span class="kw">return</span> action[<span class="st">"result"</span>]</span><span class="l">                <span class="kw">await</span> self.<span class="fn2">act</span>(ws, action)                <span class="cm"># 3 执行</span></span><span class="l">                <span class="kw">await</span> asyncio.<span class="fn2">sleep</span>(<span class="nm">0.3</span>)                <span class="cm"># 4 等页面稳定后再观察</span></span><span class="l">        <span class="kw">raise</span> <span class="fn2">RuntimeError</span>(<span class="st">"达到步数上限仍未完成"</span>)</span></pre>
+    </div>
+
+    <div class="note warn rv">
+      <b>这段骨架故意留了三个坑，正是真实实现必须补的：</b>
+      ① <code>sleep(0.3)</code> 是幼稚的等待，生产环境要等<b>事件</b>或特定元素；
+      ② 没有成本与时间刹车，只有步数；
+      ③ 没有对页面内容做<b>不可信输入</b>处理，存在提示注入风险。把这三个补上，才算接近可用。
+    </div>
+
+    <div class="note rv">
+      <b>不想从协议写起？</b>原文给了三条现实路径：
+      ① 用开源库 <code>browser-use</code>（Python / TypeScript，MIT）——<code>uv add browser-use</code> 后构造 <code>Agent(task=…, llm=…, browser=…)</code>，调 <code>agent.run()</code> 取 <code>history.final_result()</code>；
+      ② 用托管 API，只提交任务、取回结果；
+      ③ 如果你已经在用编程智能体，<b>给它加浏览器工具可能就够了</b>——它的 runtime 本来就在管推理循环。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6. 选型 ══════════ -->
+<section class="band" id="choose">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">06 / 选型</span>
+      <h2>Agent、脚本、API：先问该不该用智能体</h2>
+      <p>这是最省钱的一节。很多被做成智能体的任务，本来用 API 或脚本会更快、更便宜、更可靠。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="quote rv" style="margin-bottom:24px">
+      <span class="qlabel">原文的判断顺序</span>
+      <p>服务有可用 API 就用 API；没有 API 而流程可预测，就用脚本（Playwright / Selenium / Puppeteer）；<b>只有当下一步取决于页面上出现什么</b>、步骤无法预先写死时，才用智能体。</p>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th>维度</th><th>API</th><th>脚本</th><th>智能体</th></tr></thead>
+        <tbody>
+          <tr><td><b>决策性质</b></td><td>无（直接取数据）</td><td class="tick">确定性：同样输入 → 同样决策</td><td class="mid">随机性：同样任务可能走不同路径</td></tr>
+          <tr><td><b>网站改版</b></td><td class="tick">通常无感</td><td class="cross">要改代码</td><td class="tick">往往能自己适应</td></tr>
+          <tr><td><b>单次成本</b></td><td class="tick">最低</td><td class="tick">低</td><td class="cross">高且不可预测</td></tr>
+          <tr><td><b>结果可重复性</b></td><td class="tick">高</td><td class="tick">高</td><td class="cross">低</td></tr>
+          <tr><td><b>适合</b></td><td>有接口的一切</td><td>每周固定下载同一份报表</td><td>在陌生网站里找资料、结构各异的表单</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note rv">
+      <b>"随机性"是架构属性，不是缺陷。</b>脚本和常规 API 流程用确定性规则；智能体的决策是概率性的。
+      这既带来适应性，也带来不可重复性。原文还提了一个很实用的观点：<b>智能体是极好的原型工具</b>——
+      你可以先把流程跑通，再去判断哪一段值得改写成确定性脚本。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7. 使用分布 ══════════ -->
+<section class="band alt" id="usage">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">07 / 真实分布</span>
+      <h2>人们实际在用它做什么</h2>
+      <p>原文引用了 Browser Use Cloud 上 V2／V3／V4 智能体的运行数据（2026-10-18 快照），按运行次数占比统计。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="bars rv" id="bars">
+      <div class="bar-row">
+        <div class="bar-lb">绕过登录<small>supporting step</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="18" style="--bc:var(--p1)"></div></div>
+        <div class="bar-v" style="--bc:var(--p1)">18%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lb">提取结构化数据<small>end task</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="14" style="--bc:var(--p4)"></div></div>
+        <div class="bar-v" style="--bc:var(--p4)">14%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lb">检索开放问题<small>end task</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="6" style="--bc:var(--p2)"></div></div>
+        <div class="bar-v" style="--bc:var(--p2)">6%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lb">投递职位申请<small>end task</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="6" style="--bc:var(--p2)"></div></div>
+        <div class="bar-v" style="--bc:var(--p2)">6%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lb">查找财报与文件<small>end task</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="5" style="--bc:var(--p3)"></div></div>
+        <div class="bar-v" style="--bc:var(--p3)">5%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lb">预订与购买<small>end task</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="3" style="--bc:var(--p3)"></div></div>
+        <div class="bar-v" style="--bc:var(--p3)">3%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-lb">未分类<small>unclassified</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="15" style="--bc:var(--ink-4)"></div></div>
+        <div class="bar-v" style="--bc:var(--ink-4)">15%</div>
+      </div>
+    </div>
+
+    <div class="note warn rv">
+      <b>三个必须一起读的限定条件（原文明确交代）：</b>
+      ① 占比是「归入该类别的运行数 ÷ 数据集全部运行数」，<b>分母包含那 15% 未分类</b>；
+      ② 统计里<b>同时混入了端到端任务与支撑性步骤</b>——「绕过登录」18% 是步骤，不是目标；
+      ③ 这些数字描述的是<b>人们跑什么</b>，<b>不是任务成功率</b>。
+      把它读成"登录最难"是误读，更准确的说法是"登录是最高频的拦路环节"。
+    </div>
+
+    <div class="note rv">
+      <b>数据来源的立场需注意：</b>这组分布与全文的技术表述均来自 Browser Use 自家博客，<b>属于厂商自述</b>，且该文同时是其产品导流内容。
+      它作为"某平台实际负载长什么样"的证据是有价值的，但不宜当作全行业统计。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 8. 失效模式 ══════════ -->
+<section class="band" id="fail">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">08 / 失效</span>
+      <h2>五类限制，分别落在哪一层</h2>
+      <p>原文把限制列成清单。真正有用的做法是把每条限制<b>映射回架构层</b>——这样看到故障现象，就能直接推断该修哪里。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fmap">
+      <div class="fm rv" style="--lc:var(--p3)">
+        <span class="fm-n">L3</span>
+        <div>
+          <h4>被网站封禁 <span class="tag tag-src">访问权</span></h4>
+          <p>机器人管理系统会质询或拦截自动化流量，速率限制会约束请求频率；有的站点允许公开浏览，却在登录或结算处加紧检查。</p>
+          <p class="diag"><b>诊断：</b>若错误是 403 / 质询页 / 验证码，<b>换更强的模型没有用</b>——瓶颈在浏览器与网络身份，要动的是代理、指纹、会话与节奏。</p>
+        </div>
+      </div>
+
+      <div class="fm rv" style="--lc:var(--p2)">
+        <span class="fm-n">L2</span>
+        <div>
+          <h4>认证与会话过期 <span class="tag tag-src">状态</span></h4>
+          <p>会话会过期，多因素认证需要人来输入。复用已认证会话来减少重复登录，但流程仍要处理"会话已失效"。</p>
+          <p class="diag"><b>诊断：</b>表现为突然被弹回登录页。设计上必须内置<b>挂起等人</b>的分支，而不是让智能体自己猜密码。</p>
+        </div>
+      </div>
+
+      <div class="fm rv" style="--lc:var(--p4)">
+        <span class="fm-n">L1</span>
+        <div>
+          <h4>结果错误或不完整 <span class="tag tag-src">决策 / 校验</span></h4>
+          <p>可能选错商品、漏填必填项、或在<b>尚未保存</b>时就报告完成。<b>「跑完没有报错」不等于成功。</b>重试还可能造成重复下单、重复投递。</p>
+          <p class="diag"><b>诊断：</b>这一层最危险，因为失败是<b>静默</b>的。原文给的纪律：重试前先查保存记录或确认页；做提取时把返回值与源页面对照——<b>JSON 合法不等于数据正确</b>。</p>
+        </div>
+      </div>
+
+      <div class="fm rv" style="--lc:var(--p1)">
+        <span class="fm-n">L1′</span>
+        <div>
+          <h4>提示注入 <span class="tag tag-src">信任边界</span></h4>
+          <p>页面里可以埋入指令，试图把智能体从你的任务上引开。这是<b>把不可信内容喂进决策层</b>的经典后果。</p>
+          <p class="diag"><b>诊断：</b>应对方式不是"教模型别听"，而是架构隔离：把页面内容当<b>不可信输入</b>、限制智能体能访问的账号与动作、对敏感动作强制人工批准。原文诚实地加了一句：这些措施<b>降低风险，但不能消除</b>。</p>
+        </div>
+      </div>
+
+      <div class="fm rv" style="--lc:var(--warn)">
+        <span class="fm-n">L2′</span>
+        <div>
+          <h4>成本不可预测 <span class="tag tag-src">控制</span></h4>
+          <p>因为跑在 LLM 上，你无法预知一个任务要一步、两步还是很多步。按用量计费时，更多模型调用与浏览器时长直接推高成本；失败后重跑还要再付一次。</p>
+          <p class="diag"><b>诊断：</b>这是<b>控制层</b>问题，靠限额与统计解决，不是靠省钱提示词。下一节给出正确算法。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note rv">
+      <b>这张映射表的价值：</b>看到现象就能定位层级。被封 → L3；被弹回登录 → L2；结果对但不对 → L1；页面里有奇怪指令 → L1′；账单失控 → L2′。
+      把五条限制平铺成清单只能记住"有风险"，映射到层才能<b>修</b>。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 9. 成本 ══════════ -->
+<section class="band alt" id="cost">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">09 / 成本</span>
+      <h2>别用"单次运行成本"衡量它</h2>
+      <p>原文给了一个很实用的成本口径，能避免绝大多数自欺。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="formula rv">
+      <div class="fx">
+        单任务成本 &nbsp;=&nbsp;
+        <span style="display:inline-block; vertical-align:middle">
+          <span class="num">全部尝试的总花费（含失败与重试）</span><br>
+          <span class="den">已验证成功的任务数</span>
+        </span>
+      </div>
+      <div class="cap">人工复核耗时需<b>单独</b>计列，不要摊进这个分子——否则会掩盖真实的人力成本。</div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th>常见算法</th><th>问题</th></tr></thead>
+        <tbody>
+          <tr><td>只算成功那一次的花费</td><td class="cross">系统性低估。失败与重试的成本被隐藏</td></tr>
+          <tr><td>按"每次运行均价"报预算</td><td class="cross">方差极大，均值没有预测力</td></tr>
+          <tr><td>只统计 API 费用</td><td class="cross">漏掉浏览器时长（云浏览器按小时计费）</td></tr>
+          <tr><td><b>总花费 ÷ 已验证成功数</b></td><td class="tick">唯一能用来做决策的口径</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note rv">
+      <b>为什么必须引入"已验证"这个词：</b>因为第 8 节的 L1 失效是静默的。如果不校验就计数，
+      分母会把"报告成功但其实没保存"的运行也算进去，成本瞬间被系统性美化。
+      <b>成本统计与结果校验是同一件事的两面。</b>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 10. 起步 ══════════ -->
+<section class="band" id="start">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">10 / 起步</span>
+      <h2>从一个只读任务开始</h2>
+      <p>原文给的上手路径很克制，值得照做——因为智能体的失败模式是静默的，先用低风险任务建立直觉。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <ol class="steps rv">
+      <li>
+        <h4>先选一个只读任务</h4>
+        <p>例如采集商品价格。<b>不要</b>一上来就做下单、投递、付款这类有副作用的任务。</p>
+      </li>
+      <li>
+        <h4>把边界写成明确约束</h4>
+        <p>规定：允许访问哪些页面、必须返回哪些字段、什么算成功。这三件事写清楚，比优化提示词更有效。</p>
+      </li>
+      <li>
+        <h4>上三个刹车</h4>
+        <p>运行前设定<b>时间、步数、成本</b>上限。（若用开源库，对应 <code>max_steps</code> 一类参数。）</p>
+      </li>
+      <li>
+        <h4>选执行方式</h4>
+        <p>托管智能体只管提交任务与取回结果；自建则用开源库配本地或云浏览器。<b>如果已有编程智能体，先试"加浏览器工具"这条最轻的路。</b></p>
+      </li>
+      <li>
+        <h4>重复跑，并与源页面比对</h4>
+        <p>记录四个指标：<b>已验证完成率、耗时、总成本、人工修正次数</b>。单次成功没有意义，重复性才是信号。</p>
+      </li>
+      <li>
+        <h4>确认稳定后再扩张</h4>
+        <p>只在理解了"它在哪里需要人帮忙"之后，才增加更多站点或任务。</p>
+      </li>
+    </ol>
+
+    <div class="note warn rv">
+      <b>一个容易踩的坑：</b>原文特别提醒——<b>远程浏览器本身只提供浏览器环境</b>，
+      你的智能体或脚本仍需自己控制它。买了一个云浏览器，不等于买到了一个智能体。这两件事经常被混为一谈。
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 11. 小结 ══════════ -->
+<section class="band alt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">11 / 小结</span>
+      <h2>三句话收束</h2>
+      <div class="rule-gold"></div>
+    </div>
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">结构</div><h4>三层各司其职</h4></div>
+        <div class="pcard-b"><p><b>模型</b>决定做什么，<b>harness</b> 维持循环并翻译，<b>浏览器</b>持有真实会话。三者的失败模式互不重叠，所以要分开诊断。</p></div>
+      </div>
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">机制</div><h4>一切都是投影</h4></div>
+        <div class="pcard-b"><p>模型只能读 token。它的"视力"完全取决于 harness 把页面投影成 DOM、无障碍树还是截图。<b>投影决定上限。</b></p></div>
+      </div>
+      <div class="pcard" style="--lc:var(--p1)">
+        <div class="pcard-h"><div class="pt">纪律</div><h4>跑完 ≠ 成功</h4></div>
+        <div class="pcard-b"><p>异步让"命令成功"变得不可信，概率性让"同样任务"变得不可复现。所以必须校验结果、必须设限额、必须按<b>已验证成功</b>算成本。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 来源 ══════════ -->
+<section class="band" id="sources">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">12 / 来源</span>
+      <h2>依据与核对说明</h2>
+      <div class="rule-gold"></div>
+    </div>
+    <ul class="src-list rv">
+      <li><b>原文（本页主要依据）</b>：Nik Tomazic，<i>What Is a Browser Agent? How It Works and When to Use One</i>，Browser Use，2026-10-18。
+        本页的定义、三层架构、循环伪代码、两种感知路线、使用分布、五类限制与成本口径均出自该文。
+        <span class="pub">属厂商自述内容</span>
+        <a href="https://browser-use.com/posts/browser-agents" target="_blank" rel="noopener">browser-use.com/posts/browser-agents</a></li>
+
+      <li><b>AIHOT 条目</b>（本次需求的入口页），含中文导读与标签分类。
+        <a href="https://aihot.news/items/w3vpc68lufgj57zcy1hd38a60" target="_blank" rel="noopener">aihot.news/items/w3vpc68lufgj57zcy1hd38a60</a></li>
+
+      <li><b>CDP 细节</b>：Nik Tomazic，<i>What is Chrome DevTools Protocol (CDP)?</i>，Browser Use，2026-09-25。域名划分、JSON-RPC 改造、target 与 session、事件与响应的区别、"命令响应不代表加载完成"均出自该文。
+        <a href="https://browser-use.com/posts/what-is-chrome-devtools-protocol" target="_blank" rel="noopener">browser-use.com/posts/what-is-chrome-devtools-protocol</a></li>
+
+      <li><b>CDP 命令与描述</b>：Chrome DevTools Protocol 官方协议定义（<code>Accessibility.getFullAXTree</code>、<code>Accessibility.enable</code> 的性能提示、<code>DOM.getBoxModel</code>、<code>Input.dispatchMouseEvent</code>、<code>Page.captureScreenshot</code>、<code>Page.captureSnapshot</code>、<code>Page.getAnnotatedPageContent</code> 的实验性标注）。<b>本页所有命令名与参数均据此核对</b>，未凭记忆书写。
+        <a href="https://chromedevtools.github.io/devtools-protocol/" target="_blank" rel="noopener">chromedevtools.github.io/devtools-protocol</a></li>
+
+      <li><b>无障碍树定义</b>：MDN Web Docs，<i>Accessibility tree</i>。name / description / role / state 四属性、"浏览器基于 DOM 构建无障碍树供辅助技术使用"的表述出自此处。
+        <a href="https://developer.mozilla.org/en-US/docs/Glossary/Accessibility_tree" target="_blank" rel="noopener">developer.mozilla.org/docs/Glossary/Accessibility_tree</a></li>
+
+      <li><b>跨浏览器协议</b>：W3C <i>WebDriver BiDi</i> 规范（工作草案阶段）。本页「W3C 工作草案」的表述据此核实，未采用「正式标准」的说法。
+        <a href="https://www.w3.org/TR/webdriver-bidi/" target="_blank" rel="noopener">w3.org/TR/webdriver-bidi</a></li>
+
+      <li><b>开源库事实</b>：browser-use 仓库 README（Python / TypeScript、MIT 许可、<code>uv add browser-use</code>、<code>Agent(task, llm, browser)</code> 接口、<code>Browser.from_system_chrome()</code>、profile 同步只传 cookie 不含 localStorage）。
+        <a href="https://github.com/browser-use/browser-use" target="_blank" rel="noopener">github.com/browser-use/browser-use</a></li>
+    </ul>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>本页哪些是我的补充，哪些是原文的：</b>
+      三层架构、循环、感知路线、使用分布、五类限制、成本口径 —— <b>原文</b>。
+      CDP 的 target / session 模型、三种感知路线到具体 CDP 命令的对应表、以及<b>把五类限制映射回架构层</b>的诊断结构 —— <b>我的整理</b>，依据上述协议定义与 MDN 交叉核对。
+      第 05 节代码为<b>结构示意</b>，用于说明各层职责，非可直接运行的生产代码。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fl">关于本页</div>
+    <p>本页是对 Browser Use《What Is a Browser Agent?》一文的架构拆解与协议层补充，面向需要自己实现或评估浏览器智能体的开发者。单文件静态 HTML，无外部脚本依赖，可离线打开。</p>
+    <p class="disc">原文为厂商博客，含产品导流内容；文中使用分布为单一平台的自报数据，不代表全行业。协议层描述已与 Chrome DevTools Protocol 官方定义和 MDN 交叉核对，但实现细节可能随协议版本变化，落地前请以对应版本的协议文档为准。</p>
+    <p style="margin-top:16px; font-size:11.5px; color:var(--ink-4)">浏览器智能体 · 原理与底层架构 &nbsp;·&nbsp; 生成于 2026-10-19</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- 主题 ---------- */
+  var root = document.documentElement;
+  var tgl = document.getElementById('tgl');
+  function sync() {
+    var d = root.getAttribute('data-theme') === 'dark';
+    tgl.setAttribute('aria-pressed', d ? 'true' : 'false');
+    tgl.title = d ? '切换到浅色主题' : '切换到深色主题';
+  }
+  sync();
+  tgl.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('evo-theme', next); } catch (e) {}
+    sync();
+  });
+
+  /* ---------- 进度条 ---------- */
+  var prog = document.getElementById('prog'), tick = false;
+  function onScroll() {
+    if (tick) return;
+    tick = true;
+    requestAnimationFrame(function () {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      prog.style.width = Math.max(0, Math.min(100, h > 0 ? (pageYOffset / h) * 100 : 0)) + '%';
+      tick = false;
+    });
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- 淡入 ---------- */
+  var reduce = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = [].slice.call(document.querySelectorAll('.rv'));
+  if (reduce || !('IntersectionObserver' in window)) {
+    items.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (en, i) {
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        setTimeout(function () { el.classList.add('in'); }, Math.min(i * 50, 200));
+        io.unobserve(el);
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.07 });
+    items.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---------- 分层展开 ---------- */
+  var layers = [].slice.call(document.querySelectorAll('.layer'));
+  function toggleLayer(btn) {
+    var key = btn.getAttribute('data-layer');
+    var panel = document.getElementById('d-' + key);
+    var isOpen = btn.classList.contains('on');
+    layers.forEach(function (b) {
+      b.classList.remove('on');
+      b.setAttribute('aria-expanded', 'false');
+      var p = document.getElementById('d-' + b.getAttribute('data-layer'));
+      if (p) p.classList.remove('show');
+    });
+    if (!isOpen && panel) {
+      btn.classList.add('on');
+      btn.setAttribute('aria-expanded', 'true');
+      panel.classList.add('show');
+    }
+  }
+  layers.forEach(function (btn) {
+    btn.addEventListener('click', function () { toggleLayer(btn); });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggleLayer(btn);
+      }
+    });
+  });
+
+  /* ---------- 使用分布条形图 ---------- */
+  var bars = [].slice.call(document.querySelectorAll('.bar-f'));
+  function fillBars() {
+    bars.forEach(function (b) { b.style.width = b.getAttribute('data-w') + '%'; });
+  }
+  if ('IntersectionObserver' in window) {
+    var bo = new IntersectionObserver(function (ents) {
+      ents.forEach(function (en) {
+        if (en.isIntersecting) { fillBars(); bo.disconnect(); }
+      });
+    }, { threshold: 0.2 });
+    bo.observe(document.getElementById('bars'));
+  } else {
+    fillBars();
+  }
+
+  /* ---------- 导航高亮 ---------- */
+  var links = [].slice.call(document.querySelectorAll('#nav a'));
+  var targets = links.map(function (a) {
+    return { a: a, el: document.getElementById(a.getAttribute('href').slice(1)) };
+  }).filter(function (t) { return t.el; });
+
+  if ('IntersectionObserver' in window && targets.length) {
+    var vis = {};
+    var no = new IntersectionObserver(function (ents) {
+      ents.forEach(function (en) {
+        vis[en.target.id] = en.isIntersecting ? en.intersectionRatio : 0;
+      });
+      var best = null, bv = 0;
+      targets.forEach(function (t) {
+        var v = vis[t.el.id] || 0;
+        if (v > bv) { bv = v; best = t; }
+      });
+      if (best) {
+        links.forEach(function (a) { a.classList.remove('active'); });
+        best.a.classList.add('active');
+      }
+    }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.3, 0.6] });
+    targets.forEach(function (t) { no.observe(t.el); });
+  }
+})();
+</script>
+</body>
+</html>
