@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>福尔摩斯全景导览 · 正典 60 部与影视百年</title>
+<meta name="description" content="福尔摩斯全景导览：正典 60 部逐条、影视百年、现代观影顺序、二创谱系、福尔摩斯学、形象考据、版权史。">
+<meta name="color-scheme" content="light dark">
+<script>
+  (function () {
+    try {
+      var t = null;
+      try { t = localStorage.getItem('evo-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   design-system.css — 科普/技术讲解类单文件 HTML 的组件样式库
+   ──────────────────────────────────────────────────────────────────
+   来源：两次实战验证（《碳基→硅基》推演报告、浏览器智能体架构讲解）。
+   用法：把本文件内容整段粘进目标 HTML 的 <style> 里。不要外链——
+        交付物必须是单文件、可离线打开。
+
+   【必需的文档骨架】
+     <html lang="zh-CN" data-theme="light">
+     <head>  ...下面这 3 段必须照抄...  </head>
+     <body>
+       <div class="progress" id="prog"></div>
+       <header class="topbar">…</header>
+       <div class="hero">…</div>
+       <section class="band" id="section-id"><div class="wrap">…</div></section>
+       <footer>…</footer>
+
+   【1. 首屏防闪烁脚本】放在 <head> 里、样式之前：
+     <script>(function(){try{var t=null;try{t=localStorage.getItem('evo-theme')}catch(e){}
+       if(t!=='light'&&t!=='dark')t=matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+       document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
+
+   【2. 字体：异步加载 + 系统兜底，断网不能白屏】
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+           media="print" onload="this.media='all'">
+
+   【3. viewport 与配色提示】
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <meta name="color-scheme" content="light dark">
+
+   【标题层级 —— 必须遵守，否则验收会报"跳级"】
+     章节标题 h2  →  组件卡标题 h3  →  卡内子标题 h4
+     不要跳过中间层级。卡片直接用 h4 会让 h2→h4 跳级。
+
+   【组件】清单超过 30 行用 .tbl-wrap.compact；时间线用 .era（左年份右内容）。
+   【组件】用 .story 放轶事/考据，用 .note 讲补充说明，两者语气不同。
+
+   【主题】改 :root / [data-theme="dark"] 里的令牌即可整体换肤。
+          每节配色用行内 --lc 传入语义色，例如 style="--lc:var(--p2)"。
+          四套语义色：--p1 红 / --p2 青 / --p3 紫 / --p4 蓝。
+   【打印】已含 @media print：强制白底、隐藏导航、卡片禁止跨页断裂。
+   【动效】.rv 元素进入视口淡入；已处理 prefers-reduced-motion。
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ============================================================
+   0. 设计令牌 —— 与《碳基→硅基》推演报告同一套语言
+   ============================================================ */
+:root{
+  --paper:#ffffff; --paper-2:#f7f8fa; --paper-3:#eef0f4;
+  --ink:#0e141b; --ink-2:#39454f; --ink-3:#6b7885; --ink-4:#98a3ae;
+  --rule:#e3e7eb; --rule-2:#ccd4dc;
+  --navy:#12305a; --navy-2:#1d4e89; --navy-3:#2f6fb0; --navy-soft:#eaf1f9;
+  --gold:#8f6b16; --gold-2:#b8912b; --gold-bg:#fbf7ea;
+  --p1:#a32e27; --p1-bg:#fbf0ef;
+  --p2:#14615d; --p2-bg:#eaf4f3;
+  --p3:#6b4a8c; --p3-bg:#f3eff8;
+  --p4:#1d4e89; --p4-bg:#ecf2f9;
+  --ok:#1c6b45; --warn:#a55a00; --bad:#992d22;
+  --shadow-1:0 1px 2px rgba(16,24,32,.05), 0 2px 8px rgba(16,24,32,.04);
+  --shadow-2:0 2px 6px rgba(16,24,32,.06), 0 14px 36px rgba(16,24,32,.07);
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --maxw:1080px;
+  --r:10px; --r-sm:6px;
+}
+[data-theme="dark"]{
+  --paper:#0f141a; --paper-2:#151b23; --paper-3:#1c242e;
+  --ink:#edf1f5; --ink-2:#c0cad4; --ink-3:#8d99a6; --ink-4:#6b7885;
+  --rule:#252f3a; --rule-2:#33404d;
+  --navy:#0c1f38; --navy-2:#4d8fd6; --navy-3:#6ba6e6; --navy-soft:#16232f;
+  --gold:#d4ae52; --gold-2:#d4ae52; --gold-bg:#1f1c12;
+  --p1:#e0736a; --p1-bg:#241715;
+  --p2:#4fb3ab; --p2-bg:#10201f;
+  --p3:#a98ad0; --p3-bg:#1d1727;
+  --p4:#6ba6e6; --p4-bg:#131f2c;
+  --ok:#4bbd85; --warn:#e0a13a; --bad:#e0736a;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 2px 6px rgba(0,0,0,.4), 0 14px 36px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  font-variant-numeric:tabular-nums;
+  transition:background-color .25s ease, color .25s ease;
+}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:700; line-height:1.28; margin:0; letter-spacing:-.01em}
+p{margin:0 0 1em}
+a{color:var(--navy-2); text-decoration:none; border-bottom:1px solid color-mix(in srgb, var(--navy-2) 30%, transparent)}
+a:hover{border-bottom-color:var(--navy-2)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--navy-2); outline-offset:2px; border-radius:3px}
+code{font-family:var(--mono); font-size:.88em; background:var(--paper-3);
+  padding:1px 5px; border-radius:4px; color:var(--ink)}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px}
+@media(max-width:640px){.wrap{padding:0 20px}}
+
+/* ---------- 顶栏 ---------- */
+.progress{position:fixed; top:0; left:0; height:2px; width:0; z-index:120;
+  background:linear-gradient(90deg,var(--navy-2),var(--gold-2)); transition:width .1s linear}
+.topbar{position:sticky; top:0; z-index:100;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(14px); -webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--rule)}
+.topbar-in{max-width:var(--maxw); margin:0 auto; padding:0 28px; height:58px; display:flex; align-items:center; gap:18px}
+@media(max-width:640px){.topbar-in{padding:0 20px; gap:10px}}
+.brand{display:flex; align-items:center; gap:10px; min-width:0}
+.brand-mark{width:21px; height:21px; flex:none}
+.brand-txt{font-family:var(--serif); font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.nav{display:flex; gap:1px; margin-left:auto; align-items:center; overflow-x:auto; scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{border:0; font-size:12.3px; color:var(--ink-3); padding:6px 9px; border-radius:var(--r-sm);
+  font-weight:500; white-space:nowrap; letter-spacing:.02em; transition:.16s}
+.nav a:hover{color:var(--ink); background:var(--paper-3)}
+.nav a.active{color:var(--navy-2); background:var(--navy-soft)}
+@media(max-width:1000px){.nav{display:none}}
+.tgl{border:1px solid var(--rule-2); background:transparent; color:var(--ink-2);
+  width:34px; height:34px; border-radius:var(--r-sm); cursor:pointer; flex:none;
+  display:grid; place-items:center; transition:.16s}
+.tgl:hover{background:var(--paper-3); color:var(--ink)}
+.tgl svg{width:16px; height:16px}
+[data-theme="light"] .i-moon,[data-theme="dark"] .i-sun{display:none}
+
+/* ---------- Hero ---------- */
+.hero{position:relative; overflow:hidden;
+  background:
+    radial-gradient(900px 380px at 80% -10%, rgba(47,111,176,.28), transparent 62%),
+    radial-gradient(680px 340px at 6% 106%, rgba(184,145,43,.14), transparent 60%),
+    linear-gradient(168deg,#0a1729 0%,#102542 46%,#0e1f38 100%);
+  color:#eef3f9; border-bottom:1px solid var(--rule)}
+.hero::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.45;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent)}
+.hero-in{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:66px 28px 56px}
+@media(max-width:640px){.hero-in{padding:46px 20px 40px}}
+.eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:11px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:#9dc0e6;
+  border:1px solid rgba(157,192,230,.30); background:rgba(157,192,230,.08);
+  padding:6px 13px; border-radius:100px; margin-bottom:22px}
+.eyebrow .dot{width:5px; height:5px; border-radius:50%; background:var(--gold-2); flex:none;
+  box-shadow:0 0 0 3px rgba(184,145,43,.20)}
+.hero h1{font-size:clamp(28px,4.8vw,50px); font-weight:900; letter-spacing:-.025em;
+  line-height:1.14; color:#fff; margin-bottom:20px; max-width:20ch}
+.hero h1 .accent{background:linear-gradient(100deg,#e8c86a,#c9a227 60%);
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.hero .lede{font-size:clamp(14.5px,1.5vw,17px); color:#b9cade; max-width:60ch;
+  line-height:1.82; font-weight:300; margin-bottom:28px}
+.hero .lede strong{color:#e9f1f9; font-weight:500}
+.hero-meta{display:flex; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,.13); padding-top:20px}
+.hero-meta div{padding-right:32px; margin-right:32px; border-right:1px solid rgba(255,255,255,.13)}
+.hero-meta div:last-child{border-right:0; margin-right:0; padding-right:0}
+@media(max-width:720px){
+  .hero-meta{gap:16px 0}
+  .hero-meta div{padding-right:18px; margin-right:18px}
+  .hero-meta div:nth-child(3){border-right:0}
+}
+.hero-meta dt{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:#7f9cb8; margin-bottom:4px; font-weight:500}
+.hero-meta dd{margin:0; font-size:14px; color:#dee9f4; font-weight:500; font-family:var(--serif)}
+
+/* ---------- 区块 ---------- */
+section.band{padding:64px 0; border-bottom:1px solid var(--rule)}
+@media(max-width:640px){section.band{padding:44px 0}}
+.band.alt{background:var(--paper-2)}
+.sec-head{margin-bottom:34px}
+.sec-num{font-family:var(--mono); font-size:11.5px; font-weight:500; letter-spacing:.18em;
+  color:var(--ink-4); display:block; margin-bottom:9px}
+.sec-head h2{font-size:clamp(22px,2.9vw,30px); margin-bottom:12px; letter-spacing:-.015em}
+.sec-head p{color:var(--ink-3); max-width:72ch; font-size:15px; margin:0}
+.rule-gold{width:36px; height:2px; background:var(--gold-2); margin:18px 0 0; border-radius:2px}
+
+/* ---------- 标签 ---------- */
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500;
+  letter-spacing:.06em; padding:2px 7px; border-radius:4px; white-space:nowrap;
+  border:1px solid transparent; font-family:var(--sans); vertical-align:middle}
+.tag-src{color:var(--navy-2); background:var(--navy-soft); border-color:color-mix(in srgb,var(--navy-2) 24%, transparent)}
+.tag-ours{color:var(--gold); background:var(--gold-bg); border-color:color-mix(in srgb,var(--gold-2) 34%, transparent)}
+.tag-vend{color:var(--warn); background:color-mix(in srgb,var(--warn) 8%, transparent); border-color:color-mix(in srgb,var(--warn) 26%, transparent)}
+
+/* ---------- 引用/提示 ---------- */
+.quote{border-left:3px solid var(--gold-2); background:var(--gold-bg);
+  padding:16px 20px; border-radius:0 var(--r) var(--r) 0; margin:0}
+.quote .qlabel{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; display:block; margin-bottom:6px}
+.quote p{margin:0; font-size:15px; color:var(--ink-2); line-height:1.78}
+.quote p strong{color:var(--ink); font-weight:500}
+
+.note{border:1px solid var(--rule); border-left:3px solid var(--navy-2);
+  background:var(--paper-2); border-radius:0 var(--r) var(--r) 0;
+  padding:15px 20px; font-size:13.8px; line-height:1.74; color:var(--ink-2); margin-top:22px}
+.note b{color:var(--ink); font-weight:600}
+
+/* 故事框 —— 用来放轶事、考据、来历。与 .note 区分：note 讲道理，story 讲事 */
+.story{border:1px solid var(--rule); border-left:3px solid var(--gold-2);
+  background:var(--gold-bg); border-radius:0 var(--r) var(--r) 0;
+  padding:18px 22px; margin:22px 0}
+.story-t{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; margin-bottom:9px; font-family:var(--mono)}
+.story p{font-size:14px; color:var(--ink-2); line-height:1.78; margin:0 0 10px}
+.story p:last-child{margin:0}
+.story b{color:var(--ink); font-weight:600}
+.note.warn{border-left-color:var(--warn); background:color-mix(in srgb,var(--warn) 6%, var(--paper))}
+
+/* ---------- 代码块 ---------- */
+.code{position:relative; margin:18px 0; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper-2); overflow:hidden}
+.code-bar{display:flex; align-items:center; gap:8px; padding:9px 15px;
+  border-bottom:1px solid var(--rule); background:var(--paper-3)}
+.code-bar .dot{width:9px; height:9px; border-radius:50%; background:var(--rule-2); flex:none}
+.code-bar .fn{font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  letter-spacing:.03em; margin-left:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.code-bar .lb{margin-left:auto; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; flex:none}
+pre{margin:0; padding:16px 0 16px 0; overflow-x:auto; counter-reset:ln;
+  font-family:var(--mono); font-size:12.8px; line-height:1.72; tab-size:2}
+pre .l{display:block; padding:0 18px 0 52px; position:relative; white-space:pre}
+pre .l::before{counter-increment:ln; content:counter(ln); position:absolute; left:0; width:38px;
+  text-align:right; color:var(--ink-4); opacity:.6; font-size:11px; user-select:none}
+pre .l.mark{background:color-mix(in srgb,var(--gold-2) 10%, transparent)}
+.cm{color:var(--ink-4); font-style:normal}
+.kw{color:var(--p3); font-weight:500}
+.st{color:var(--p2)}
+.fn2{color:var(--navy-2)}
+.nm{color:var(--p1)}
+[data-theme="dark"] .kw{color:#c9a9ee}
+[data-theme="dark"] .st{color:#7fd8ce}
+[data-theme="dark"] .fn2{color:#7fb6ea}
+[data-theme="dark"] .nm{color:#e79b93}
+
+/* ---------- 分层架构 ---------- */
+.stack{display:grid; gap:10px; margin:8px 0 30px}
+.layer{display:grid; grid-template-columns:56px 1fr auto; gap:18px; align-items:center;
+  padding:20px 22px; background:var(--paper); border:1px solid var(--rule);
+  border-left:3px solid var(--lc); cursor:pointer; transition:.18s; position:relative;
+  width:100%; border-radius:var(--r)}
+.layer:hover{background:color-mix(in srgb,var(--lc) 5%, var(--paper))}
+.layer:focus-visible{outline:2px solid var(--lc); outline-offset:2px}
+.layer.on{background:color-mix(in srgb,var(--lc) 9%, var(--paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 40%, transparent);
+  border-radius:var(--r) var(--r) 0 0; border-bottom-color:transparent}
+.layer-mid{min-width:0}
+.layer-ico{width:40px; height:40px; border-radius:8px; display:grid; place-items:center;
+  background:color-mix(in srgb,var(--lc) 12%, transparent); border:1px solid color-mix(in srgb,var(--lc) 30%, transparent)}
+.layer-ico svg{width:19px; height:19px; stroke:var(--lc); fill:none; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round}
+.layer :is(h3,h4){font-size:16px; margin-bottom:2px; font-family:var(--serif)}
+.layer .role{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono)}
+.layer .io{font-size:13px; color:var(--ink-3); line-height:1.6; margin-top:5px}
+.layer .chev{color:var(--ink-4); font-size:16px; transition:transform .2s; flex:none}
+.layer.on .chev{transform:rotate(90deg); color:var(--lc)}
+@media(max-width:620px){
+  .layer{grid-template-columns:44px 1fr; gap:14px; padding:16px}
+  .layer .chev{display:none}
+  .layer-ico{width:34px;height:34px}
+}
+
+.ldetail{display:none; margin-top:-10px; padding:22px 24px;
+  border:1px solid var(--rule); border-top:0; border-left:3px solid var(--lc);
+  border-radius:0 0 var(--r) var(--r);
+  background:var(--paper-2)}
+.ldetail.show{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){.ldetail.show{animation:none}}
+.ldetail :is(h4,h5){font-family:var(--serif); font-size:14.5px; margin:0 0 8px;
+  color:var(--ink); display:flex; align-items:center; gap:8px}
+.ldetail :is(h4,h5)::before{content:""; width:3px; height:14px; background:var(--lc); border-radius:2px; flex:none}
+.ldetail p{font-size:13.8px; color:var(--ink-2); margin:0 0 10px; line-height:1.74}
+.ldetail p:last-child{margin:0}
+.ldetail ul{margin:0 0 12px; padding-left:18px}
+.ldetail li{font-size:13.4px; color:var(--ink-2); line-height:1.72; margin-bottom:5px}
+.ldetail li:last-child{margin-bottom:0}
+.ldetail code{font-size:12px}
+
+/* ---------- 循环图 ---------- */
+.cyc{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:6px 0 8px;
+  position:relative}
+@media(max-width:760px){.cyc{grid-template-columns:repeat(2,1fr)}}
+.cyc-s{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 16px; box-shadow:var(--shadow-1); position:relative; overflow:hidden}
+.cyc-s::before{content:attr(data-n); position:absolute; top:8px; right:11px;
+  font-family:var(--mono); font-size:26px; font-weight:700; color:var(--lc);
+  opacity:.10; line-height:1}
+.cyc-s .ct{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; margin-bottom:7px; font-family:var(--mono)}
+.cyc-s :is(h3,h4){font-size:14.5px; margin-bottom:6px}
+.cyc-s p{font-size:12.6px; color:var(--ink-3); margin:0; line-height:1.62}
+.cyc-s code{font-size:11px; padding:0 3px}
+.cyc-loop{display:flex; align-items:center; gap:10px; justify-content:center;
+  margin:14px 0 0; font-size:12.2px; color:var(--ink-4); font-family:var(--mono)}
+.cyc-loop .arw{flex:1; height:1px; background:var(--rule-2); position:relative; max-width:220px}
+.cyc-loop .arw::after{content:""; position:absolute; right:0; top:-3.5px;
+  border:4px solid transparent; border-left-color:var(--rule-2)}
+
+/* ---------- 表格 ---------- */
+.tbl-wrap{overflow-x:auto; margin:18px 0; border:1px solid var(--rule);
+  border-radius:var(--r); background:var(--paper)}
+table{border-collapse:collapse; width:100%; font-size:13.4px; min-width:560px}
+th,td{text-align:left; padding:11px 15px; border-bottom:1px solid var(--rule);
+  vertical-align:top; line-height:1.64}
+th{background:var(--paper-3); font-weight:600; font-size:11.5px; letter-spacing:.05em;
+  color:var(--ink-2); white-space:nowrap; text-transform:uppercase; font-family:var(--sans)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--navy-2) 3%, transparent)}
+td b{font-weight:600; color:var(--ink)}
+td code{font-size:11.6px; white-space:nowrap}
+.tick{color:var(--ok); font-weight:700}
+
+/* 密集表格 —— 几十行以上的清单（正典全表、改编总表）用，行高收紧 */
+.tbl-wrap.compact table{font-size:12.7px; min-width:640px}
+.tbl-wrap.compact th,.tbl-wrap.compact td{padding:7px 12px; line-height:1.52}
+.tbl-wrap.compact th{font-size:10.8px}
+.tbl-wrap.compact td code{font-size:11px; white-space:normal}
+
+/* 年代轴 —— 影视史/时间线。左栏年份，右栏内容，用 --lc 上色 */
+.era{display:grid; grid-template-columns:96px 1fr; gap:20px;
+  padding:20px 0; border-top:1px solid var(--rule)}
+.era:first-child{border-top:0; padding-top:0}
+.era:last-child{padding-bottom:0}
+.era-y{font-family:var(--mono); font-size:12.5px; font-weight:700; color:var(--lc);
+  letter-spacing:.02em; line-height:1.5; padding-top:2px}
+.era-y small{display:block; font-weight:400; font-size:10.5px; color:var(--ink-4);
+  letter-spacing:.06em; margin-top:3px}
+.era-b h3{font-size:15.5px; margin-bottom:6px}
+.era-b p{font-size:13.5px; color:var(--ink-2); margin:0 0 8px; line-height:1.72}
+.era-b p:last-child{margin:0}
+.era-b .who{font-size:12.4px; color:var(--ink-3); font-family:var(--mono)}
+@media(max-width:620px){
+  .era{grid-template-columns:1fr; gap:6px; padding:16px 0}
+  .era-y{padding-top:0}
+}
+.cross{color:var(--bad); font-weight:700}
+.mid{color:var(--warn); font-weight:700}
+
+/* ---------- 感知三选一卡 ---------- */
+.perc{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0}
+@media(max-width:840px){.perc{grid-template-columns:1fr}}
+.pcard{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  box-shadow:var(--shadow-1); overflow:hidden; display:flex; flex-direction:column}
+.pcard-h{padding:15px 18px; border-bottom:1px solid var(--rule);
+  background:color-mix(in srgb,var(--lc) 7%, var(--paper))}
+.pcard-h .pt{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono); margin-bottom:4px}
+.pcard-h :is(h3,h4){font-size:15px}
+.pcard-b{padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:11px}
+.pcard-b p{font-size:13px; color:var(--ink-2); margin:0; line-height:1.7}
+.pcard-b .kv{font-size:12.2px; color:var(--ink-3); line-height:1.6}
+.pcard-b .kv b{color:var(--ink); font-weight:600}
+.pcard-b .cd{font-family:var(--mono); font-size:11px; background:var(--paper-3);
+  padding:6px 8px; border-radius:4px; color:var(--ink-2); word-break:break-all; line-height:1.55}
+.pcard-f{padding:11px 18px; border-top:1px solid var(--rule); background:var(--paper-2);
+  font-size:11.8px; color:var(--ink-3); line-height:1.6}
+.pcard-f b{color:var(--bad); font-weight:600}
+
+/* ---------- 使用分布 ---------- */
+.bars{margin:16px 0 8px}
+.bar-row{display:grid; grid-template-columns:172px 1fr 48px; gap:13px; align-items:center;
+  padding:7px 0; border-bottom:1px solid color-mix(in srgb,var(--rule) 60%, transparent)}
+.bar-row:last-child{border-bottom:0}
+@media(max-width:620px){.bar-row{grid-template-columns:112px 1fr 42px; gap:9px}}
+.bar-lb{font-size:13px; color:var(--ink-2); line-height:1.4}
+.bar-lb small{display:block; font-size:10.5px; color:var(--ink-4); font-family:var(--mono)}
+.bar-tr{height:20px; background:var(--paper-3); border-radius:4px; overflow:hidden}
+.bar-f{height:100%; border-radius:4px; background:var(--bc);
+  width:0; transition:width .9s cubic-bezier(.2,.7,.3,1)}
+.bar-v{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--bc); text-align:right}
+.bar-note{font-size:12px; color:var(--ink-4); margin-top:12px; line-height:1.7}
+
+/* ---------- 失效映射 ---------- */
+.fmap{display:grid; gap:10px; margin-top:16px}
+.fm{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start;
+  padding:16px 18px; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper); border-left:3px solid var(--lc)}
+.fm-n{font-family:var(--mono); font-size:11px; font-weight:700; color:#fff;
+  background:var(--lc); border-radius:4px; padding:2px 7px; height:fit-content; white-space:nowrap; margin-top:2px}
+[data-theme="dark"] .fm-n{color:#0f141a}
+.fm :is(h3,h4){font-size:14.5px; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.fm p{font-size:13.2px; color:var(--ink-2); margin:0 0 7px; line-height:1.7}
+.fm p:last-child{margin:0}
+.fm .diag{font-size:12.4px; color:var(--ink-3); padding-top:7px;
+  border-top:1px dashed var(--rule-2)}
+.fm .diag b{color:var(--lc); font-weight:600}
+
+/* ---------- 步骤清单 ---------- */
+.steps{counter-reset:st; list-style:none; margin:16px 0 0; padding:0}
+.steps li{counter-increment:st; position:relative; padding:0 0 18px 42px; margin:0;
+  border-left:1px solid var(--rule-2); margin-left:13px}
+.steps li:last-child{border-left-color:transparent; padding-bottom:0}
+.steps li::before{content:counter(st); position:absolute; left:-13px; top:1px;
+  width:26px; height:26px; border-radius:50%; background:var(--navy-2); color:#fff;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11.5px;
+  font-weight:700; border:2px solid var(--paper)}
+.steps :is(h3,h4){font-size:14.5px; margin-bottom:4px}
+.steps p{font-size:13.4px; color:var(--ink-2); margin:0; line-height:1.72}
+.steps code{font-size:11.8px}
+
+/* ---------- 公式 ---------- */
+.formula{background:var(--paper-2); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 22px; margin:16px 0; text-align:center; overflow-x:auto}
+.formula .fx{font-family:var(--mono); font-size:14px; color:var(--ink);
+  display:inline-block; white-space:nowrap; letter-spacing:.01em}
+.formula .fx .num{border-bottom:1px solid var(--ink-3); padding:0 6px 3px}
+.formula .fx .den{padding:6px 6px 0}
+.formula .cap{font-size:11.8px; color:var(--ink-4); margin-top:10px; line-height:1.6}
+
+/* ---------- 来源 ---------- */
+.src-list{list-style:none; margin:0; padding:0}
+.src-list li{position:relative; padding-left:30px; margin-bottom:13px;
+  font-size:13px; line-height:1.66; color:var(--ink-2)}
+.src-list li::before{content:"▸"; position:absolute; left:0; top:0;
+  color:var(--gold-2); font-size:12px}
+.src-list li b{color:var(--ink); font-weight:600}
+.src-list li a{word-break:break-all; font-size:12.3px}
+.src-list li .pub{display:block; color:var(--ink-4); font-size:11.8px; margin-top:1px}
+
+footer{background:var(--paper-2); padding:38px 0; border-top:1px solid var(--rule)}
+footer p{font-size:12.4px; color:var(--ink-3); line-height:1.74; margin:0 0 8px}
+footer .fl{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; margin-bottom:9px}
+.disc{border-left:2px solid var(--gold-2); padding-left:14px; font-size:12.2px;
+  color:var(--ink-3); line-height:1.74}
+
+/* ---------- 动效 ---------- */
+.rv{opacity:0; transform:translateY(14px);
+  transition:opacity .55s cubic-bezier(.2,.7,.3,1), transform .55s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1; transform:none; transition:none}
+  .bar-f{transition:none}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  :root{--paper:#fff; --paper-2:#fff; --paper-3:#f4f4f4; --ink:#000; --ink-2:#222;
+    --ink-3:#444; --rule:#bbb; --rule-2:#999; --shadow-1:none; --shadow-2:none}
+  .topbar,.progress,.tgl,.cyc-loop{display:none !important}
+  .hero{background:#fff !important; color:#000}
+  .hero h1{color:#000}
+  .hero h1 .accent{color:#8a6a18; -webkit-text-fill-color:#8a6a18}
+  .hero .lede{color:#333} .hero .lede strong{color:#000}
+  .hero::after{display:none}
+  .eyebrow{color:#333; border-color:#999; background:none}
+  .hero-meta dt{color:#555} .hero-meta dd{color:#000}
+  .hero-meta div{border-color:#bbb}
+  .rv{opacity:1 !important; transform:none !important}
+  .ldetail{display:block !important}
+  section.band{padding:20px 0}
+  .layer,.pcard,.fm,.cyc-s,.tbl-wrap{break-inside:avoid}
+  a{color:#000; border-bottom:0}
+  body{font-size:10pt; line-height:1.45}
+  pre{font-size:9pt}
+  .bar-f{width:var(--w) !important}
+}
+
+</style>
+</head>
+<body>
+
+<div class="progress" id="prog" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.1" fill="var(--gold-2)"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3" transform="rotate(60 12 12)"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3" transform="rotate(120 12 12)"/>
+      </svg>
+      <span class="brand-txt">福尔摩斯全景导览</span>
+    </div>
+    <nav class="nav" id="nav" aria-label="章节导航">
+      <a href="#overview">导览</a>
+      <a href="#doyle">柯南·道尔</a>
+      <a href="#birth">诞生与复活</a>
+      <a href="#canon-novels">四长篇</a>
+      <a href="#canon-shorts">56 短篇</a>
+      <a href="#characters">人物志</a>
+      <a href="#settings">设定与地点</a>
+      <a href="#method">推理方法</a>
+      <a href="#screen-early">影视·早期</a>
+      <a href="#screen-tv">影视·黄金期</a>
+      <a href="#screen-now">影视·当代</a>
+      <a href="#watch-order">观影顺序</a>
+      <a href="#pastiche">二创谱系</a>
+      <a href="#sherlockian">福尔摩斯学</a>
+      <a href="#myths">哪些记错了</a>
+      <a href="#copyright">版权史</a>
+      <a href="#contested">争议与存疑</a>
+      <a href="#start">入门路线</a>
+      <a href="#sources">来源</a>
+    </nav>
+    <button class="tgl" id="tgl" type="button" aria-label="切换深色 / 浅色主题" title="切换主题">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.4M12 19.4v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="eyebrow"><span class="dot"></span>全景导览 · 正典 60 部 · 影视百年 · 二创谱系</div>
+    <h1>一个人物，<span class="accent">被搬上银幕 254 次</span></h1>
+    <p class="lede">
+      2012 年，吉尼斯世界纪录认证夏洛克·福尔摩斯是"被搬上银幕最多的人类文学角色"——254 次。
+      他从 1887 年活到 1927 年，作者中途杀了他又被迫复活，此后一百多年，他换过几十张脸、十几座城市、好几条时间线。
+      这份文档把所有门类摊开：正典、影视、二创、学问、误会、版权。
+    </p>
+    <dl class="hero-meta">
+      <div><dt>正典</dt><dd>60 部（4 长篇 + 56 短篇）</dd></div>
+      <div><dt>影视</dt><dd>1900 → 2026</dd></div>
+      <div><dt>跨度</dt><dd>1887 – 至今</dd></div>
+      <div><dt>阅读</dt><dd>约 55 分钟</dd></div>
+    </dl>
+  </div>
+</div>
+
+<section class="band" id="overview">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">01 / 导览</span>
+      <h2>先给一张地图，再进细节</h2>
+      <p>福尔摩斯这个题目，最容易犯的错不是记错年份，而是把「原著」「改编」「二创」「考据」混成一团。这份文档按这四层分开。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">第 1 层</div><h3>正典 Canon</h3></div>
+        <div class="pcard-b">
+          <p>柯南·道尔本人写的 60 部。<b>只有这 60 部算「原著」</b>，其余全是衍生。</p>
+          <div class="kv">1887–1927 年</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">第 2 层</div><h3>改编 Adaptation</h3></div>
+        <div class="pcard-b">
+          <p>影视、广播、舞台、游戏。数量最多，质量方差最大——从公认最佳到金酸莓最差都有。</p>
+          <div class="kv">254 次银幕演绎</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--gold)">
+        <div class="pcard-h"><div class="pt">第 3 层</div><h3>二创 Pastiche</h3></div>
+        <div class="pcard-b">
+          <p>别人写的新故事：让福尔摩斯见弗洛伊德、给他一个妹妹、让莫里亚蒂当主角。</p>
+          <div class="kv">部分获版权方正式授权</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">第 4 层：福尔摩斯学</span>
+      <p>一个只有福尔摩斯才有的现象——<b>把虚构人物当成真人来研究</b>：给他编年表、考证住址、讨论他上过哪所大学、华生结过几次婚。这套玩法有个名字，叫"大游戏"（The Great Game），从 1902 年前后开始，至今没停。</p>
+    </div>
+
+    <div class="note rv">
+      <b>这份文档怎么读：</b>想快速挑一部看 → 直接跳到<b>第 17 节「入门路线」</b>。想搞清原著顺序 → 第 04–05 节。想了解影视史 → 第 10–12 节。只想看冷知识 → 第 15 节「哪些是我们记错的」。
+    </div>
+
+    <div class="note warn rv">
+      <b>一个必须先说明的量级问题：</b>254 次演绎里，大量是默片残本、各国电视改编、动画和戏仿，逐条列完既不可能也没意义。本文的处理是：<b>正典 60 部全收，影视按时代脉络全覆盖并点评关键作品，二创列代表性谱系</b>。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="doyle">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">02 / 作者</span>
+      <h2>医生、历史小说家、唯灵论者——顺带写了福尔摩斯</h2>
+      <p>理解这个人的一个关键：他从不认为福尔摩斯是他最好的作品。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1859<small></small></div>
+          <div class="era-b">
+            <h3>柯南·道尔生于爱丁堡</h3>
+            <p>1859年5月22日生于苏格兰爱丁堡皮卡迪广场，父亲查尔斯是潦倒的公务员兼插画家，母亲玛丽是爱尔兰人。他在七个孩子中排行第二，童年家境拮据，后来在自传《回忆与冒险》中追述这段经历。</p>
+            <p class="who">Arthur Conan Doyle</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1876–1881<small></small></div>
+          <div class="era-b">
+            <h3>爱丁堡学医与贝尔教授</h3>
+            <p>1876年入爱丁堡大学学医，1881年8月获医学学士与外科学硕士。外科教授约瑟夫·贝尔查房时能从衣着、步态与谈吐推断病人的职业和病史，这种“观察—推断”的示范，后来成为福尔摩斯方法的原型。</p>
+            <p class="who">University of Edinburgh</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1887<small></small></div>
+          <div class="era-b">
+            <h3>《血字的研究》问世</h3>
+            <p>1887年，长篇《血字的研究》收入《比顿圣诞年刊》，福尔摩斯与华生首次登场。稿件此前屡遭退稿，沃德·洛克公司仅以25英镑买下；小说当时几乎无人注意，却开启了前后六十部的福尔摩斯正典。</p>
+            <p class="who">A Study in Scarlet</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1893<small></small></div>
+          <div class="era-b">
+            <h3>《最后一案》推下莱辛巴赫</h3>
+            <p>1893年12月，《海滨杂志》刊出《最后一案》，福尔摩斯与宿敌莫里亚蒂在瑞士莱辛巴赫瀑布搏斗后双双坠崖。道尔厌倦被角色绑住、想专心写历史小说，日记里只留下一句“杀了福尔摩斯”。</p>
+            <p class="who">The Final Problem</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1893–1894<small>存疑</small></div>
+          <div class="era-b">
+            <h3>两万份退订：流传与疑点</h3>
+            <p>BBC、斯坦福等常说《海滨杂志》（The Strand，又译《岸边》）逾两万读者退订、杂志“几乎垮掉”。但检索未见同时代发行记录佐证；杂志1890年代月销已近五十万份，且一直出版到1950年，“濒临倒闭”明显夸大，宜视为传说（待核）。</p>
+            <p class="who">The Strand Magazine subscription cancellations</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1893–1894<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯之死催生粉丝文化</h3>
+            <p>福尔摩斯之死激起大量抗议信，美国读者组织“让福尔摩斯活下去”俱乐部，要求作者让他复活。BBC称读者由此开始把通俗小说“当真”、期待作品符合自己的期待，被视为现代粉丝文化的重要起点。</p>
+            <p class="who">Sherlock Holmes fandom</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1901–1902<small></small></div>
+          <div class="era-b">
+            <h3>《巴斯克维尔猎犬》试探回归</h3>
+            <p>1901年8月至1902年5月，《海滨杂志》连载《巴斯克维尔猎犬》。故事设定在福尔摩斯坠瀑之前，既回应读者热情，又不必真正复活角色；连载大卖，也为道尔日后回心转意留了台阶。</p>
+            <p class="who">The Hound of the Baskervilles</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--navy-2)">
+          <div class="era-y">1903–1927<small></small></div>
+          <div class="era-b">
+            <h3>《空屋》让福尔摩斯复活</h3>
+            <p>1903年，美国出版商以高额稿酬邀道尔续写，他于是在《空屋》中让福尔摩斯现身，解释自己只身脱险、坠崖的只有莫里亚蒂。此后二十余年他又陆续发表三十余篇，直到1927年才真正收笔。</p>
+            <p class="who">The Adventure of the Empty House</p>
+          </div>
+        </div>
+
+    <div class="quote rv" style="margin-top:28px">
+      <span class="qlabel">最有意思的一条反差</span>
+      <p>道尔一辈子最想被记住的是<b>历史小说</b>（《白衣纵队》《米卡·克拉克》），福尔摩斯只是养家糊口的副业。他在日记里写"杀了福尔摩斯"，语气像在完成一件拖了很久的杂活。<b>而让他被记住的，恰恰是他想摆脱的那个。</b></p>
+    </div>
+
+    <div class="note rv">
+      <b>原型：约瑟夫·贝尔医生。</b>爱丁堡外科医生贝尔（1837–1911）以病床边"观察—推断—验证"的教学闻名，常一眼道破病人的职业与病史。1877 年道尔做他的门诊助理，后来在信里写："福尔摩斯主要得归功于你。"贝尔本人还参与过真实案件的鉴定。<b>这是"福尔摩斯有原型"这一说法里最扎实的一环</b>——但仍是原型之一，不是唯一来源。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="birth">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">03 / 文本史</span>
+      <h2>一次退稿、一次谋杀、一次被迫的复活</h2>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--navy-2)">
+      <div class="era-y">1887</div>
+      <div class="era-b">
+        <h3>《血字的研究》：25 英镑</h3>
+        <p>稿件屡遭退稿，最后收进《比顿圣诞年刊》，沃德·洛克公司只付了 25 英镑买断。小说当时几乎无人注意——但它定下了此后六十部的全部规则：贝克街 221B、合租、华生作叙述者、推理先于行动。</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--navy-2)">
+      <div class="era-y">1891</div>
+      <div class="era-b">
+        <h3>《岸边》杂志：短篇让他爆红</h3>
+        <p>《波希米亚丑闻》起在《岸边》（The Strand）连载。杂志配图（Sidney Paget 绘）与短篇形式一起，把福尔摩斯推成全民偶像。<b>注意：绝大多数经典形象来自插图，不是文字。</b></p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p1)">
+      <div class="era-y">1893</div>
+      <div class="era-b">
+        <h3>《最后一案》：把他推下瀑布</h3>
+        <p>福尔摩斯与莫里亚蒂在瑞士莱辛巴赫瀑布搏斗后双双坠崖。道尔厌倦被角色绑住、想专心写历史小说，日记里只留下一句"杀了福尔摩斯"。</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--warn)">
+      <div class="era-y">1894</div>
+      <div class="era-b">
+        <h3>粉丝文化的起点（含一个存疑的传说）</h3>
+        <p>抗议信大量涌入，美国读者组织"让福尔摩斯活下去"俱乐部。BBC 认为这是现代粉丝文化的重要起点——读者第一次如此明确地要求作者按他们的期待写。</p>
+        <p><b>但那个"两万份退订"的说法要打问号</b>，详见第 16 节「争议与存疑」。</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p2)">
+      <div class="era-y">1901</div>
+      <div class="era-b">
+        <h3>《巴斯克维尔的猎犬》：一个台阶</h3>
+        <p>故事设定在福尔摩斯坠瀑<b>之前</b>——既回应读者，又不必真正复活角色。连载大卖，为日后的回心转意留了台阶。<b>这一步很聪明：给了读者福尔摩斯，却没有承认他没死。</b></p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p2)">
+      <div class="era-y">1903</div>
+      <div class="era-b">
+        <h3>《空屋》：复活</h3>
+        <p>美国出版商以高额稿酬邀约，道尔于是在《空屋》里让福尔摩斯现身，解释只有莫里亚蒂坠崖。此后二十余年又写了三十余篇，直到 1927 年才真正收笔。</p>
+      </div>
+    </div>
+
+    <div class="quote rv" style="margin-top:26px">
+      <span class="qlabel">这条时间线的真正含义</span>
+      <p><b>福尔摩斯不是被作者一个人创造的，是被作者、插图师、杂志和读者共同创造的。</b>他"死"过一次又活过来，这个事件本身就是证据：人物的所有权，在诞生那一刻就已经部分转移给了读者。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="canon-novels">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">04 / 正典 · 长篇</span>
+      <h2>四部长篇：两次开山，一次试探，一次分水岭</h2>
+      <p>正典共 60 部。长篇只有 4 部，但每一部的功能完全不同。</p>
+      <div class="rule-gold"></div>
+    </div>
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:22%">作品</th><th style="width:9%">年份</th><th>一句话</th></tr></thead>
+        <tbody>
+<tr>
+          <td><b>血字的研究</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">A Study in Scarlet</span></td>
+          <td class="mono" style="white-space:nowrap">1887</td>
+          <td>长篇开山之作，1887年刊于《比顿圣诞年刊》。退役军医华生与福尔摩斯在贝克街221B合租，随即受托调查布里克斯顿路一具无伤尸体与墙上的血字“RACHE”。BBC《神探夏洛克》首集即由此改编。</td></tr>
+<tr>
+          <td><b>四签名</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">The Sign of the Four</span></td>
+          <td class="mono" style="white-space:nowrap">1890</td>
+          <td>第二部长篇，1890年首发于美国《利平科特月刊》。玛丽·莫斯坦收到匿名珍珠与约会信，请福尔摩斯追查父亲失踪与一笔印度宝藏；华生在此案中遇见未来的妻子。1987年格拉纳达版曾改编。</td></tr>
+<tr>
+          <td><b>巴斯克维尔的猎犬</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">The Hound of the Baskervilles</span></td>
+          <td class="mono" style="white-space:nowrap">1901–1902</td>
+          <td>第三部长篇，1901年8月至1902年4月在《斯特兰德》连载。达特穆尔庄园主查尔斯·巴斯克维尔离奇身亡，现场留有巨大犬爪印；福尔摩斯派华生独驻庄园，调查家族“魔犬”传说。1939年与1959年两度搬上银幕。</td></tr>
+<tr>
+          <td><b>恐怖谷</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">The Valley of Fear</span></td>
+          <td class="mono" style="white-space:nowrap">1914–1915</td>
+          <td>第四部长篇，1914年9月至1915年5月在《斯特兰德》连载。伯尔斯通庄园主道格拉斯中枪身亡，现场留下“恐怖谷”字样；案情牵出美国煤矿区的秘密会社与莫里亚蒂教授。1916年曾被拍成默片。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note rv">
+      <b>读法提示：</b>《血字的研究》后半部有一段美国摩门教徒的长篇倒叙，节奏与前半段割裂，很多读者在这里卡住——<b>可以直接读前半，再回来补</b>。《恐怖谷》同样结构（前半英国命案、后半美国矿区往事），但后半更精彩。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="canon-shorts">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">05 / 正典 · 短篇</span>
+      <h2>56 个短篇：五个集子，逐条列全</h2>
+      <p>这是福尔摩斯真正的本体。影视改编绝大多数取材于短篇，因为短篇结构最适合一集一案。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+<h3 style="font-size:16px;margin:30px 0 10px">《冒险史》 <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-4);font-weight:400">The Adventures of Sherlock Holmes · 1892 · 12 篇</span></h3>
+        <div class="tbl-wrap compact">
+          <table>
+            <thead><tr><th>#</th><th>篇名</th><th>原名</th><th>年</th><th>一句话</th></tr></thead>
+            <tbody>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">1</td>
+              <td><b>波希米亚丑闻</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">A Scandal in Bohemia</span></td>
+              <td class="mono" style="white-space:nowrap">1891</td>
+              <td>《冒险史》首篇。波希米亚国王委托福尔摩斯取回一张与歌剧名伶艾琳·艾德勒的合影，以免婚事告吹；福尔摩斯乔装行事后，却对这位女士刮目相看。格拉纳达版与BBC《神探夏洛克》均曾改编。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">2</td>
+              <td><b>红发会</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">The Red-Headed League</span></td>
+              <td class="mono" style="white-space:nowrap">1891</td>
+              <td>《冒险史》第2篇。当铺老板杰贝兹·威尔逊因一头红发被“红发会”高薪雇用抄书，福尔摩斯却从这份怪差事里嗅出一桩针对银行金库的阴谋。道尔自评最爱的故事之一。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">3</td>
+              <td><b>身份案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">A Case of Identity</span></td>
+              <td class="mono" style="white-space:nowrap">1891</td>
+              <td>《冒险史》第3篇。玛丽·萨瑟兰的未婚夫在婚礼当天于教堂途中失踪，继父却表现得异常镇定；福尔摩斯从身高、笔迹与一封打字信入手，拆穿一场精心设计的骗局。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">4</td>
+              <td><b>博斯科姆比溪谷秘案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">The Boscombe Valley Mystery</span></td>
+              <td class="mono" style="white-space:nowrap">1891</td>
+              <td>《冒险史》第4篇。赫里福德郡农夫麦卡锡横死池塘边，其子詹姆斯因争执现场被控谋杀；福尔摩斯受雷斯垂德之邀下乡，从死者临终遗言与澳洲旧事中寻找真凶。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">5</td>
+              <td><b>五个橘核</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">The Five Orange Pips</span></td>
+              <td class="mono" style="white-space:nowrap">1891</td>
+              <td>《冒险史》第5篇。青年约翰·奥彭肖接连收到匿名信与五粒橘核，叔父与父亲都曾在收到同样东西后暴毙；福尔摩斯意识到背后是来自美国的秘密组织，随即展开与时间的赛跑。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">6</td>
+              <td><b>歪唇男人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">The Man with the Twisted Lip</span></td>
+              <td class="mono" style="white-space:nowrap">1891</td>
+              <td>《冒险史》第6篇。商人内维尔·圣克莱尔在伦敦失踪，妻子却在鸦片馆楼上瞥见他的脸；福尔摩斯与华生夜探烟馆，线索指向一个以乞讨为业的“歪唇”男子。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">7</td>
+              <td><b>蓝宝石案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Blue Carbuncle</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《冒险史》第7篇。圣诞节后，一枚失窃的蓝宝石被塞进一只鹅的嗉囊，辗转落到贝克街；福尔摩斯循着鹅与旧帽子的线索，追查宝石的下落。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">8</td>
+              <td><b>斑点带子案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Speckled Band</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《冒险史》第8篇。海伦·斯托纳的姐姐在婚期前夕离奇死亡，临终只留下“斑点带子”四字；她担心继父如法炮制，向福尔摩斯求助。道尔本人最偏爱此篇。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">9</td>
+              <td><b>工程师大拇指案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Engineer's Thumb</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《冒险史》第9篇。工程师维克托·哈瑟利被高薪请去检修一台神秘水压机，事成后遭人灭口，侥幸逃生却失去拇指；福尔摩斯从假地址与机器用途追出伪造货币的窝点。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">10</td>
+              <td><b>贵族单身汉案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Noble Bachelor</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《冒险史》第10篇。圣西蒙勋爵新婚当天，新娘哈蒂·多兰在婚宴后失踪；社交界议论纷纷，福尔摩斯却从新娘掉落的结婚戒指与一位美国来客身上理出头绪。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">11</td>
+              <td><b>绿玉皇冠案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Beryl Coronet</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《冒险史》第11篇。银行家亚历山大·霍尔德受托保管一顶绿玉皇冠，夜里皇冠被掰断、三颗绿玉失窃，其子亚瑟形迹可疑；福尔摩斯顶着压力追查真正的窃贼。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">12</td>
+              <td><b>铜山毛榉案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Copper Beeches</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《冒险史》第12篇。家庭教师维奥莱特·亨特受雇于乡间富户，条件竟是剪短头发、穿蓝裙坐在窗前；她察觉雇主在演戏，向福尔摩斯求助，随后发现宅中另有隐情。</td></tr>
+            </tbody>
+          </table>
+        </div>
+<h3 style="font-size:16px;margin:30px 0 10px">《回忆录》 <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-4);font-weight:400">The Memoirs of Sherlock Holmes · 1894 · 12 篇</span></h3>
+        <div class="tbl-wrap compact">
+          <table>
+            <thead><tr><th>#</th><th>篇名</th><th>原名</th><th>年</th><th>一句话</th></tr></thead>
+            <tbody>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">1</td>
+              <td><b>银色马</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">Silver Blaze</span></td>
+              <td class="mono" style="white-space:nowrap">1892</td>
+              <td>《回忆录》首篇。赛马“银色马”在比赛前夜失踪，驯马师斯特雷克死于荒野；福尔摩斯凭“狗在夜里没有叫”这一反常细节推翻众议，此语已成侦探文学名句。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">2</td>
+              <td><b>硬纸盒案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Cardboard Box</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第2篇（多数英版）。克罗伊登的库欣小姐收到装有两只人耳的盐渍纸盒，福尔摩斯由绳结、邮戳与耳上切口追查寄件人。此篇因题材敏感，在英美版本中或归《回忆录》、或归《最后致意》。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">3</td>
+              <td><b>黄面人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Yellow Face</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第3篇。格兰特·芒罗发现妻子频繁出入邻村小屋，窗内一张“黄脸”令他怀疑妻子另有隐情；福尔摩斯揭开真相，留下一个关于偏见与体面的辛酸注脚。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">4</td>
+              <td><b>证券经纪人的书记员</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Stockbroker's Clerk</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第4篇。霍尔·派克罗夫特辞去稳定工作，接受一家新公司的高薪职位，却发现办公室与同事处处透着古怪；福尔摩斯察觉这是一场冒名顶替的骗局。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">5</td>
+              <td><b>“格洛里亚斯科特”号</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the 'Gloria Scott'</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第5篇。福尔摩斯向华生讲述大学时代的第一桩案子：同学维克托·特雷弗的父亲收到一封古怪信件后惊恐而死，线索指向一艘名为“格洛里亚斯科特”号的旧船。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">6</td>
+              <td><b>马斯格雷夫礼典</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Musgrave Ritual</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第6篇。古老乡绅家族流传一段关于冠冕的谜语式礼典，管家布鲁顿深夜掘地后失踪；福尔摩斯为旧友马斯格雷夫破解仪式文字，解开家族世代相传的秘密。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">7</td>
+              <td><b>赖盖特之谜</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Reigate Squire</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第7篇。福尔摩斯在赖盖特乡间养病，当地乡绅家中遭窃、马车夫中弹身亡；他拖着病体从半张撕碎的便条入手，将两起看似无关的案件并案。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">8</td>
+              <td><b>驼背人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Crooked Man</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第8篇。退役上校巴克利在自家书房中弹身亡，妻子昏倒在旁；现场门窗紧闭，福尔摩斯却发现死者脸上凝固着极度恐惧，并追出一段印度兵变时期的旧怨。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">9</td>
+              <td><b>住院病人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Resident Patient</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第9篇。特雷弗林医生收治了一位古怪的赞助人布莱辛顿，后者出资替他开诊所，却对来访者惊恐万状；福尔摩斯从访客的异常举动中嗅到危险。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">10</td>
+              <td><b>希腊译员</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Greek Interpreter</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第10篇。福尔摩斯的哥哥迈克罗夫特首次登场，他带来一桩希腊译员的求助：一名被囚的希腊男子与胁迫他的两名英国男子。福尔摩斯顺藤摸出一桩家族阴谋。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">11</td>
+              <td><b>海军协定</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Naval Treaty</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》第11篇。外交部机密《海军协定》在办公室失窃，年轻外交官珀西·费尔普斯声誉尽毁；福尔摩斯受旧友之托，从窗台脚印、铃绳与一份夜宵入手追查。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">12</td>
+              <td><b>最后一案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Final Problem</span></td>
+              <td class="mono" style="white-space:nowrap">1893</td>
+              <td>《回忆录》末篇。福尔摩斯与犯罪帝国首脑莫里亚蒂在欧洲周旋，最终在瑞士莱辛巴赫瀑布与对手决战。道尔原本打算以此终结系列，读者抗议多年后才让福尔摩斯归来。</td></tr>
+            </tbody>
+          </table>
+        </div>
+<h3 style="font-size:16px;margin:30px 0 10px">《归来记》 <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-4);font-weight:400">The Return of Sherlock Holmes · 1905 · 13 篇</span></h3>
+        <div class="tbl-wrap compact">
+          <table>
+            <thead><tr><th>#</th><th>篇名</th><th>原名</th><th>年</th><th>一句话</th></tr></thead>
+            <tbody>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">1</td>
+              <td><b>空屋</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Empty House</span></td>
+              <td class="mono" style="white-space:nowrap">1903</td>
+              <td>《归来记》首篇。福尔摩斯在莱辛巴赫瀑布“死而复生”，向华生解释脱身经过；两人随即在贝克街空屋设局，对付莫里亚蒂余党、神枪手塞巴斯蒂安·莫兰上校。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">2</td>
+              <td><b>诺伍德的建筑师</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Norwood Builder</span></td>
+              <td class="mono" style="white-space:nowrap">1903</td>
+              <td>《归来记》第2篇。年轻律师麦克法兰被控谋杀委托人老建筑师奥尔德克，案发现场却只有一堆烧焦的遗骨；福尔摩斯从一扇暗门与房屋结构看出破绽。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">3</td>
+              <td><b>跳舞的人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Dancing Men</span></td>
+              <td class="mono" style="white-space:nowrap">1903</td>
+              <td>《归来记》第3篇。乡绅希尔顿·丘比特发现妻子收到一串诡异的跳舞小人涂鸦，随后命案发生；福尔摩斯破译这套密码，牵出一名美国黑帮旧情人。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">4</td>
+              <td><b>孤身骑车人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Solitary Cyclist</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第4篇。年轻音乐教师维奥莱特·史密斯骑车往返乡间时，总被一名神秘男子尾随；福尔摩斯调查后发现，这关系到她雇主家的一桩婚事与遗产图谋。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">5</td>
+              <td><b>修道院公学</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Priory School</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第5篇。公爵之子萨尔泰尔勋爵从寄宿学校失踪，德语教师海德格尔死在荒原；福尔摩斯从一双鞋印与一封勒索信，追到荒野深处的藏匿点。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">6</td>
+              <td><b>黑彼得</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">Black Peter</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第6篇。捕鲸船长“黑彼得”在自家木屋中被鱼叉钉死，现场门窗紧闭；福尔摩斯与雷斯垂德从现场遗留的烟具与一段海上旧怨入手。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">7</td>
+              <td><b>米尔沃顿</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">Charles Augustus Milverton</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第7篇。伦敦最臭名昭著的勒索者米尔沃顿手握多位贵妇的把柄，福尔摩斯为救一位委托人潜入其宅邸，却在书房里撞见意想不到的访客。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">8</td>
+              <td><b>六座拿破仑半身像</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Six Napoleons</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第8篇。伦敦接连发生拿破仑石膏像被砸毁的怪案，最后一座雕像牵出黑珍珠与一名意大利工匠；雷斯垂德罕见地对福尔摩斯心服口服。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">9</td>
+              <td><b>三个大学生</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Three Students</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第9篇。大学奖学金考试前夜，试卷被人从导师书房抄走，三名考生与老校工都有嫌疑；福尔摩斯从窗台泥印、削尖的铅笔与一张字条还原经过。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">10</td>
+              <td><b>金边夹鼻眼镜</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Golden Pince-Nez</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第10篇。老教授科拉姆的秘书在书房中刀身亡，死者手中攥着一副金边夹鼻眼镜；福尔摩斯由眼镜度数、鞋跟磨损追出一段流亡者的往事。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">11</td>
+              <td><b>失踪的中卫</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Missing Three-Quarter</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第11篇。剑桥橄榄球队主力戈弗雷·斯汤顿在赛前突然失踪，球队经理向福尔摩斯求助；调查指向伦敦一位医生与一桩秘而不宣的婚事。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">12</td>
+              <td><b>格兰其庄园</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Abbey Grange</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第12篇。庄园主尤斯塔斯·布雷肯斯托尔爵士被人用拨火棍击毙，夫人被绑在椅上；福尔摩斯却从一只缺失的银盘与绳索打结方式看出破绽。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">13</td>
+              <td><b>第二块血迹</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Second Stain</span></td>
+              <td class="mono" style="white-space:nowrap">1904</td>
+              <td>《归来记》第13篇。一封足以引爆欧洲战争的密信从内阁大臣保险柜中不翼而飞，一名知情者离奇死亡；福尔摩斯受首相之托秘密追查，线索指向一块地毯上的血迹。</td></tr>
+            </tbody>
+          </table>
+        </div>
+<h3 style="font-size:16px;margin:30px 0 10px">《最后致意》 <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-4);font-weight:400">His Last Bow · 1917 · 7 篇</span></h3>
+        <div class="tbl-wrap compact">
+          <table>
+            <thead><tr><th>#</th><th>篇名</th><th>原名</th><th>年</th><th>一句话</th></tr></thead>
+            <tbody>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">1</td>
+              <td><b>威斯特里亚寓所</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">Wisteria Lodge</span></td>
+              <td class="mono" style="white-space:nowrap">1908</td>
+              <td>《最后致意》第1篇。斯科特·埃克尔斯在一座租来的乡间别墅过夜，醒来发现主人失踪、一名男子横死；福尔摩斯循着这栋“凶宅”追查背后的真相。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">2</td>
+              <td><b>红圈会</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Red Circle</span></td>
+              <td class="mono" style="white-space:nowrap">1911</td>
+              <td>《最后致意》第2篇。沃伦太太的房客深居简出，只与外界以暗号联络；福尔摩斯受雇监视，发现背后是意大利那不勒斯的秘密社团“红圈会”。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">3</td>
+              <td><b>布鲁斯—帕廷顿计划</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Bruce-Partington Plans</span></td>
+              <td class="mono" style="white-space:nowrap">1908</td>
+              <td>《最后致意》第3篇。海军部绝密的潜艇图纸在上班途中遗失，经手人卡多根·韦斯特死在铁轨旁；迈克罗夫特请福尔摩斯出马，案情牵动海军机密。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">4</td>
+              <td><b>临终的侦探</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Dying Detective</span></td>
+              <td class="mono" style="white-space:nowrap">1913</td>
+              <td>《最后致意》第4篇。福尔摩斯突然卧病不起、拒绝就医，只肯见一位来自苏门答腊的种植园主；华生按指示配合演出一场“临终”戏码，真相在病榻前揭开。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">5</td>
+              <td><b>弗朗西丝·卡法克斯女士的失踪</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">The Disappearance of Lady Frances Carfax</span></td>
+              <td class="mono" style="white-space:nowrap">1911</td>
+              <td>《最后致意》第5篇。富有而孤独的卡法克斯女士在欧洲旅行途中音讯全无，仅寄回一些反常的明信片；福尔摩斯从一只旧行李箱与报纸广告追到伦敦南部的宅院。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">6</td>
+              <td><b>魔鬼之足</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Devil's Foot</span></td>
+              <td class="mono" style="white-space:nowrap">1910</td>
+              <td>《最后致意》第6篇。康沃尔郡一家人围坐时突遭怪病，一人死亡、两人精神失常，现场毫无外力痕迹；福尔摩斯从壁炉余烬与一种非洲植物粉末入手。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">7</td>
+              <td><b>最后致意</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">His Last Bow</span></td>
+              <td class="mono" style="white-space:nowrap">1917</td>
+              <td>《最后致意》压卷篇。时值1914年欧战爆发前夕，福尔摩斯化名美国间谍“阿尔塔蒙特”潜入德国情报头目冯·博克的庄园，执行一项秘密任务。</td></tr>
+            </tbody>
+          </table>
+        </div>
+<h3 style="font-size:16px;margin:30px 0 10px">《新探案》 <span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-4);font-weight:400">The Case-Book of Sherlock Holmes · 1927 · 12 篇</span></h3>
+        <div class="tbl-wrap compact">
+          <table>
+            <thead><tr><th>#</th><th>篇名</th><th>原名</th><th>年</th><th>一句话</th></tr></thead>
+            <tbody>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">1</td>
+              <td><b>王冠宝石案</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Mazarin Stone</span></td>
+              <td class="mono" style="white-space:nowrap">1921</td>
+              <td>《新探案》。一颗名为“马萨林”的巨钻失窃，嫌疑人西尔维厄斯伯爵上门与福尔摩斯谈判；本篇以第三人称叙事，改编自道尔的舞台剧《王冠钻石》。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">2</td>
+              <td><b>雷神桥之谜</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">The Problem of Thor Bridge</span></td>
+              <td class="mono" style="white-space:nowrap">1922</td>
+              <td>《新探案》。富商之妻玛丽亚·吉布森在雷神桥边中枪身亡，家庭女教师成为嫌犯；福尔摩斯从桥栏上一处缺口与一颗石子，重建了死者最后时刻。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">3</td>
+              <td><b>爬行人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Creeping Man</span></td>
+              <td class="mono" style="white-space:nowrap">1923</td>
+              <td>《新探案》。年迈的普雷斯伯里教授性情大变，夜里竟沿常春藤爬墙；福尔摩斯从一只发狂的狼犬与一封情书，追查教授夜间异行的原因。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">4</td>
+              <td><b>吸血鬼</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Sussex Vampire</span></td>
+              <td class="mono" style="white-space:nowrap">1924</td>
+              <td>《新探案》。苏塞克斯乡绅弗格森怀疑年轻妻子是吸血鬼，因为前妻之子颈上出现两个血孔；福尔摩斯从家庭关系与一支南美吹箭看出另情。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">5</td>
+              <td><b>三个加里德布</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Three Garridebs</span></td>
+              <td class="mono" style="white-space:nowrap">1924</td>
+              <td>《新探案》。内森·加里德布独居收藏，被陌生人告知只要找到第三个姓“加里德布”的人就能继承巨款；福尔摩斯却从“遗产”条款与破绽中看穿骗局。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">6</td>
+              <td><b>显贵的主顾</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Illustrious Client</span></td>
+              <td class="mono" style="white-space:nowrap">1924</td>
+              <td>《新探案》。奥地利男爵格鲁纳以魅力与把柄控制女性，一位英国将军之女执意下嫁；福尔摩斯受雇阻止婚事，并得到一位旧情人的意外协助。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">7</td>
+              <td><b>三角墙山庄</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Three Gables</span></td>
+              <td class="mono" style="white-space:nowrap">1926</td>
+              <td>《新探案》。寡妇梅伯利太太收到高价收购老宅连同全部家具的要约，随后宅中一部手稿失窃；福尔摩斯发现买家的目标并非房产，而是屋中旧物。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">8</td>
+              <td><b>皮肤变白的军人</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Blanched Soldier</span></td>
+              <td class="mono" style="white-space:nowrap">1926</td>
+              <td>《新探案》。退役军官戈弗雷·埃姆斯沃思从南非回来后离奇“变白”，被家人隔离在庄园偏房；福尔摩斯应其友之请前往，发现所谓“变白”另有隐情。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">9</td>
+              <td><b>狮鬃毛</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Lion's Mane</span></td>
+              <td class="mono" style="white-space:nowrap">1926</td>
+              <td>《新探案》。退休后的福尔摩斯在苏塞克斯海滨目睹命案：教师麦克弗森背上布满鞭痕般伤口，倒地身亡；他通过潮池里的“狮鬃”生物解开谜团。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">10</td>
+              <td><b>退休的颜料商</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Retired Colourman</span></td>
+              <td class="mono" style="white-space:nowrap">1926</td>
+              <td>《新探案》。退休颜料商安伯利报案称妻子携款与邻居私奔，请福尔摩斯寻人；福尔摩斯却从一张未使用的剧院票根和满屋新漆中看出破绽。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">11</td>
+              <td><b>戴面纱的房客</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">the Veiled Lodger</span></td>
+              <td class="mono" style="white-space:nowrap">1927</td>
+              <td>《新探案》。一位终身戴面纱的房客向福尔摩斯与华生讲述往事：她曾是马戏团驯狮人的妻子，一场狮笼惨剧毁了她的容貌，也留下道德拷问。</td></tr>
+<tr>
+              <td class="mono" style="color:var(--ink-4);white-space:nowrap">12</td>
+              <td><b>肖斯科姆别墅</b></td>
+              <td><span class="mono" style="font-size:11px;color:var(--ink-3)">Shoscombe Old Place</span></td>
+              <td class="mono" style="white-space:nowrap">1927</td>
+              <td>《新探案》。赛马“肖斯科姆王子”的主人诺伯顿爵士行为反常，妹妹久未露面；福尔摩斯受托调查，在古老宅邸与家族墓穴间寻找答案。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+    <div class="note warn rv" style="margin-top:30px">
+      <b>一个必须解释的账目问题：为什么短篇是 56 而不是 57？</b>
+      《硬纸盒案》1893 年首发于《岸边》，1894 年《回忆录》英国初版未收，美国初版收录后又撤下，1917 年再收入《最后致意》。于是<b>英版把它算在《回忆录》（12 篇），美版算在《最后致意》（8 篇）</b>——但一部作品只能计一次，所以总数仍是 56。
+      <br><br>本页按英版归类，故《最后致意》显示 7 篇。若你手上的版本是美版，《最后致意》会是 8 篇，两个数字都对。
+    </div>
+
+    <div class="note rv">
+      <b>道尔自己的十二佳（1927 年应《岸边》之邀列出）：</b>第一名是《斑点带子案》，第二名《红发会》。他偏爱《斑点带子案》是出了名的——这篇也是公认最适合入门的短篇之一。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="characters">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">06 / 人物</span>
+      <h2>人物志：谁出场多，谁出场少</h2>
+      <p>这里有个反直觉的事实：最著名的反派，其实只出现在两个故事里。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:20%">人物</th><th style="width:16%">身份</th><th>在正典里的实际分量</th></tr></thead>
+        <tbody>
+          <tr><td><b>夏洛克·福尔摩斯</b></td><td>咨询侦探</td><td>全程主角。情绪起伏、药瘾、对女性的疏离，都是原著写明的</td></tr>
+          <tr><td><b>约翰·华生</b></td><td>军医、室友、记录者</td><td>大多数篇目的叙述者。他的"笨"主要是电影塑造的，原著里是可靠的搭档</td></tr>
+          <tr><td><b>赫德森太太</b></td><td>221B 的房东</td><td>出场有限，但承担了"家"这个功能；影视里被大幅加戏</td></tr>
+          <tr><td><b>雷斯垂德</b></td><td>苏格兰场警探</td><td>出现于十余篇，常被写成一个不笨但缺想象力的职业警察</td></tr>
+          <tr><td><b>麦克罗夫特</b></td><td>福尔摩斯的兄长</td><td>仅三篇，但设定极强——"第欧根尼俱乐部"，比弟弟更聪明却更懒</td></tr>
+          <tr><td class="cross"><b>莫里亚蒂</b></td><td>犯罪帝国首脑</td><td class="cross"><b>只出现在两篇</b>（《最后一案》《空屋》被提及）。"犯罪拿破仑"的形象是后世影视放大出来的</td></tr>
+          <tr><td class="cross"><b>艾琳·艾德勒</b></td><td>歌剧名伶</td><td class="cross"><b>只出现一篇</b>（《波希米亚丑闻》）。"福尔摩斯一生所爱"完全是改编产物</td></tr>
+          <tr><td><b>贝克街小分队</b></td><td>街头少年情报网</td><td>少数几篇出现，队长叫 Wiggins。核心功能是"廉价并行的人力搜索"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn rv">
+      <b>这条值得单独记住：</b>莫里亚蒂和艾琳·艾德勒之所以成为文化符号，恰恰因为<b>正典给的太少</b>。留白越大，改编空间越大。这是理解福尔摩斯影视史的一把钥匙——<b>被改编得最多的，往往不是原著里写得最多的。</b>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="settings">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">07 / 设定</span>
+      <h2>六个地点，撑起整个宇宙</h2>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">总部</div><h3>贝克街 221B</h3></div>
+        <div class="pcard-b">
+          <p>两间卧室加一间大起居室，17 级台阶。化学实验、小提琴、烟草与子弹痕共存。</p>
+          <div class="kv">写作时这个门牌并不存在</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">兄长</div><h3>第欧根尼俱乐部</h3></div>
+        <div class="pcard-b">
+          <p>麦克罗夫特的据点：会员之间<b>禁止交谈</b>，只允许在"陌生人房间"说话。</p>
+          <div class="kv">一个把社交成本压到零的设计</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p1)">
+        <div class="pcard-h"><div class="pt">终局</div><h3>莱辛巴赫瀑布</h3></div>
+        <div class="pcard-b">
+          <p>1893 年福尔摩斯"死亡"处，1903 年复活的起点。瑞士。</p>
+          <div class="kv">文学史上最著名的一次"杀死主角"</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="perc rv" style="margin-top:14px">
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">恐怖</div><h3>达特穆尔荒原</h3></div>
+        <div class="pcard-b">
+          <p>《巴斯克维尔的猎犬》的舞台。沼泽、迷雾、家族诅咒——这是福尔摩斯系列里唯一接近"哥特恐怖"的篇目。</p>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--gold)">
+        <div class="pcard-h"><div class="pt">退隐</div><h3>苏塞克斯丘陵</h3></div>
+        <div class="pcard-b">
+          <p>晚年养蜂、写回忆录。这个设定被后世大量使用：《福尔摩斯先生》《玛丽·拉塞尔》系列都从这里长出来。</p>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">机构</div><h3>苏格兰场</h3></div>
+        <div class="pcard-b">
+          <p>官方警察系统，与"咨询侦探"形成体制外/体制内的对照。雷斯垂德的角色价值就在这里。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="method">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">08 / 方法论</span>
+      <h2>他做的不是演绎，是溯因</h2>
+      <p>这是本文最想纠的一处。中文世界普遍说他用"演绎法"，英文也常说 deduction——<b>两处都不准确</b>。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:16%">类型</th><th style="width:34%">方向</th><th>确定性</th></tr></thead>
+        <tbody>
+          <tr><td><b>演绎</b><br>Deduction</td><td>从一般规则 + 前提 → 必然结论</td><td class="tick">结论被前提锁死。前提对，结论必对</td></tr>
+          <tr><td><b>归纳</b><br>Induction</td><td>从多个个例 → 一般规则</td><td class="mid">概率性的推广</td></tr>
+          <tr><td><b>溯因</b><br>Abduction</td><td>从结果 + 已知规则 → <b>最可能的解释</b></td><td class="cross">只是"最佳猜测"，可被新证据推翻</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">福尔摩斯实际在做的事</span>
+      <p>"看到泥、听到狗、发现烟灰" → 提出一个能同时解释这三者的假设 → 再去验证。<b>这是溯因（abduction），是皮尔士（C. S. Peirce）命名的第三种推理</b>，特点是<b>结论永远是可错的</b>。</p>
+    </div>
+
+    <div class="note rv">
+      <b>学术依据：</b>把福尔摩斯与皮尔士的溯因接起来，最标准的文献是 Umberto Eco 与 Thomas A. Sebeok 合编的《The Sign of Three: Dupin, Holmes, Peirce》（Indiana University Press, 1983）。这本书把爱伦·坡的杜宾、福尔摩斯、皮尔士三人放在同一个符号学谱系里讨论——<b>是这一领域的奠基文集</b>。
+      <span style="display:block;margin-top:6px;font-size:12.4px;color:var(--ink-4)">馆藏检索号：OCLC 9412985（纸质书，出版信息见附录）</span>
+    </div>
+
+    <div class="note warn rv">
+      <b>为什么这个区别重要，不只是术语洁癖：</b>
+      <br>如果它是演绎，那福尔摩斯<b>不可能错</b>——因为演绎结论被前提锁死。
+      <br>如果它是溯因，那福尔摩斯<b>经常错</b>，而且原著里他真的错过（《黄面人》就是他判断失误、并向客户道歉的一篇）。
+      <br><br>把溯因说成演绎，会同时误读两件事：<b>高估了推理的确定性，也低估了原著的自省。</b>道尔写《黄面人》，正是为了给这个"永远正确"的形象拆台。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">顺带一提</span>
+      <p>福尔摩斯自己说过一句常被忽略的话，大意是：<b>"数据不足就推理，是最大的错误。"</b>这不是演绎的语气，这是溯因者的自觉——他知道结论依赖证据量。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="screen-early">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">09 / 影视 · 第一幕</span>
+      <h2>1900–1960s：从西洋镜到 Hammer 彩色片</h2>
+      <p>福尔摩斯的银幕史几乎和电影史同步。最早的版本比很多人以为的早得多。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1900<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯的困惑</h3>
+            <p>美国 Mutoscope and Biograph 公司出品、Arthur Marvin 拍摄的 30 秒特技短片，只在 Mutoscope 西洋镜机里供单人投币观看，是现存最早出现福尔摩斯形象的影片。片中侦探被会瞬间消失的小偷反复戏弄，全靠停机再拍的魔术效果。原以为失传，1968 年在国会图书馆纸印拷贝档案中被认出。</p>
+            <p class="who">Sherlock Holmes Baffled</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1905<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯历险记；或，为赎金而被扣</h3>
+            <p>Vitagraph 出品、J. Stuart Blackton 执导的一卷本短片，剧情取材《四签名》，通常被视为第一次严肃改编柯南·道尔原著的尝试，也让福尔摩斯从杂耍特技片进入叙事电影。长期误传由 Maurice Costello 主演，学者 Leslie S. Klinger 已据档期证伪。今仅存国会图书馆纸印残片。</p>
+            <p class="who">Adventures of Sherlock Holmes; or, Held for Ransom</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1916<small></small></div>
+          <div class="era-b">
+            <h3>夏洛克·福尔摩斯</h3>
+            <p>Essanay 出品、Arthur Berthelet 执导，是剧作家 William Gillette 一生唯一一部电影，把他 1899 年的百老汇名剧搬上银幕；鹿帽、弯柄烟斗、睡袍的经典造型由此定型。原以为早已失传，2014 年法国电影资料馆发现硝酸底片，经 4K 扫描与调色修复，2015 年重新首映。</p>
+            <p class="who">Sherlock Holmes</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1921–1923<small></small></div>
+          <div class="era-b">
+            <h3>斯托尔公司福尔摩斯默片系列</h3>
+            <p>英国 Stoll Pictures 出品、Eille Norwood 主演：45 部两卷本短片分《冒险》《续冒险》《最后冒险》三辑（1921、1922、1923），另加《巴斯克维尔的猎犬》(1921) 与《四签名》(1923) 两部长片，合计 47 部，至今仍是演员出演福尔摩斯的最高纪录。柯南·道尔公开称赞其“魅力”与无人能及的易容术。</p>
+            <p class="who">Sherlock Holmes (Stoll film series)</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1922<small></small></div>
+          <div class="era-b">
+            <h3>夏洛克·福尔摩斯</h3>
+            <p>Goldwyn 出品、Albert Parker 执导，John Barrymore 主演，同样改编自 Gillette 舞台剧；Roland Young 饰华生，Gustav von Seyffertitz 饰莫里亚蒂，William Powell 也在此片银幕出道。原版长 136 分钟，散佚数十年后由 George Eastman House 于 1970 年代寻回重编，2001 年再修复，仍缺约 26 分钟。</p>
+            <p class="who">Sherlock Holmes</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1931–1937<small></small></div>
+          <div class="era-b">
+            <h3>阿瑟·旺特纳的福尔摩斯系列</h3>
+            <p>英国 Twickenham 等公司出品，Arthur Wontner 主演，共 5 部：《沉睡的红衣主教》(1931)、《失踪的伦勃朗》(1932，已失传)、《四签名》(1932)、《福尔摩斯的胜利》(1935)、《银色马》(1937)。Wontner 接演时已 56 岁，前三年戴假发遮掩秃顶；《银色马》1941 年在美国改名《巴斯克维尔谋杀案》。</p>
+            <p class="who">Sherlock Holmes (1931 film series)</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1931<small></small></div>
+          <div class="era-b">
+            <h3>斑点带子案</h3>
+            <p>英国 British &amp; Dominions 出品、Jack Raymond 执导，Raymond Massey 主演福尔摩斯，Lyn Harding 饰罗伊洛特医生；中文资料常误记为 1932 年，实为 1931 年 3 月公映。剧本据柯南·道尔 1910 年亲自改写的舞台剧而非原作小说，故人名情节有别，贝克街也被改成“107 号”、配有女秘书与录音机。</p>
+            <p class="who">The Speckled Band</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1939–1946<small></small></div>
+          <div class="era-b">
+            <h3>拉斯伯恩与布鲁斯的福尔摩斯片集</h3>
+            <p>二十世纪福克斯先拍 2 部（《巴斯克维尔的猎犬》《福尔摩斯冒险史》，1939，保持维多利亚时代背景），环球 1942 年接手后续拍 12 部，共 14 部，Basil Rathbone 与 Nigel Bruce 主演。环球版降为 B 级片预算，并把故事整体搬到二战当下，福尔摩斯直接与纳粹间谍交手。</p>
+            <p class="who">Sherlock Holmes (1939 film series)</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1959<small></small></div>
+          <div class="era-b">
+            <h3>巴斯克维尔的猎犬</h3>
+            <p>英国 Hammer 出品、Terence Fisher 执导，Peter Cushing 饰福尔摩斯、André Morell 饰华生、Christopher Lee 饰亨利爵士，是这部小说第一个彩色电影版。Cushing 熟读原著并参与道具细节设计；Morell 刻意反拨 Nigel Bruce 的滑稽华生，恢复原著里可靠军医的分量。</p>
+            <p class="who">The Hound of the Baskervilles</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p3)">
+          <div class="era-y">1965–1968<small></small></div>
+          <div class="era-b">
+            <h3>BBC《福尔摩斯》电视剧（库欣版）</h3>
+            <p>BBC 两季共 29 集（1964 年试播集另计）。1965 年一季由 Douglas Wilmer 主演，1968 年第二季 16 集改由 Peter Cushing 主演、Nigel Stock 固定饰华生，是英国最早一批彩色电视剧。1968 年 12 月 23 日以《蓝宝石案》作圣诞档收尾，收视一度突破 1500 万。</p>
+            <p class="who">Sherlock Holmes / Sir Arthur Conan Doyle's Sherlock Holmes</p>
+          </div>
+        </div>
+
+    <div class="quote rv" style="margin-top:26px">
+      <span class="qlabel">这一段最值得知道的两件事</span>
+      <p><b>一、现存最早的福尔摩斯影片是 1900 年的 30 秒特技片</b>，靠停机再拍让小偷凭空消失。它原本被认为失传，1968 年才在国会图书馆的纸印档案里被认出。<br>
+      <b>二、鹿帽与弯烟斗的经典造型，是 1916 年 William Gillette 那部电影定型的</b>——而这部电影也一度失传，2014 年在法国电影资料馆的硝酸底片里被找到，修复后 2015 年重映。</p>
+    </div>
+
+    <div class="note rv">
+      <b>关于诺伍德版的数字：</b>常被说成"47 部"，准确表述是<b>45 部短片 + 2 部长片</b>。只写"45 部"会漏掉两部正片，只写"47 部"会让人误以为是 47 部短片。
+    </div>
+
+    <div class="note warn rv">
+      <b>两处容易搞错的年份：</b><br>
+      ① 《斑点带子案》电影是 <b>1931</b> 年 3 月上映，不是 1932——1932 年是旺特纳版的《失踪的伦勃朗》和《四签名》。<br>
+      ② Peter Cushing <b>1959 年演 Hammer 版电影</b>，<b>1968 年才接 BBC 电视剧</b>，两件事相隔九年，不能合并叙述。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="screen-tv">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">10 / 影视 · 第二幕</span>
+      <h2>1970–1990s：解构、谐仿，与"权威版"</h2>
+      <p>这二十年发生了两件相反的事：一边把福尔摩斯拆开来开玩笑，一边拍出了公认最忠于原著的版本。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1984–1994<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯探案集（格拉纳达版）</h3>
+            <p>格拉纳达为ITV制作，1984–1994年播出41集（36集50分钟＋5部特辑），分《冒险史》《归来记》《新探案》《回忆录》四系列，涵盖原著60篇中的43篇。以“权威版”为目标重建贝克街、只改道尔原作，被推为最贴近原著的版本。</p>
+            <p class="who">Sherlock Holmes (Granada TV series)</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1984–1994<small></small></div>
+          <div class="era-b">
+            <h3>杰里米·布雷特</h3>
+            <p>布雷特演满41集，自建77页“贝克街档案”核对原著，以阴郁、神经质又优雅的演法被《纽约时报》称为“典型福尔摩斯”。1986年末确诊躁郁症，锂盐治疗引发严重水肿，1989年因心脏问题入院、拍摄一度中断；1995年心力衰竭去世，年61。</p>
+            <p class="who">Jeremy Brett</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1979–1986<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯与华生医生历险记</h3>
+            <p>列宁格勒电影制片厂出品、马斯连尼科夫执导，1979–1986年拍成5部共11集，利瓦诺夫与索洛明分饰福尔摩斯、华生。英国评论界盛赞其忠于原著，2006年他因表演艺术贡献获荣誉MBE，英媒多归因于这个福尔摩斯（常误作OBE）。</p>
+            <p class="who">The Adventures of Sherlock Holmes and Dr. Watson</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1970<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯私生活</h3>
+            <p>比利·怀尔德执导并与戴蒙德合编，罗伯特·斯蒂芬斯饰福尔摩斯、科林·布莱克利饰华生、克里斯托弗·李饰迈克罗夫特。影片把福尔摩斯写成可卡因成瘾、性向暧昧的人；怀尔德原想明写其压抑的同性恋倾向，最终只留暗示，初剪逾三小时被删至125分钟。</p>
+            <p class="who">The Private Life of Sherlock Holmes</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1975<small></small></div>
+          <div class="era-b">
+            <h3>福尔摩斯聪明弟弟历险记</h3>
+            <p>吉恩·怀尔德自编自导自演的处女作，他饰福尔摩斯那位满怀怨气的弟弟西格森，麦德琳·卡恩、马蒂·费尔德曼、多姆·德路易斯同台，李奥·麦克恩饰莫里亚蒂。影片以歌舞谐仿贝克街，道格拉斯·威尔默客串真福尔摩斯，是70年代福尔摩斯谐仿潮的代表。</p>
+            <p class="who">The Adventure of Sherlock Holmes' Smarter Brother</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1985<small></small></div>
+          <div class="era-b">
+            <h3>少年福尔摩斯</h3>
+            <p>巴里·莱文森执导、克里斯·哥伦布编剧，斯皮尔伯格监制、Amblin出品。尼古拉斯·罗饰少年福尔摩斯，讲述他与华生在寄宿学校初遇、联手破获埃及邪教案。片中教堂彩窗骑士是影史首个全CG角色（卢卡斯影业/皮克斯制作），获奥斯卡最佳视觉效果提名。</p>
+            <p class="who">Young Sherlock Holmes</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1986<small></small></div>
+          <div class="era-b">
+            <h3>妙妙探</h3>
+            <p>迪士尼第26部动画长片，改编伊芙·泰特斯《贝克街的巴兹尔》，马斯克与克莱门茨等执导，文森特·普莱斯为反派拉蒂根配音。片尾大本钟齿轮大战大量使用电脑动画；影片在《黑神锅传奇》失利后票房报捷，被记为使迪士尼动画部重获信心的一功。</p>
+            <p class="who">The Great Mouse Detective</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1988<small></small></div>
+          <div class="era-b">
+            <h3>毫无线索</h3>
+            <p>埃伯哈特执导的英国喜剧，反转道尔设定：真正破案的是华生（本·金斯利），福尔摩斯只是他雇来充门面的三流演员金凯德（迈克尔·凯恩）。英镑印版失窃、华生假死，“假福尔摩斯”被迫独力破案。影片把“福尔摩斯是华生虚构”的设定推向极致。</p>
+            <p class="who">Without a Clue</p>
+          </div>
+        </div>
+<div class="era" style="--lc:var(--p2)">
+          <div class="era-y">1976<small></small></div>
+          <div class="era-b">
+            <h3>百分之七的溶液</h3>
+            <p>赫伯特·罗斯执导，尼古拉斯·迈耶改编自己1974年的小说：华生把可卡因成瘾的福尔摩斯骗到维也纳，交给弗洛伊德（艾伦·阿金）戒瘾，却牵出莫里亚蒂与福尔摩斯的童年创伤。尼科尔·威廉森饰福尔摩斯、罗伯特·杜瓦尔饰华生，获两项奥斯卡提名。</p>
+            <p class="who">The Seven-Per-Cent Solution</p>
+          </div>
+        </div>
+
+    <div class="quote rv" style="margin-top:26px">
+      <span class="qlabel">为什么 1980 年代叫"福尔摩斯复兴"</span>
+      <p>因为四条路同时通了：<b>正典化</b>（格拉纳达的权威版）、<b>青春化</b>（《少年福尔摩斯》）、<b>动画化</b>（迪士尼《妙妙探》）、<b>元喜剧</b>（《毫无线索》把福尔摩斯写成华生雇的演员）。<b>一个形象能被这四路同时使用，就说明它已经成了公共财产。</b></p>
+    </div>
+
+    <div class="note rv">
+      <b>杰里米·布雷特这一版为什么地位特殊：</b>他演满 41 集，自建 77 页"贝克街档案"逐条核对原著。1986 年末确诊躁郁症，锂盐治疗引发严重水肿，1989 年因心脏问题入院、拍摄一度中断，1995 年去世，年 61 岁。<b>他的福尔摩斯之所以"对"，部分原因是他把自己的病态也放了进去。</b>
+    </div>
+
+    <div class="note warn rv">
+      <b>一处常被写错的荣誉：</b>苏联版福尔摩斯的扮演者瓦西里·利瓦诺夫 2006 年获的是<b>荣誉 MBE</b>（大英帝国员佐勋章），不少中文资料写成 OBE（官佐勋章）——两者等级不同。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="screen-now">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">11 / 影视 · 第三幕</span>
+      <h2>2000 至今：两条路线，与一个公版拐点</h2>
+      <p>当代改编基本分成两派：把福尔摩斯搬进现代，或者把他留在维多利亚时代。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:9%">年份</th><th style="width:22%">作品</th><th>要点</th></tr></thead>
+        <tbody>
+<tr>
+          <td class="mono" style="white-space:nowrap">2009</td>
+          <td><b>大侦探福尔摩斯</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Sherlock Holmes</span></td>
+          <td>盖·里奇把小罗伯特·唐尼塑造成能打拳、玩爆破的动作版福尔摩斯，与裘德·洛的华生斗嘴不断。影片以1890年伦敦黑木勋爵「复活」案开场，全球票房约5.24亿美元，唐尼凭此获金球奖音乐喜剧类最佳男主角。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2011</td>
+          <td><b>大侦探福尔摩斯2：诡影游戏</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Sherlock Holmes: A Game of Shadows</span></td>
+          <td>续集让莫里亚蒂教授正式登场，福尔摩斯与华生横跨法、德、瑞士追查其挑起欧战的阴谋，高潮在莱辛巴赫瀑布同归于尽。杰瑞德·哈里斯演莫里亚蒂、斯蒂芬·弗雷演迈克罗夫特，全球票房约5.44亿美元。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">未定档</td>
+          <td><b>大侦探福尔摩斯3</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Sherlock Holmes 3</span></td>
+          <td>2011年续集后华纳宣布开发第三部，曾定档2020、2021年均落空。2026年7月编剧布兰卡托称完整初稿已写完，但无开机与档期，唐尼的繁忙日程被指为最大障碍；里奇已于2019年退出导演位。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2010–2017</td>
+          <td><b>神探夏洛克</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Sherlock</span></td>
+          <td>BBC现代版把福尔摩斯搬进智能手机时代，短信与推理以悬浮字幕呈现。4季各3集，加2016年特别篇《可恶的新娘》，共13集。2011年获BAFTA最佳剧情剧集，2014年艾美奖拿下视帝、男配与编剧，2016年特别篇获艾美最佳电视电影。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2012–2019</td>
+          <td><b>福尔摩斯：基本演绎法</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Elementary</span></td>
+          <td>CBS把故事搬到纽约，共7季154集。刘玉玲饰女版华生琼·沃森：前外科医生、福尔摩斯父亲雇来的戒毒陪护；主创称这是「其中一个兄弟是女人」的友情故事，刻意不写成爱情。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2013</td>
+          <td><b>福尔摩斯（俄版）</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Шерлок Холмс</span></td>
+          <td>俄罗斯-1频道八集剧，安德烈·卡文执导，伊戈尔·彼得连科演福尔摩斯、安德烈·潘宁演华生。2013年11月18日首播；潘宁在完成配音前去世，本剧成为其遗作，剧组多用现场收音补全。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2015</td>
+          <td><b>福尔摩斯先生</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Mr. Holmes</span></td>
+          <td>比尔·康顿执导，伊恩·麦克莱恩演93岁、退休后在苏塞克斯养蜂的福尔摩斯；他记忆衰退，想写下真实的最后一案。影片改编自米奇·卡林小说《A Slight Trick of the Mind》，Metacritic 67、CinemaScore A−。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2018</td>
+          <td><b>福尔摩斯与华生</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Holmes &amp; Watson</span></td>
+          <td>伊坦·科恩执导、威尔·法瑞尔与约翰·C·赖利主演的闹剧，未给影评人试映。上映时烂番茄新鲜度0%，Metacritic 24、CinemaScore D+；成本4200万美元、全球票房4190万，金酸莓奖拿下最差影片、导演等4项。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2018</td>
+          <td><b>女神探夏洛克</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Miss Sherlock</span></td>
+          <td>HBO Asia与Hulu Japan合拍，2018年4月27日首播，全8集。竹内结子演女版夏洛克，贯地谷诗穗梨演女军医华生，故事搬到东京；被视为首部由女性主演福尔摩斯的主要剧集。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2020</td>
+          <td><b>福尔摩斯小姐</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Enola Holmes</span></td>
+          <td>改编南希·斯普林格小说，米莉·波比·布朗演福尔摩斯家小妹伊诺拉，亨利·卡维尔演夏洛克、山姆·克拉弗林演迈克罗夫特。2020年9月23日Netflix上线，首四周约7600万户观看；道尔遗产委员会曾起诉，同年12月被驳回。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2022</td>
+          <td><b>福尔摩斯小姐2</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Enola Holmes 2</span></td>
+          <td>续集不改编原著，改以1888年伦敦火柴女工罢工为灵感：伊诺拉开设侦探社，追查失踪女工，夏洛克与她并肩。2022年11月4日上线，登顶93国Netflix观看榜，评价正面。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2026</td>
+          <td><b>福尔摩斯小姐3</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Enola Holmes 3</span></td>
+          <td>第三部换菲利普·巴兰蒂尼执导，2026年7月1日上线Netflix。伊诺拉在马耳他筹备与图克斯伯里的婚礼时夏洛克失踪，她转而寻兄；卡维尔、海伦娜·伯翰·卡特回归，媒体评价褒贬不一。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2020–2026</td>
+          <td><b>亨利·卡维尔版福尔摩斯</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Henry Cavill as Sherlock Holmes</span></td>
+          <td>卡维尔在《福尔摩斯小姐》三部曲（2020、2022、2026）中饰夏洛克：体格魁梧、待人温和，与传统神经质神探不同；影片把侦探主角让给妹妹伊诺拉，他更像守护者与配角。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2020–2021</td>
+          <td><b>忧国的莫里亚蒂</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Moriarty the Patriot</span></td>
+          <td>竹内良辅负责故事、三好辉作画的漫画，2016年起在《Jump Square》连载，把莫里亚蒂写成以犯罪反抗贵族阶级的「犯罪顾问」。Production I.G改编动画24集，2020年10月至2021年6月播出，另有两集OVA。</td></tr>
+<tr>
+          <td class="mono" style="white-space:nowrap">2021</td>
+          <td><b>贝克街游击队</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">The Irregulars</span></td>
+          <td>Netflix八集剧，汤姆·比德韦尔创作，把贝克街小分队写成受华生驱使、在伦敦对抗超自然力量的街头少年。2021年3月26日上线，口碑平淡，同年5月被取消，仅此一季。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quote rv" style="margin-top:26px">
+      <span class="qlabel">两条路线</span>
+      <p><b>复古派</b>保留维多利亚伦敦与原著骨架（《福尔摩斯先生》、俄版、《福尔摩斯小姐》系列、BBC 2016 特别篇）。<br>
+      <b>现代化派</b>整体移植到当代技术与都市（《神探夏洛克》《基本演绎法》《女神探夏洛克》《贝克街游击队》）。<br>
+      <b>还有第三条：</b>盖·里奇版——背景是维多利亚，但用拳击、爆破和慢镜头把它改造成动作片。</p>
+    </div>
+
+    <div class="note rv">
+      <b>《基本演绎法》的设定值得单独说：</b>刘玉玲演女版华生琼·沃森——前外科医生、福尔摩斯父亲雇来监督他戒毒的人。主创明确表示这是"其中一个兄弟是女人"的友情故事，<b>刻意不写成爱情线</b>。七季 154 集，是集数最多的福尔摩斯剧集。
+    </div>
+
+    <div class="note warn rv">
+      <b>《福尔摩斯与华生》（2018）的口碑数据：</b>烂番茄新鲜度 0%，Metacritic 24，CinemaScore D+；成本 4200 万美元，全球票房 4190 万；金酸莓奖拿下最差影片等四项。<b>它证明了一件事：这个 IP 可以烂到这个程度，仍然会被拍。</b>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="watch-order">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">12 / 观影顺序</span>
+      <h2>今天该按什么顺序看</h2>
+      <p>本节只收<b>彩色、且今天看仍不难受</b>的作品。默片、黑白片、大量遗失的早期剧集一律不进推荐——它们对研究者有价值，对想放松看片的人是负担。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="note rv">
+      <b>先把筛选逻辑说清楚，免得误会：</b>排除黑白片是<b>实用考虑，不是价值判断</b>。1939–1946 年那 14 部 Rathbone 电影在福尔摩斯史上的地位极高——它们塑造了现代"侦探+助手"的公式（见第 11 节）。只是它们对"今天想轻松看一部的观众"不友好。<b>研究用途看它们，娱乐用途看下面这些。</b>
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:30px 0 12px">一、如果只有一个周末（约 7 小时）</h3>
+    <p class="rv" style="font-size:14.6px; color:var(--ink-2); max-width:72ch">
+      三步就能建立坐标系：现代版、原教旨版、好莱坞版各一部。看完你会知道自己更喜欢哪一种。
+    </p>
+
+    <ol class="steps rv">
+      <li>
+        <h3>《神探夏洛克》第一季</h3>
+        <p>BBC，2010，3 集 × 约 88 分钟。<b>最快进入状态</b>——现代伦敦、手机短信、悬浮字幕。看完第一集《粉色的研究》你就知道这个 IP 的当代形态长什么样。</p>
+      </li>
+      <li>
+        <h3>格拉纳达版：选两集</h3>
+        <p>ITV，1984。<b>《斑点带子案》+《红发会》</b>，各约 50 分钟。这是公认最忠于原著的版本，也是道尔自评的前两名。看它，是为了知道"忠实"到底意味着什么气质——慢、稳、靠对话推。</p>
+      </li>
+      <li>
+        <h3>《大侦探福尔摩斯》</h3>
+        <p>盖·里奇，2009，约 128 分钟。<b>好莱坞动作版</b>：拳击、爆破、慢镜头。它不是最好的福尔摩斯，但它证明了这个角色能撑起 5 亿美元票房。</p>
+      </li>
+    </ol>
+
+    <div class="note rv">
+      <b>这三步的意义：</b>它们代表三种完全不同的改编哲学——<b>彻底现代化、绝对忠实、商业奇观化</b>。福尔摩斯一百多年的影视史，基本就是这三种做法的轮流上场。先建立坐标系，后面看什么都容易定位。
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">二、愿意投入一周（约 18 小时，推荐主线）</h3>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:7%">顺序</th><th style="width:30%">作品</th><th style="width:13%">年份</th><th style="width:14%">时长</th><th>为什么排在这里</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td><b>格拉纳达《冒险史》系列</b></td><td class="mono">1984–85</td><td class="mono">约 11 小时</td><td>主线。先把"原教旨"看完，后面所有版本你都能看出差别在哪</td></tr>
+          <tr><td class="mono">2</td><td><b>《四签名》</b>（格拉纳达电视电影）</td><td class="mono">1987</td><td class="mono">约 100 分</td><td>Brett 版的两部长篇之一，补上"长篇怎么拍"</td></tr>
+          <tr><td class="mono">3</td><td><b>《巴斯克维尔的猎犬》</b>（格拉纳达）</td><td class="mono">1988</td><td class="mono">约 105 分</td><td>同一版本里最著名的一部，也是原著里唯一带恐怖调子的</td></tr>
+          <tr><td class="mono">4</td><td><b>《福尔摩斯私生活》</b></td><td class="mono">1970</td><td class="mono">125 分</td><td>换口味。比利·怀尔德把它写成可卡因成瘾、性向暧昧的人——最"成人"的一部</td></tr>
+          <tr><td class="mono">5</td><td><b>《福尔摩斯先生》</b></td><td class="mono">2015</td><td class="mono">104 分</td><td>收尾。93 岁、记忆衰退的福尔摩斯，把整个形象拉回"人"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note rv">
+      <b>为什么把格拉纳达放在最前面：</b>因为它是<b>基准</b>。看完最忠实的一版，你再看任何改编都能立刻判断"它改了什么、为什么改"。反过来先看改编版，你会以为那些改动是原著本来的样子——这是最常见的误读来源。
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">三、长剧与进阶</h3>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:28%">作品</th><th style="width:13%">年份</th><th style="width:14%">体量</th><th>适合谁</th></tr></thead>
+        <tbody>
+          <tr><td><b>《基本演绎法》</b><br><span class="mono" style="font-size:11px">Elementary</span></td><td class="mono">2012–19</td><td class="mono">7 季 154 集</td><td>想长期下饭的人。纽约、女版华生（刘玉玲），刻意不写爱情线</td></tr>
+          <tr><td><b>苏联版《福尔摩斯与华生医生历险记》</b></td><td class="mono">1979–86</td><td class="mono">11 集</td><td>不介意字幕的人。彩色，极受英国评论界推崇，利瓦诺夫因此获荣誉 MBE</td></tr>
+          <tr><td><b>俄版《福尔摩斯》</b></td><td class="mono">2013</td><td class="mono">8 集</td><td>想看风格化视觉的人。服化道华丽，节奏偏慢</td></tr>
+          <tr><td><b>《女神探夏洛克》</b><br><span class="mono" style="font-size:11px">Miss Sherlock</span></td><td class="mono">2018</td><td class="mono">8 集</td><td>想换文化语境的人。东京版，女版福尔摩斯与华生</td></tr>
+          <tr><td><b>《福尔摩斯小姐》三部曲</b><br><span class="mono" style="font-size:11px">Enola Holmes</span></td><td class="mono">2020 / 22 / 26</td><td class="mono">3 部</td><td>合家欢。主角是福尔摩斯的妹妹，卡维尔演夏洛克</td></tr>
+          <tr><td><b>《忧国的莫里亚蒂》</b>（动画）</td><td class="mono">2020–21</td><td class="mono">24 集</td><td>想看"反派视角"的人。把莫里亚蒂写成反抗贵族阶级的犯罪顾问</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">四、按口味直接选</h3>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:22%">你想要</th><th style="width:38%">首选</th><th>备选</th></tr></thead>
+        <tbody>
+          <tr><td><b>最忠于原著</b></td><td>格拉纳达版（Brett）</td><td>苏联版</td></tr>
+          <tr><td><b>节奏最快、最像当代剧</b></td><td>BBC《神探夏洛克》第一季</td><td>《基本演绎法》</td></tr>
+          <tr><td><b>动作、爽片</b></td><td>《大侦探福尔摩斯》(2009)</td><td>《诡影游戏》(2011)</td></tr>
+          <tr><td><b>情感、文艺</b></td><td>《福尔摩斯先生》(2015)</td><td>《福尔摩斯私生活》(1970)</td></tr>
+          <tr><td><b>反转、元叙事</b></td><td>《毫无线索》(1988)：真正破案的是华生，福尔摩斯是他雇的演员</td><td>《百分之七溶液》(1976)</td></tr>
+          <tr><td><b>合家欢</b></td><td>《福尔摩斯小姐》</td><td>《妙妙探》(1986，迪士尼动画)</td></tr>
+          <tr><td><b>看"历史转折"</b></td><td>《巴斯克维尔的猎犬》(1959，Hammer 彩色版)</td><td>——</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="rv" style="font-size:17px; margin:32px 0 12px">五、明确跳过，以及为什么</h3>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:34%">作品</th><th>跳过原因</th></tr></thead>
+        <tbody>
+          <tr><td><b>1900–1923 默片全部</b></td><td>无声、多为残本，且大量失传</td></tr>
+          <tr><td><b>1931–37 Wontner 系列（5 部）</b></td><td>黑白</td></tr>
+          <tr><td><b>1939–46 Rathbone 系列（14 部）</b></td><td>黑白。<b>但研究价值最高</b>，详见第 11 节与下文说明</td></tr>
+          <tr><td><b>1965–68 BBC 剧集</b></td><td>1965 年一季为黑白；1968 年虽为彩色，但大量母带被销毁，仅存少数几集</td></tr>
+          <tr><td><b>《福尔摩斯与华生》(2018)</b></td><td>彩色，但烂番茄新鲜度 0%、Metacritic 24。属于"值得知道他有多差"，不值得花两小时</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quote rv" style="margin-top:26px">
+      <span class="qlabel">一个绕不开的说明</span>
+      <p>如果你只想要"最好看的那一版"，答案就是格拉纳达。但如果你想理解<b>这个形象为什么能活一百四十年</b>，就绕不开 1940 年代那批黑白片——包括我让你跳过的那 14 部。
+      <br><br><b>娱乐价值和历史价值在这里正好是错开的。</b>本节服务前者，第 11 节服务后者。</p>
+    </div>
+
+    <div class="note rv">
+      <b>最后一句实用建议：</b>不要按"年份顺序"看。福尔摩斯的影视史不是进步史，是<b>不同做法在不同年代轮流占上风</b>——1940 年代商业化、1980 年代正典化、2010 年代现代化。按年份看会以为自己见证了一条上升曲线，其实只是钟摆在动。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="pastiche">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">12 / 二创</span>
+      <h2>别人写的福尔摩斯：一条从模仿到授权的光谱</h2>
+      <p>正典只有 60 部，但"福尔摩斯故事"有成千上万。这里挑的是有代表性的节点。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">1974</span>
+          <div>
+            <h3>《百分之七溶液》 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">The Seven-Per-Cent Solution</span></h3>
+            <p>尼古拉斯·梅耶1974年由Dutton出版：华生把可卡因成瘾的福尔摩斯骗到维也纳，交给弗洛伊德治疗；莫里亚蒂则退成无害的数学教师，犯罪帝国只是瘾者幻觉。首印2.5万册，在《纽约时报》畅销榜40周、售出逾200万册，1976年拍成电影。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">2011</span>
+          <div>
+            <h3>《丝绸之家》 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">The House of Silk</span></h3>
+            <p>霍洛维茨2011年11月1日由Little, Brown出版，是柯南·道尔产权会首次正式授权的福尔摩斯长篇。华生以回忆录口吻追述一桩“平顶帽案”，牵出虐童的“丝绸之家”俱乐部；福尔摩斯遭栽赃入狱，连莫里亚蒂也罕见出手相助。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">2014</span>
+          <div>
+            <h3>《莫里亚蒂》 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Moriarty</span></h3>
+            <p>2014年10月23日由Orion出版，霍洛维茨称它是《丝绸之家》的“续篇而非续集”。故事紧接1891年《最后一案》：福尔摩斯与莫里亚蒂双双坠瀑后，平克顿侦探弗雷德里克·蔡斯与苏格兰场警探阿瑟尔尼·琼斯联手，阻止新的犯罪首脑接管伦敦。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">1994–</span>
+          <div>
+            <h3>玛丽·拉塞尔系列 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Mary Russell &amp; Sherlock Holmes</span></h3>
+            <p>劳瑞·R·金1994年首作《养蜂人的学徒》：1915年，15岁的玛丽·拉塞尔在萨塞克斯丘陵撞见退休养蜂的福尔摩斯，被他收为学徒，后成长为牛津生与搭档。作者官网称系列已写十八部，以玛丽第一人称“回忆录”展开，横跨一战与1920年代。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">2006–2023</span>
+          <div>
+            <h3>《艾诺拉·福尔摩斯谜案》系列 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">The Enola Holmes Mysteries</span></h3>
+            <p>南希·斯普林格2006年起写的少年小说：14岁的艾诺拉是福尔摩斯的小妹，比哥哥小20岁；母亲失踪后她逃往伦敦，靠易装与密码侦破失踪案，还要躲开两个哥哥的管教。2006–2023年间共十部长篇加一篇短篇，2020年改编为Netflix电影。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">1929–1971</span>
+          <div>
+            <h3>索拉·庞斯系列 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Solar Pons</span></h3>
+            <p>德雷斯听说道尔封笔后写信求续写被婉拒，遂自创“索拉·庞斯”，1928年写、1929年首刊于《The Dragnet Magazine》。庞斯住伦敦7B Praed Street，搭档是林登·帕克医生；庞斯故事数量超过道尔笔下的福尔摩斯。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--gold)">
+          <span class="fm-n">2010–2015</span>
+          <div>
+            <h3>少年福尔摩斯系列 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Young Sherlock Holmes</span></h3>
+            <p>安德鲁·莱恩的少年福尔摩斯系列，2010年6月《Death Cloud》起共八部，至2015年《Night Break》。经柯南·道尔产权会授权，写14岁的福尔摩斯寄居汉普郡亲戚家，由导师艾米厄斯·克罗引导断案，刻意衔接正典开篇。</p>
+          </div>
+        </div>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>pastiche 与同人小说的区别，不是质量，是合法性路径：</b><br>
+      <b>仿作（pastiche）</b>通常公开出版、署真名、可能获版权方授权并取得商业回报，常借"华生未刊手稿""遗稿"自我合法化，目标是接续正典的文体与年表。<br>
+      <b>同人（fan fiction）</b>多为业余、非商业、未授权，依托社群传播，法律上处于被容忍地带，更强调配对、平行宇宙与角色改写。<br>
+      <b>获授权的续作（如 Horowitz 两部）正处在两者之间。</b>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">一个结构性的观察</span>
+      <p>《百分之七溶液》干的事最狠：<b>它把莫里亚蒂降格成一个无害的数学教师，宣布整个犯罪帝国只是瘾君子的幻觉。</b>这是二创的典型权力——<b>它不只要写新故事，还要重新解释旧故事。</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="sherlockian">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">13 / 学问</span>
+      <h2>把虚构人物当成真人来研究</h2>
+      <p>这套玩法有名字、有组织、有期刊，而且玩了一百多年。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--p2)">
+          <span class="fm-n">1934</span>
+          <div>
+            <h3>贝克街小分队（纽约） <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">The Baker Street Irregulars</span></h3>
+            <p>1934年由克里斯托弗·莫利在纽约创立，首届聚会在Christ Cella餐馆，出席者包括演员威廉·吉列特。会员须经邀请、取正典典故为“教名”，领袖称“Wiggins”；1946年起办《贝克街期刊》，2015年前后约300名会员。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--p2)">
+          <span class="fm-n">1902–</span>
+          <div>
+            <h3>大游戏 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">The Great Game / Sherlockian Game</span></h3>
+            <p>福尔摩斯学的核心玩法：把福尔摩斯与华生当真实人物、把道尔当华生的“文学经纪人”，用正典细节加维多利亚史料补写传记、消解矛盾。罗纳德·诺克斯的《福尔摩斯文学研究》被视为奠基文本；塞耶斯强调必须“像郡板球赛一样严肃”地玩，不能滑向戏谑。</p>
+          </div>
+        </div>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>为什么福尔摩斯特别适合"当成真人研究"？</b>因为道尔用华生的"案件记录"制造了伪纪实感：福尔摩斯有可核对的住址、哥哥、大学、药瘾、退休养蜂生涯——<b>却又留下大量矛盾</b>：华生伤口在腿还是在肩、结婚几次、案件日期对不上、门牌号说不通。<b>矛盾不是缺陷，是燃料。</b>有矛盾才有"用史料消解矛盾"的空间，才有游戏可玩。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">塞耶斯定的规矩</span>
+      <p>侦探小说家多萝西·塞耶斯强调，玩"大游戏"必须<b>像郡板球赛一样严肃</b>地玩，不能滑向戏谑。这句话定义了福尔摩斯学的调性：<b>它是一场自愿的、有规则的、一本正经的假装。</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="myths">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">14 / 考据</span>
+      <h2>哪些是我们记错的</h2>
+      <p>福尔摩斯最流行的几个形象，几乎全不是原著给的。这一节每一条都能查证。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--p1)">
+          <span class="fm-n">1891–</span>
+          <div>
+            <h3>猎鹿帽 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Deerstalker</span></h3>
+            <p>原著没写“deerstalker”一词，只在《银色马》写“护耳旅行帽”、《博斯科姆比溪谷秘案》写“紧贴的布帽”。Sidney Paget 1891年为后者配图时给他戴上猎鹿帽与Inverness披风，图像从此定型；道尔只让他在乡间戴布帽。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--p1)">
+          <span class="fm-n">1899–</span>
+          <div>
+            <h3>弯葫芦烟斗 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Calabash pipe</span></h3>
+            <p>原著只写他抽陶土、樱桃木或石楠斗，Paget 插图也一律画直斗。1899年 William Gillette 在舞台剧改用弯斗，以便边说台词边抽，弯斗走红。弯“葫芦斗”与福尔摩斯的绑定更晚：1930年代才见于植物学文章，1940年代定型。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--p1)">
+          <span class="fm-n">1887–</span>
+          <div>
+            <h3>贝克街221B号 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">221B Baker Street</span></h3>
+            <p>1887年《血字的研究》写下221B时，贝克街门牌还没排到221号，北段叫Upper Baker Street。1932年Abbey Road Building Society入驻219–229号；1990年博物馆才获准挂221B门牌。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--p1)">
+          <span class="fm-n">1887–</span>
+          <div>
+            <h3>福尔摩斯住址考证 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">The Address of Sherlock Holmes</span></h3>
+            <p>正典说221B是“一楼、17级台阶”上的两间卧室加一间大起居室，但门牌、街号与建筑细节互相打架。福学提出过贝克街与George Street交口、Upper Baker Street等“原址”，至今没有公认答案。</p>
+          </div>
+        </div>
+<div class="fm rv" style="--lc:var(--p1)">
+          <span class="fm-n">1887–1927</span>
+          <div>
+            <h3>华生的婚姻次数 <span class="mono" style="font-size:11px;font-weight:400;color:var(--ink-4)">Dr. Watson's Marriages</span></h3>
+            <p>正典只明确华生娶了玛丽·摩斯坦，她1891–94年间去世；《皮肤变白的军人》又提到1902年他为“一个妻子”离开福尔摩斯。1931年S. C. Roberts 据此提出再婚说，随即有人推出“第三次婚姻”；塞耶斯写《华生医生，鳏夫》反驳。</p>
+          </div>
+        </div>
+
+    <div class="note warn rv" style="margin-top:26px">
+      <b>这里有个可以推广的规律：</b>越是"人人都知道"的形象细节，越可能是后来加上去的。
+      <br>猎鹿帽来自插图师，弯烟斗来自舞台演员，221B 门牌来自市政，莫里亚蒂的分量来自影视，艾琳的位置来自编剧。
+      <br><b>原作给的是骨架，血肉是别人添的。而人们记住的往往是血肉。</b>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="copyright">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">15 / 版权</span>
+      <h2>一场官司，决定了谁能写福尔摩斯</h2>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p4)">
+      <div class="era-y">2014</div>
+      <div class="era-b">
+        <h3>Klinger v. Conan Doyle Estate</h3>
+        <p>律师兼福学研究者 Leslie S. Klinger 起诉柯南·道尔产权会。产权会的主张是：虽然早期故事已进入公有领域，但<b>"人物"本身仍受保护</b>，所以任何使用福尔摩斯与华生的新作都得付授权费。</p>
+        <p><b>2014 年 6 月，美国第七巡回上诉法院驳回这一主张</b>，由波斯纳（Richard Posner）法官执笔。同年 8 月，法院进一步判产权会承担对方律师费。</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p4)">
+      <div class="era-y">2023</div>
+      <div class="era-b">
+        <h3>最后一批故事也进入公有领域</h3>
+        <p>《新探案》（The Case-Book, 1927）中尚在保护期内的最后几篇，于 2023 年 1 月 1 日在美国期满。<b>至此整部正典在美国完全进入公有领域。</b></p>
+        <p>英国的情况更早——道尔 1930 年去世，按"作者死后 70 年"计算，2000 年底即已到期。</p>
+      </div>
+    </div>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>这场官司的方法论意义大于结果：</b>它确立了一个原则——<b>你不能给"人物"单独续命</b>。人物一旦随作品进入公有领域，就不再有独立于文本的保护。<b>这对所有经典 IP 都有效，不只是福尔摩斯。</b>
+    </div>
+
+    <div class="note rv">
+      <b>公版之后的直接后果：</b>改编门槛骤降。2023 年之后新项目明显增多，包括 CBS 的《Watson》（2025）、Prime Video 的《少年福尔摩斯》（2026）。此前产权会的"人物仍受保护"主张曾被用来施压——《福尔摩斯先生》（2015）被诉后庭外和解，《福尔摩斯小姐》（2020）被诉、同年 12 月被法院驳回。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="contested">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">16 / 存疑</span>
+      <h2>流传很广，但证据不足的几件事</h2>
+      <p>一份诚实的导览，应该把"大家都这么说"和"有证据"分开。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--warn)">
+      <span class="fm-n">存疑</span>
+      <div>
+        <h3>两万份退订，让杂志濒临倒闭？</h3>
+        <p>BBC、斯坦福等机构都复述过这个说法：《岸边》杂志因福尔摩斯之死收到两万多份退订，"几乎垮掉"。</p>
+        <p><b>但没有检索到同时代的发行记录佐证。</b>而且《岸边》1890 年代月销已近五十万份，且一直出版到 1950 年——"濒临倒闭"明显夸大。<b>更稳妥的说法是：确实有大量抗议，杂志确实受影响，但"两万份退订致其濒死"很可能是后世加固的传说。</b></p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--warn)">
+      <span class="fm-n">存疑</span>
+      <div>
+        <h3>221B 到底在哪？</h3>
+        <p>正典说是"一楼、17 级台阶"上的两间卧室加一间大起居室，但门牌、街号与建筑细节互相打架。福学提出过贝克街与 George Street 交口、Upper Baker Street 等若干"原址"。<b>至今没有公认答案，而且大概率根本没有唯一答案——道尔写的时候并没打算被这样核对。</b></p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--mid)">
+      <span class="fm-n">待核</span>
+      <div>
+        <h3>《大侦探福尔摩斯 3》</h3>
+        <p>2011 年续集后华纳宣布开发第三部，曾定档 2020、2021 年均落空。2026 年 7 月编剧布兰卡托称完整初稿已写完，但<b>无开机、无档期</b>；盖·里奇已于 2019 年退出导演位。唐尼的档期被指为最大障碍。<b>结论：剧本存在，电影不存在。</b></p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--mid)">
+      <span class="fm-n">待核</span>
+      <div>
+        <h3>华生结过几次婚？</h3>
+        <p>正典明确写他娶了玛丽·摩斯坦，她在 1891–94 年间去世；《皮肤变白的军人》又提到 1902 年他为"一个妻子"离开福尔摩斯。1931 年 S. C. Roberts 据此提出再婚说，随即有人推出"第三次婚姻"，塞耶斯写《华生医生，鳏夫》反驳。<b>这是"原著留白 → 后世补完"的典范案例，本身没有定论。</b></p>
+      </div>
+    </div>
+
+    <div class="quote rv" style="margin-top:26px">
+      <span class="qlabel">这一节为什么必须存在</span>
+      <p>福尔摩斯的传播史里，<b>考据与传说混得比大多数题材都厉害</b>——因为他本来就是个"伪纪实"人物，真假边界从诞生那天就是模糊的。<b>恰恰因此，更需要把"有出处"和"大家都说"分开写。</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="start">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">17 / 入门</span>
+      <h2>从哪开始：按口味选</h2>
+      <p>60 部原著 + 254 次演绎，第一次接触的人最容易卡在"从哪进"。这里给四条路。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">路线 A</div><h3>只想读原著</h3></div>
+        <div class="pcard-b">
+          <p><b>先读三个短篇：</b>《斑点带子案》（道尔自评第一）、《红发会》、《波希米亚丑闻》。<br>再读一部长篇：《巴斯克维尔的猎犬》（结构最完整）。<br>最后补：《最后一案》→《空屋》，按顺序连读，体验"死而复生"。</p>
+          <div class="kv">约 5 小时</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">路线 B</div><h3>只想看影视</h3></div>
+        <div class="pcard-b">
+          <p><b>本页第 12 节「观影顺序」已经专门处理</b>：只收彩色、可看性好的作品，给了周末版、一周版、长剧版三条路径，还有"按口味直接选"的对照表。</p>
+          <div class="kv">先看那一节，再回来看这里</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">路线 D</div><h3>只想看"聪明"</h3></div>
+        <div class="pcard-b">
+          <p><b>《百分之七溶液》</b>（1974 小说 / 1976 电影）：让福尔摩斯去见弗洛伊德，把莫里亚蒂重新解释一遍。<br><b>《毫无线索》</b>（1988）：反转设定，真正破案的是华生。<br><b>《福尔摩斯先生》</b>（2015）：93 岁、记忆衰退的福尔摩斯。</p>
+          <div class="kv">都是"关于福尔摩斯"而非"福尔摩斯故事"</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p1)">
+        <div class="pcard-h"><div class="pt">避坑</div><h3>不建议作为第一部</h3></div>
+        <div class="pcard-b">
+          <p><b>《福尔摩斯与华生》（2018）：</b>烂番茄 0%。<br><b>《血字的研究》后半：</b>美国摩门教徒倒叙，节奏断裂。<br><b>《新探案》整本：</b>道尔晚年之作，质量明显下滑，适合读完前面再看。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note rv" style="margin-top:22px">
+      <b>一个反直觉的建议：</b>如果你想理解"福尔摩斯为什么重要"，<b>不要从最好的版本开始，从 1939 年的 Rathbone 版开始</b>。因为它不忠于原著——糊涂华生、二战背景、B 级片预算——但正是它塑造了此后八十年的"福尔摩斯应该长什么样"。<b>理解这个形象的文化地位，得先看他被误读的那个版本。</b>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="sources">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">18 / 附录</span>
+      <h2>来源与核对说明</h2>
+      <p>本页事实部分主要依据以下来源。每条数据的具体出处也写在对应条目的 source 字段里。</p>
+      <div class="rule-gold"></div>
+    </div>
+    <ul class="src-list rv">
+      <li><b>正典书目与出版年</b>：Victorian Web 的柯南·道尔作品年表（注意：该页把 60 部正典误写成"60 个短篇"，并把《硬纸盒案》同时列入两集；本文已按 Canon 条目校正）。
+        <a href="https://victorianweb.org/authors/doyle/works.html" target="_blank" rel="noopener">victorianweb.org/authors/doyle/works.html</a></li>
+
+      <li><b>正典逐篇细节与分歧</b>：Wikipedia 的 Canon of Sherlock Holmes 及各集条目。
+        <a href="https://en.wikipedia.org/wiki/Canon_of_Sherlock_Holmes" target="_blank" rel="noopener">en.wikipedia.org/wiki/Canon_of_Sherlock_Holmes</a></li>
+
+      <li><b>254 次演绎</b>：吉尼斯世界纪录，2012 年认证夏洛克·福尔摩斯为"被搬上银幕最多的人类文学角色"，计 254 次。
+        <a href="https://www.guinnessworldrecords.com/news/2012/5/sherlock-holmes-awarded-title-for-most-portrayed-literary-human-character-in-film-tv-41743" target="_blank" rel="noopener">guinnessworldrecords.com/news/2012/5/…</a></li>
+
+      <li><b>溯因推理与福尔摩斯</b>：Umberto Eco &amp; Thomas A. Sebeok 编，<i>The Sign of Three: Dupin, Holmes, Peirce</i>，Indiana University Press，1983。OCLC 9412985。<b>纸质书，本页未提供链接</b>——馆藏可通过 OCLC 号检索。</li>
+
+      <li><b>版权判决</b>：Klinger v. Conan Doyle Estate, Ltd.（第七巡回上诉法院，2014，波斯纳法官）；2014 年 6 月判决与 8 月律师费裁定见 NYT 报道与判决书原文。
+        <a href="https://archive.nytimes.com/artsbeat.blogs.nytimes.com/2014/06/17/conan-doyle-estate-loses-sherlock-holmes-copyright-appeal/" target="_blank" rel="noopener">nytimes.com（2014-06-17）</a>
+        ·
+        <a href="https://storage.courtlistener.com/pdf/2014/08/04/leslie_klinger_v._conan_doyle_estate_ltd..pdf" target="_blank" rel="noopener">判决书 PDF</a></li>
+
+      <li><b>公版时间</b>：最后一批故事（《新探案》，1927）于 2023 年 1 月 1 日在美国期满；英国因作者 1930 年去世，2000 年底到期。见 CITMA 专文。
+        <a href="https://www.citma.org.uk/resources/sherlock-homes-has-entered-the-public-domain-what-does-it-mean-blog.html" target="_blank" rel="noopener">citma.org.uk（公版说明）</a></li>
+
+      <li><b>猎鹿帽</b>：原著无 deerstalker 一词，形象来自 Sidney Paget 1891 年插图。<i>Smithsonian Magazine</i>。
+        <a href="https://www.smithsonianmag.com/arts-culture/the-deerstalker-where-sherlock-holmes-popular-image-came-from-7325976/" target="_blank" rel="noopener">smithsonianmag.com（猎鹿帽考）</a></li>
+
+      <li><b>弯烟斗</b>：原著与 Paget 插图均为直斗；弯斗由 William Gillette 1899 年舞台剧引入，葫芦斗的绑定更晚。BBC News。
+        <a href="https://www.bbc.com/news/magazine-30932322" target="_blank" rel="noopener">bbc.com/news/magazine-30932322</a></li>
+
+      <li><b>221B 门牌</b>：写作时贝克街尚无 221 号；1932 年该段门牌排定，1990 年博物馆获准挂 221B。
+        <a href="https://en.wikipedia.org/wiki/221B_Baker_Street" target="_blank" rel="noopener">en.wikipedia.org/wiki/221B_Baker_Street</a></li>
+
+      <li><b>约瑟夫·贝尔</b>：爱丁堡外科医生（1837–1911），道尔 1877 年任其门诊助理，后公开承认其为原型。
+        <a href="https://en.wikipedia.org/wiki/Joseph_Bell" target="_blank" rel="noopener">en.wikipedia.org/wiki/Joseph_Bell</a></li>
+
+      <li><b>柯南·道尔生平</b>：The Arthur Conan Doyle Encyclopedia 的年表与传记条目。
+        <a href="https://www.arthur-conan-doyle.com/wiki/Biography" target="_blank" rel="noopener">arthur-conan-doyle.com/wiki/Biography</a></li>
+
+      <li><b>影视条目</b>：各片/剧的 Wikipedia 条目、BFI Screenonline、BBC Press Office、AFI Catalog、epguides 等，具体链接见各条目 source 字段。</li>
+    </ul>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>核对说明与已知偏差：</b>
+      <br>① 本页所有年份、集数、演员名均经联网核对；凡研究过程中发现与原设想不符的，已按核实结果改写并在正文标注（例如《斑点带子案》电影是 1931 而非 1932；利瓦诺夫获的是 MBE 而非 OBE；诺伍德系列是 45 短片 + 2 长片）。
+      <br>② <b>"两万份退订"被标为存疑</b>，未作为事实陈述。
+      <br>③ 《大侦探福尔摩斯 3》《福尔摩斯小姐 3》等项目的状态具有时效性，截至 2026 年 10 月。
+      <br>④ 短篇归属按英版计（《硬纸盒案》在《回忆录》），故《最后致意》为 7 篇；美版为 8 篇。两版总数都是 56。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fl">关于本页</div>
+    <p>这是一份福尔摩斯全景导览：正典 60 部逐条收录，影视按时代脉络覆盖，二创与福学单列，误会与存疑单独标注。信息综合自公开资料，具体出处见各条目与附录。</p>
+    <p class="disc">免责声明：本页为资料整理，非学术论文。影视项目状态、集数与版权情况有时效性，引用前请以原始来源为准。标注为"存疑/待核"的条目，表示流传广泛但证据不足，请勿当作事实引用。</p>
+    <p style="margin-top:16px; font-size:11.5px; color:var(--ink-4)">福尔摩斯全景导览 &nbsp;·&nbsp; 2026-10-20</p>
+  </div>
+</footer>
+
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   app.js — 科普/技术讲解页的通用行为层
+   与 design-system.css 配套。全部可选组件都做了存在性判断，
+   没有对应 DOM 也不会报错。无外部依赖。
+
+   提供的行为：
+     1. 深浅主题切换（含 aria 状态与 localStorage 记忆）
+     2. 顶部滚动进度条       [需要 #prog]
+     3. 滚动淡入             [需要 .rv]
+     4. 章节导航高亮         [需要 #nav a → 章节 id]
+     5. 分层折叠卡           [需要 .layer[data-layer] + #d-<key>]
+     6. 条形图入场填充       [需要 .bar-f[data-w]]
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+
+  /* ---------- 1. 主题切换 ---------- */
+  var tgl = document.getElementById('tgl');
+  function syncTheme() {
+    if (!tgl) return;
+    var dark = root.getAttribute('data-theme') === 'dark';
+    tgl.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    tgl.title = dark ? '切换到浅色主题' : '切换到深色主题';
+  }
+  syncTheme();
+  if (tgl) {
+    tgl.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('evo-theme', next); } catch (e) {}
+      syncTheme();
+    });
+  }
+
+  /* ---------- 2. 滚动进度条 ---------- */
+  var prog = document.getElementById('prog');
+  if (prog) {
+    var ticking = false;
+    var onScroll = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        prog.style.width = Math.max(0, Math.min(100, h > 0 ? (pageYOffset / h) * 100 : 0)) + '%';
+        ticking = false;
+      });
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    onScroll();
+  }
+
+  /* ---------- 3. 滚动淡入 ---------- */
+  var reduce = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reveal = [].slice.call(document.querySelectorAll('.rv'));
+  if (reveal.length) {
+    if (reduce || !('IntersectionObserver' in window)) {
+      reveal.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en, i) {
+          if (!en.isIntersecting) return;
+          var el = en.target;
+          setTimeout(function () { el.classList.add('in'); }, Math.min(i * 50, 200));
+          io.unobserve(el);
+        });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.07 });
+      reveal.forEach(function (el) { io.observe(el); });
+    }
+  }
+
+  /* ---------- 4. 章节导航高亮 ---------- */
+  var links = [].slice.call(document.querySelectorAll('#nav a'));
+  var targets = links.map(function (a) {
+    var id = a.getAttribute('href').slice(1);
+    return { a: a, el: document.getElementById(id) };
+  }).filter(function (t) { return t.el; });
+
+  if ('IntersectionObserver' in window && targets.length) {
+    var vis = {};
+    var navObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        vis[en.target.id] = en.isIntersecting ? en.intersectionRatio : 0;
+      });
+      var best = null, bv = 0;
+      targets.forEach(function (t) {
+        var v = vis[t.el.id] || 0;
+        if (v > bv) { bv = v; best = t; }
+      });
+      if (best) {
+        links.forEach(function (a) { a.classList.remove('active'); });
+        best.a.classList.add('active');
+      }
+    }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.3, 0.6] });
+    targets.forEach(function (t) { navObs.observe(t.el); });
+  }
+
+  /* ---------- 5. 分层折叠卡 ---------- */
+  var layers = [].slice.call(document.querySelectorAll('.layer[data-layer]'));
+  function toggleLayer(btn) {
+    var key = btn.getAttribute('data-layer');
+    var panel = document.getElementById('d-' + key);
+    var isOpen = btn.classList.contains('on');
+    layers.forEach(function (b) {
+      b.classList.remove('on');
+      b.setAttribute('aria-expanded', 'false');
+      var p = document.getElementById('d-' + b.getAttribute('data-layer'));
+      if (p) p.classList.remove('show');
+    });
+    if (!isOpen && panel) {
+      btn.classList.add('on');
+      btn.setAttribute('aria-expanded', 'true');
+      panel.classList.add('show');
+    }
+  }
+  layers.forEach(function (btn) {
+    btn.addEventListener('click', function () { toggleLayer(btn); });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggleLayer(btn);
+      }
+    });
+  });
+
+  /* ---------- 6. 条形图入场填充 ---------- */
+  var bars = [].slice.call(document.querySelectorAll('.bar-f[data-w]'));
+  if (bars.length) {
+    var fill = function () {
+      bars.forEach(function (b) { b.style.width = b.getAttribute('data-w') + '%'; });
+    };
+    var chart = document.querySelector('.bars');
+    if ('IntersectionObserver' in window && chart) {
+      var bo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { fill(); bo.disconnect(); }
+        });
+      }, { threshold: 0.2 });
+      bo.observe(chart);
+    } else {
+      fill();
+    }
+  }
+})();
+
+</script>
+</body>
+</html>
