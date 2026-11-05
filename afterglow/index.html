@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Afterglow 实测：4 分 48 秒，没有一次副歌释放</title>
+<meta name="description" content="把《Unsent》第 7 首 Afterglow 的设计文档、MV 剧本和音频实测放在一起：一首被设计成“没有高潮”的歌，究竟靠什么撑住 4 分 48 秒，哪些说法经得起测量，哪些只是文本承诺。">
+<meta name="color-scheme" content="light dark">
+<script>
+  (function () {
+    try {
+      var t = null;
+      try { t = localStorage.getItem('evo-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   design-system.css — 科普/技术讲解类单文件 HTML 的组件样式库
+   ──────────────────────────────────────────────────────────────────
+   来源：两次实战验证（《碳基→硅基》推演报告、浏览器智能体架构讲解）。
+   用法：把本文件内容整段粘进目标 HTML 的 <style> 里。不要外链——
+        交付物必须是单文件、可离线打开。
+
+   【必需的文档骨架】
+     <html lang="zh-CN" data-theme="light">
+     <head>  ...下面这 3 段必须照抄...  </head>
+     <body>
+       <div class="progress" id="prog"></div>
+       <header class="topbar">…</header>
+       <div class="hero">…</div>
+       <section class="band" id="section-id"><div class="wrap">…</div></section>
+       <footer>…</footer>
+
+   【1. 首屏防闪烁脚本】放在 <head> 里、样式之前：
+     <script>(function(){try{var t=null;try{t=localStorage.getItem('evo-theme')}catch(e){}
+       if(t!=='light'&&t!=='dark')t=matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+       document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
+
+   【2. 字体：异步加载 + 系统兜底，断网不能白屏】
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+           media="print" onload="this.media='all'">
+
+   【3. viewport 与配色提示】
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <meta name="color-scheme" content="light dark">
+
+   【标题层级 —— 必须遵守，否则验收会报"跳级"】
+     章节标题 h2  →  组件卡标题 h3  →  卡内子标题 h4
+     不要跳过中间层级。卡片直接用 h4 会让 h2→h4 跳级。
+
+   【组件】清单超过 30 行用 .tbl-wrap.compact；时间线用 .era（左年份右内容）。
+   【组件】用 .story 放轶事/考据，用 .note 讲补充说明，两者语气不同。
+
+   【主题】改 :root / [data-theme="dark"] 里的令牌即可整体换肤。
+          每节配色用行内 --lc 传入语义色，例如 style="--lc:var(--p2)"。
+          四套语义色：--p1 红 / --p2 青 / --p3 紫 / --p4 蓝。
+   【打印】已含 @media print：强制白底、隐藏导航、卡片禁止跨页断裂。
+   【动效】.rv 元素进入视口淡入；已处理 prefers-reduced-motion。
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ============================================================
+   0. 设计令牌 —— 与《碳基→硅基》推演报告同一套语言
+   ============================================================ */
+:root{
+  --paper:#ffffff; --paper-2:#f7f8fa; --paper-3:#eef0f4;
+  --ink:#0e141b; --ink-2:#39454f; --ink-3:#6b7885; --ink-4:#98a3ae;
+  --rule:#e3e7eb; --rule-2:#ccd4dc;
+  --navy:#12305a; --navy-2:#1d4e89; --navy-3:#2f6fb0; --navy-soft:#eaf1f9;
+  --gold:#8f6b16; --gold-2:#b8912b; --gold-bg:#fbf7ea;
+  --p1:#a32e27; --p1-bg:#fbf0ef;
+  --p2:#14615d; --p2-bg:#eaf4f3;
+  --p3:#6b4a8c; --p3-bg:#f3eff8;
+  --p4:#1d4e89; --p4-bg:#ecf2f9;
+  --ok:#1c6b45; --warn:#a55a00; --bad:#992d22;
+  --shadow-1:0 1px 2px rgba(16,24,32,.05), 0 2px 8px rgba(16,24,32,.04);
+  --shadow-2:0 2px 6px rgba(16,24,32,.06), 0 14px 36px rgba(16,24,32,.07);
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --maxw:1080px;
+  --r:10px; --r-sm:6px;
+}
+[data-theme="dark"]{
+  --paper:#0f141a; --paper-2:#151b23; --paper-3:#1c242e;
+  --ink:#edf1f5; --ink-2:#c0cad4; --ink-3:#8d99a6; --ink-4:#6b7885;
+  --rule:#252f3a; --rule-2:#33404d;
+  --navy:#0c1f38; --navy-2:#4d8fd6; --navy-3:#6ba6e6; --navy-soft:#16232f;
+  --gold:#d4ae52; --gold-2:#d4ae52; --gold-bg:#1f1c12;
+  --p1:#e0736a; --p1-bg:#241715;
+  --p2:#4fb3ab; --p2-bg:#10201f;
+  --p3:#a98ad0; --p3-bg:#1d1727;
+  --p4:#6ba6e6; --p4-bg:#131f2c;
+  --ok:#4bbd85; --warn:#e0a13a; --bad:#e0736a;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 2px 6px rgba(0,0,0,.4), 0 14px 36px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  font-variant-numeric:tabular-nums;
+  transition:background-color .25s ease, color .25s ease;
+}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:700; line-height:1.28; margin:0; letter-spacing:-.01em}
+p{margin:0 0 1em}
+a{color:var(--navy-2); text-decoration:none; border-bottom:1px solid color-mix(in srgb, var(--navy-2) 30%, transparent)}
+a:hover{border-bottom-color:var(--navy-2)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--navy-2); outline-offset:2px; border-radius:3px}
+code{font-family:var(--mono); font-size:.88em; background:var(--paper-3);
+  padding:1px 5px; border-radius:4px; color:var(--ink)}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px}
+@media(max-width:640px){.wrap{padding:0 20px}}
+
+/* ---------- 顶栏 ---------- */
+.progress{position:fixed; top:0; left:0; height:2px; width:0; z-index:120;
+  background:linear-gradient(90deg,var(--navy-2),var(--gold-2)); transition:width .1s linear}
+.topbar{position:sticky; top:0; z-index:100;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(14px); -webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--rule)}
+.topbar-in{max-width:var(--maxw); margin:0 auto; padding:0 28px; height:58px; display:flex; align-items:center; gap:18px}
+@media(max-width:640px){.topbar-in{padding:0 20px; gap:10px}}
+.brand{display:flex; align-items:center; gap:10px; min-width:0}
+.brand-mark{width:21px; height:21px; flex:none}
+.brand-txt{font-family:var(--serif); font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.nav{display:flex; gap:1px; margin-left:auto; align-items:center; overflow-x:auto; scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{border:0; font-size:12.3px; color:var(--ink-3); padding:6px 9px; border-radius:var(--r-sm);
+  font-weight:500; white-space:nowrap; letter-spacing:.02em; transition:.16s}
+.nav a:hover{color:var(--ink); background:var(--paper-3)}
+.nav a.active{color:var(--navy-2); background:var(--navy-soft)}
+@media(max-width:1000px){.nav{display:none}}
+.tgl{border:1px solid var(--rule-2); background:transparent; color:var(--ink-2);
+  width:34px; height:34px; border-radius:var(--r-sm); cursor:pointer; flex:none;
+  display:grid; place-items:center; transition:.16s}
+.tgl:hover{background:var(--paper-3); color:var(--ink)}
+.tgl svg{width:16px; height:16px}
+[data-theme="light"] .i-moon,[data-theme="dark"] .i-sun{display:none}
+
+/* ---------- Hero ---------- */
+.hero{position:relative; overflow:hidden;
+  background:
+    radial-gradient(900px 380px at 80% -10%, rgba(47,111,176,.28), transparent 62%),
+    radial-gradient(680px 340px at 6% 106%, rgba(184,145,43,.14), transparent 60%),
+    linear-gradient(168deg,#0a1729 0%,#102542 46%,#0e1f38 100%);
+  color:#eef3f9; border-bottom:1px solid var(--rule)}
+.hero::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.45;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent)}
+.hero-in{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:66px 28px 56px}
+@media(max-width:640px){.hero-in{padding:46px 20px 40px}}
+.eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:11px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:#9dc0e6;
+  border:1px solid rgba(157,192,230,.30); background:rgba(157,192,230,.08);
+  padding:6px 13px; border-radius:100px; margin-bottom:22px}
+.eyebrow .dot{width:5px; height:5px; border-radius:50%; background:var(--gold-2); flex:none;
+  box-shadow:0 0 0 3px rgba(184,145,43,.20)}
+.hero h1{font-size:clamp(28px,4.8vw,50px); font-weight:900; letter-spacing:-.025em;
+  line-height:1.14; color:#fff; margin-bottom:20px; max-width:20ch}
+.hero h1 .accent{background:linear-gradient(100deg,#e8c86a,#c9a227 60%);
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.hero .lede{font-size:clamp(14.5px,1.5vw,17px); color:#b9cade; max-width:60ch;
+  line-height:1.82; font-weight:300; margin-bottom:28px}
+.hero .lede strong{color:#e9f1f9; font-weight:500}
+.hero-meta{display:flex; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,.13); padding-top:20px}
+.hero-meta div{padding-right:32px; margin-right:32px; border-right:1px solid rgba(255,255,255,.13)}
+.hero-meta div:last-child{border-right:0; margin-right:0; padding-right:0}
+@media(max-width:720px){
+  .hero-meta{gap:16px 0}
+  .hero-meta div{padding-right:18px; margin-right:18px}
+  .hero-meta div:nth-child(3){border-right:0}
+}
+.hero-meta dt{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:#7f9cb8; margin-bottom:4px; font-weight:500}
+.hero-meta dd{margin:0; font-size:14px; color:#dee9f4; font-weight:500; font-family:var(--serif)}
+
+/* ---------- 区块 ---------- */
+section.band{padding:64px 0; border-bottom:1px solid var(--rule)}
+@media(max-width:640px){section.band{padding:44px 0}}
+.band.alt{background:var(--paper-2)}
+.sec-head{margin-bottom:34px}
+.sec-num{font-family:var(--mono); font-size:11.5px; font-weight:500; letter-spacing:.18em;
+  color:var(--ink-4); display:block; margin-bottom:9px}
+.sec-head h2{font-size:clamp(22px,2.9vw,30px); margin-bottom:12px; letter-spacing:-.015em}
+.sec-head p{color:var(--ink-3); max-width:72ch; font-size:15px; margin:0}
+.rule-gold{width:36px; height:2px; background:var(--gold-2); margin:18px 0 0; border-radius:2px}
+
+/* ---------- 标签 ---------- */
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500;
+  letter-spacing:.06em; padding:2px 7px; border-radius:4px; white-space:nowrap;
+  border:1px solid transparent; font-family:var(--sans); vertical-align:middle}
+.tag-src{color:var(--navy-2); background:var(--navy-soft); border-color:color-mix(in srgb,var(--navy-2) 24%, transparent)}
+.tag-ours{color:var(--gold); background:var(--gold-bg); border-color:color-mix(in srgb,var(--gold-2) 34%, transparent)}
+.tag-vend{color:var(--warn); background:color-mix(in srgb,var(--warn) 8%, transparent); border-color:color-mix(in srgb,var(--warn) 26%, transparent)}
+
+/* ---------- 引用/提示 ---------- */
+.quote{border-left:3px solid var(--gold-2); background:var(--gold-bg);
+  padding:16px 20px; border-radius:0 var(--r) var(--r) 0; margin:0}
+.quote .qlabel{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; display:block; margin-bottom:6px}
+.quote p{margin:0; font-size:15px; color:var(--ink-2); line-height:1.78}
+.quote p strong{color:var(--ink); font-weight:500}
+
+.note{border:1px solid var(--rule); border-left:3px solid var(--navy-2);
+  background:var(--paper-2); border-radius:0 var(--r) var(--r) 0;
+  padding:15px 20px; font-size:13.8px; line-height:1.74; color:var(--ink-2); margin-top:22px}
+.note b{color:var(--ink); font-weight:600}
+
+/* 故事框 —— 用来放轶事、考据、来历。与 .note 区分：note 讲道理，story 讲事 */
+.story{border:1px solid var(--rule); border-left:3px solid var(--gold-2);
+  background:var(--gold-bg); border-radius:0 var(--r) var(--r) 0;
+  padding:18px 22px; margin:22px 0}
+.story-t{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; margin-bottom:9px; font-family:var(--mono)}
+.story p{font-size:14px; color:var(--ink-2); line-height:1.78; margin:0 0 10px}
+.story p:last-child{margin:0}
+.story b{color:var(--ink); font-weight:600}
+.note.warn{border-left-color:var(--warn); background:color-mix(in srgb,var(--warn) 6%, var(--paper))}
+
+/* ---------- 代码块 ---------- */
+.code{position:relative; margin:18px 0; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper-2); overflow:hidden}
+.code-bar{display:flex; align-items:center; gap:8px; padding:9px 15px;
+  border-bottom:1px solid var(--rule); background:var(--paper-3)}
+.code-bar .dot{width:9px; height:9px; border-radius:50%; background:var(--rule-2); flex:none}
+.code-bar .fn{font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  letter-spacing:.03em; margin-left:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.code-bar .lb{margin-left:auto; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; flex:none}
+pre{margin:0; padding:16px 0 16px 0; overflow-x:auto; counter-reset:ln;
+  font-family:var(--mono); font-size:12.8px; line-height:1.72; tab-size:2}
+pre .l{display:block; padding:0 18px 0 52px; position:relative; white-space:pre}
+pre .l::before{counter-increment:ln; content:counter(ln); position:absolute; left:0; width:38px;
+  text-align:right; color:var(--ink-4); opacity:.6; font-size:11px; user-select:none}
+pre .l.mark{background:color-mix(in srgb,var(--gold-2) 10%, transparent)}
+.cm{color:var(--ink-4); font-style:normal}
+.kw{color:var(--p3); font-weight:500}
+.st{color:var(--p2)}
+.fn2{color:var(--navy-2)}
+.nm{color:var(--p1)}
+[data-theme="dark"] .kw{color:#c9a9ee}
+[data-theme="dark"] .st{color:#7fd8ce}
+[data-theme="dark"] .fn2{color:#7fb6ea}
+[data-theme="dark"] .nm{color:#e79b93}
+
+/* ---------- 分层架构 ---------- */
+.stack{display:grid; gap:10px; margin:8px 0 30px}
+.layer{display:grid; grid-template-columns:56px 1fr auto; gap:18px; align-items:center;
+  padding:20px 22px; background:var(--paper); border:1px solid var(--rule);
+  border-left:3px solid var(--lc); cursor:pointer; transition:.18s; position:relative;
+  width:100%; border-radius:var(--r)}
+.layer:hover{background:color-mix(in srgb,var(--lc) 5%, var(--paper))}
+.layer:focus-visible{outline:2px solid var(--lc); outline-offset:2px}
+.layer.on{background:color-mix(in srgb,var(--lc) 9%, var(--paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 40%, transparent);
+  border-radius:var(--r) var(--r) 0 0; border-bottom-color:transparent}
+.layer-mid{min-width:0}
+.layer-ico{width:40px; height:40px; border-radius:8px; display:grid; place-items:center;
+  background:color-mix(in srgb,var(--lc) 12%, transparent); border:1px solid color-mix(in srgb,var(--lc) 30%, transparent)}
+.layer-ico svg{width:19px; height:19px; stroke:var(--lc); fill:none; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round}
+.layer :is(h3,h4){font-size:16px; margin-bottom:2px; font-family:var(--serif)}
+.layer .role{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono)}
+.layer .io{font-size:13px; color:var(--ink-3); line-height:1.6; margin-top:5px}
+.layer .chev{color:var(--ink-4); font-size:16px; transition:transform .2s; flex:none}
+.layer.on .chev{transform:rotate(90deg); color:var(--lc)}
+@media(max-width:620px){
+  .layer{grid-template-columns:44px 1fr; gap:14px; padding:16px}
+  .layer .chev{display:none}
+  .layer-ico{width:34px;height:34px}
+}
+
+.ldetail{display:none; margin-top:-10px; padding:22px 24px;
+  border:1px solid var(--rule); border-top:0; border-left:3px solid var(--lc);
+  border-radius:0 0 var(--r) var(--r);
+  background:var(--paper-2)}
+.ldetail.show{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){.ldetail.show{animation:none}}
+.ldetail :is(h4,h5){font-family:var(--serif); font-size:14.5px; margin:0 0 8px;
+  color:var(--ink); display:flex; align-items:center; gap:8px}
+.ldetail :is(h4,h5)::before{content:""; width:3px; height:14px; background:var(--lc); border-radius:2px; flex:none}
+.ldetail p{font-size:13.8px; color:var(--ink-2); margin:0 0 10px; line-height:1.74}
+.ldetail p:last-child{margin:0}
+.ldetail ul{margin:0 0 12px; padding-left:18px}
+.ldetail li{font-size:13.4px; color:var(--ink-2); line-height:1.72; margin-bottom:5px}
+.ldetail li:last-child{margin-bottom:0}
+.ldetail code{font-size:12px}
+
+/* ---------- 循环图 ---------- */
+.cyc{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:6px 0 8px;
+  position:relative}
+@media(max-width:760px){.cyc{grid-template-columns:repeat(2,1fr)}}
+.cyc-s{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 16px; box-shadow:var(--shadow-1); position:relative; overflow:hidden}
+.cyc-s::before{content:attr(data-n); position:absolute; top:8px; right:11px;
+  font-family:var(--mono); font-size:26px; font-weight:700; color:var(--lc);
+  opacity:.10; line-height:1}
+.cyc-s .ct{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; margin-bottom:7px; font-family:var(--mono)}
+.cyc-s :is(h3,h4){font-size:14.5px; margin-bottom:6px}
+.cyc-s p{font-size:12.6px; color:var(--ink-3); margin:0; line-height:1.62}
+.cyc-s code{font-size:11px; padding:0 3px}
+.cyc-loop{display:flex; align-items:center; gap:10px; justify-content:center;
+  margin:14px 0 0; font-size:12.2px; color:var(--ink-4); font-family:var(--mono)}
+.cyc-loop .arw{flex:1; height:1px; background:var(--rule-2); position:relative; max-width:220px}
+.cyc-loop .arw::after{content:""; position:absolute; right:0; top:-3.5px;
+  border:4px solid transparent; border-left-color:var(--rule-2)}
+
+/* ---------- 表格 ---------- */
+.tbl-wrap{overflow-x:auto; margin:18px 0; border:1px solid var(--rule);
+  border-radius:var(--r); background:var(--paper)}
+table{border-collapse:collapse; width:100%; font-size:13.4px; min-width:560px}
+th,td{text-align:left; padding:11px 15px; border-bottom:1px solid var(--rule);
+  vertical-align:top; line-height:1.64}
+th{background:var(--paper-3); font-weight:600; font-size:11.5px; letter-spacing:.05em;
+  color:var(--ink-2); white-space:nowrap; text-transform:uppercase; font-family:var(--sans)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--navy-2) 3%, transparent)}
+td b{font-weight:600; color:var(--ink)}
+td code{font-size:11.6px; white-space:nowrap}
+.tick{color:var(--ok); font-weight:700}
+
+/* 密集表格 —— 几十行以上的清单（正典全表、改编总表）用，行高收紧 */
+.tbl-wrap.compact table{font-size:12.7px; min-width:640px}
+.tbl-wrap.compact th,.tbl-wrap.compact td{padding:7px 12px; line-height:1.52}
+.tbl-wrap.compact th{font-size:10.8px}
+.tbl-wrap.compact td code{font-size:11px; white-space:normal}
+
+/* 年代轴 —— 影视史/时间线。左栏年份，右栏内容，用 --lc 上色 */
+.era{display:grid; grid-template-columns:96px 1fr; gap:20px;
+  padding:20px 0; border-top:1px solid var(--rule)}
+.era:first-child{border-top:0; padding-top:0}
+.era:last-child{padding-bottom:0}
+.era-y{font-family:var(--mono); font-size:12.5px; font-weight:700; color:var(--lc);
+  letter-spacing:.02em; line-height:1.5; padding-top:2px}
+.era-y small{display:block; font-weight:400; font-size:10.5px; color:var(--ink-4);
+  letter-spacing:.06em; margin-top:3px}
+.era-b h3{font-size:15.5px; margin-bottom:6px}
+.era-b p{font-size:13.5px; color:var(--ink-2); margin:0 0 8px; line-height:1.72}
+.era-b p:last-child{margin:0}
+.era-b .who{font-size:12.4px; color:var(--ink-3); font-family:var(--mono)}
+@media(max-width:620px){
+  .era{grid-template-columns:1fr; gap:6px; padding:16px 0}
+  .era-y{padding-top:0}
+}
+.cross{color:var(--bad); font-weight:700}
+.mid{color:var(--warn); font-weight:700}
+
+/* ---------- 感知三选一卡 ---------- */
+.perc{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0}
+@media(max-width:840px){.perc{grid-template-columns:1fr}}
+.pcard{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  box-shadow:var(--shadow-1); overflow:hidden; display:flex; flex-direction:column}
+.pcard-h{padding:15px 18px; border-bottom:1px solid var(--rule);
+  background:color-mix(in srgb,var(--lc) 7%, var(--paper))}
+.pcard-h .pt{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono); margin-bottom:4px}
+.pcard-h :is(h3,h4){font-size:15px}
+.pcard-b{padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:11px}
+.pcard-b p{font-size:13px; color:var(--ink-2); margin:0; line-height:1.7}
+.pcard-b .kv{font-size:12.2px; color:var(--ink-3); line-height:1.6}
+.pcard-b .kv b{color:var(--ink); font-weight:600}
+.pcard-b .cd{font-family:var(--mono); font-size:11px; background:var(--paper-3);
+  padding:6px 8px; border-radius:4px; color:var(--ink-2); word-break:break-all; line-height:1.55}
+.pcard-f{padding:11px 18px; border-top:1px solid var(--rule); background:var(--paper-2);
+  font-size:11.8px; color:var(--ink-3); line-height:1.6}
+.pcard-f b{color:var(--bad); font-weight:600}
+
+/* ---------- 使用分布 ---------- */
+.bars{margin:16px 0 8px}
+.bar-row{display:grid; grid-template-columns:172px 1fr 48px; gap:13px; align-items:center;
+  padding:7px 0; border-bottom:1px solid color-mix(in srgb,var(--rule) 60%, transparent)}
+.bar-row:last-child{border-bottom:0}
+@media(max-width:620px){.bar-row{grid-template-columns:112px 1fr 42px; gap:9px}}
+.bar-lb{font-size:13px; color:var(--ink-2); line-height:1.4}
+.bar-lb small{display:block; font-size:10.5px; color:var(--ink-4); font-family:var(--mono)}
+.bar-tr{height:20px; background:var(--paper-3); border-radius:4px; overflow:hidden}
+.bar-f{height:100%; border-radius:4px; background:var(--bc);
+  width:0; transition:width .9s cubic-bezier(.2,.7,.3,1)}
+.bar-v{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--bc); text-align:right}
+.bar-note{font-size:12px; color:var(--ink-4); margin-top:12px; line-height:1.7}
+
+/* ---------- 失效映射 ---------- */
+.fmap{display:grid; gap:10px; margin-top:16px}
+.fm{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start;
+  padding:16px 18px; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper); border-left:3px solid var(--lc)}
+.fm-n{font-family:var(--mono); font-size:11px; font-weight:700; color:#fff;
+  background:var(--lc); border-radius:4px; padding:2px 7px; height:fit-content; white-space:nowrap; margin-top:2px}
+[data-theme="dark"] .fm-n{color:#0f141a}
+.fm :is(h3,h4){font-size:14.5px; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.fm p{font-size:13.2px; color:var(--ink-2); margin:0 0 7px; line-height:1.7}
+.fm p:last-child{margin:0}
+.fm .diag{font-size:12.4px; color:var(--ink-3); padding-top:7px;
+  border-top:1px dashed var(--rule-2)}
+.fm .diag b{color:var(--lc); font-weight:600}
+
+/* ---------- 步骤清单 ---------- */
+.steps{counter-reset:st; list-style:none; margin:16px 0 0; padding:0}
+.steps li{counter-increment:st; position:relative; padding:0 0 18px 42px; margin:0;
+  border-left:1px solid var(--rule-2); margin-left:13px}
+.steps li:last-child{border-left-color:transparent; padding-bottom:0}
+.steps li::before{content:counter(st); position:absolute; left:-13px; top:1px;
+  width:26px; height:26px; border-radius:50%; background:var(--navy-2); color:#fff;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11.5px;
+  font-weight:700; border:2px solid var(--paper)}
+.steps :is(h3,h4){font-size:14.5px; margin-bottom:4px}
+.steps p{font-size:13.4px; color:var(--ink-2); margin:0; line-height:1.72}
+.steps code{font-size:11.8px}
+
+/* ---------- 公式 ---------- */
+.formula{background:var(--paper-2); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 22px; margin:16px 0; text-align:center; overflow-x:auto}
+.formula .fx{font-family:var(--mono); font-size:14px; color:var(--ink);
+  display:inline-block; white-space:nowrap; letter-spacing:.01em}
+.formula .fx .num{border-bottom:1px solid var(--ink-3); padding:0 6px 3px}
+.formula .fx .den{padding:6px 6px 0}
+.formula .cap{font-size:11.8px; color:var(--ink-4); margin-top:10px; line-height:1.6}
+
+/* ---------- 来源 ---------- */
+.src-list{list-style:none; margin:0; padding:0}
+.src-list li{position:relative; padding-left:30px; margin-bottom:13px;
+  font-size:13px; line-height:1.66; color:var(--ink-2)}
+.src-list li::before{content:"▸"; position:absolute; left:0; top:0;
+  color:var(--gold-2); font-size:12px}
+.src-list li b{color:var(--ink); font-weight:600}
+.src-list li a{word-break:break-all; font-size:12.3px}
+.src-list li .pub{display:block; color:var(--ink-4); font-size:11.8px; margin-top:1px}
+
+footer{background:var(--paper-2); padding:38px 0; border-top:1px solid var(--rule)}
+footer p{font-size:12.4px; color:var(--ink-3); line-height:1.74; margin:0 0 8px}
+footer .fl{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; margin-bottom:9px}
+.disc{border-left:2px solid var(--gold-2); padding-left:14px; font-size:12.2px;
+  color:var(--ink-3); line-height:1.74}
+
+/* ---------- 动效 ---------- */
+.rv{opacity:0; transform:translateY(14px);
+  transition:opacity .55s cubic-bezier(.2,.7,.3,1), transform .55s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1; transform:none; transition:none}
+  .bar-f{transition:none}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  :root{--paper:#fff; --paper-2:#fff; --paper-3:#f4f4f4; --ink:#000; --ink-2:#222;
+    --ink-3:#444; --rule:#bbb; --rule-2:#999; --shadow-1:none; --shadow-2:none}
+  .topbar,.progress,.tgl,.cyc-loop{display:none !important}
+  .hero{background:#fff !important; color:#000}
+  .hero h1{color:#000}
+  .hero h1 .accent{color:#8a6a18; -webkit-text-fill-color:#8a6a18}
+  .hero .lede{color:#333} .hero .lede strong{color:#000}
+  .hero::after{display:none}
+  .eyebrow{color:#333; border-color:#999; background:none}
+  .hero-meta dt{color:#555} .hero-meta dd{color:#000}
+  .hero-meta div{border-color:#bbb}
+  .rv{opacity:1 !important; transform:none !important}
+  .ldetail{display:block !important}
+  section.band{padding:20px 0}
+  .layer,.pcard,.fm,.cyc-s,.tbl-wrap{break-inside:avoid}
+  a{color:#000; border-bottom:0}
+  body{font-size:10pt; line-height:1.45}
+  pre{font-size:9pt}
+  .bar-f{width:var(--w) !important}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="prog" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.1" fill="var(--gold-2)"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3" transform="rotate(60 12 12)"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3" transform="rotate(120 12 12)"/>
+      </svg>
+      <span class="brand-txt">Afterglow 实测</span>
+    </div>
+    <nav class="nav" id="nav" aria-label="章节导航">
+      <a href="#overview">导览</a>
+      <a href="#origin">来历</a>
+      <a href="#mechanism">机制</a>
+      <a href="#structure">结构</a>
+      <a href="#myth">误区</a>
+      <a href="#doubt">存疑</a>
+      <a href="#listen">入门</a>
+      <a href="#sources">来源</a>
+    </nav>
+    <button class="tgl" id="tgl" type="button" aria-label="切换深色 / 浅色主题" title="切换主题">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.4M12 19.4v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="eyebrow"><span class="dot"></span>单曲实测 · Unsent 第 7 首 · 96 BPM · 4:48.7</div>
+    <h1>4 分 48 秒的歌，<span class="accent">没有一次</span><span style="white-space:nowrap">副歌释放</span></h1>
+    <p class="lede">
+      《Afterglow》的设计文档写得很清楚：没有打击乐高潮，没有 Drop，没有 Hook，结尾停在半句话上。
+      反直觉的地方在于，它并不靠“把音量压低”来制造这种安静——全曲 11 个段落的整体响度只差 5 LU，
+      起音强度在 1.1 到 1.3 之间几乎不动。这页把三样东西摊开对齐：写作意图、音频实测、视觉重述，
+      看哪些承诺被兑现了，哪些只是文档里的说法。
+    </p>
+    <dl class="hero-meta">
+      <div><dt>时长</dt><dd>4:48.7（288.74 s）</dd></div>
+      <div><dt>整体响度</dt><dd>−15.7 LUFS</dd></div>
+      <div><dt>起音强度</dt><dd>1.1–1.3，全曲持平</dd></div>
+      <div><dt>阅读</dt><dd>约 15 分钟</dd></div>
+    </dl>
+  </div>
+</div>
+
+<section class="band" id="overview">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">01 / 导览</span>
+      <h2>先把一首歌拆成三份不会互相顶替的材料</h2>
+      <p>这一节不给结论，只给一张地图：后面的每一节，都落在这三份材料中的某一份上。混着读，就会把“设计意图”当成“实际效果”。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">第 1 层</div><h3>写作意图</h3></div>
+        <div class="pcard-b">
+          <p>专辑设计文档里这首歌的规划段：调性、BPM、结构骨架、Prompt、歌词、参数、终验报告。它说的是“打算做成什么样”。</p>
+          <div class="kv">1 份文档 · 约 130 行</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">第 2 层</div><h3>作品实体</h3></div>
+        <div class="pcard-b">
+          <p>交付的 MP3 本身。响度、频段、起音密度、段落边界、静默位置——这些只能量，不能从文档推。</p>
+          <div class="kv">256 kbps · 44.1 kHz · 立体声</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">第 3 层</div><h3>视觉重述</h3></div>
+        <div class="pcard-b">
+          <p>MV 剧本把歌词第 5 行当成镜头表，并给出了自己的时长与几条可验证规则。它是第三份独立表述。</p>
+          <div class="kv">288.740 s · 96 BPM</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">一条判据</span>
+      <p>凡是文本里写了、音频里测不到的，一律降级为“存疑”；凡是音频里能测到、文本里没写的，才值得单独说。<strong>不接受“作者说它很安静”作为“它很安静”的证据。</strong></p>
+    </div>
+
+    <div class="note rv">
+      <b>这份文档怎么读：</b>想知道“它凭什么不无聊”，直接去 03 机制；想核对数字，去 04 结构与 06 存疑；
+      只想判断值不值得听，去 07 入门，三个时长档位按你的耐心挑。
+    </div>
+
+    <div class="note warn rv">
+      <b>一个必须先说明的量级问题：</b>这是单曲分析，样本量 1，结论不外推到整张专辑；音频来自生成模型
+      （具体模型与参数记在专辑设计文档里），母带是谁做的、用没用限制器，
+      文档里没有记录，所以“为什么峰值贴着 0 dBFS”这个问题本页只能给出测量，不能给出归因。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="origin">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">02 / 来历</span>
+      <h2>它是一张“没寄出的信”专辑里的第 7 首，位置决定了它必须最轻</h2>
+      <p>这一节只交代能被文件证实的时间顺序。注意：下面写的是文件时间，不等于创作时间。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era" style="--lc:var(--navy-2)">
+      <div class="era-y">07-27<small>企划</small></div>
+      <div class="era-b">
+        <h3>专辑《Unsent》立项，8 首，身份设定是“一封没寄到的信”</h3>
+        <p>创意基因组写明：情绪 isolation + tenderness，场景 rooftop at 3am，听者是创作者；
+          曲风是 Funk / Pop / R&amp;B 的融合。第 7 首在表里的标签是“96 慢 · S11 · 不插电精简型 · 3 行 Intro”。</p>
+        <p class="who">专辑设定 · 创意基因组 / 曲目表</p>
+      </div>
+    </div>
+
+    <div class="era" style="--lc:var(--navy-2)">
+      <div class="era-y">10-03<small>成音</small></div>
+      <div class="era-b">
+        <h3>音频文件落盘：4 分 48 秒，比设计文档写的 3:40 长出 68.7 秒</h3>
+        <p>设计文档的“时长参考”是 3:40；交付的 MP3 是 288.74 秒。这个差值后面还会出现，它关系到“谁在说话”。</p>
+        <p class="who">交付音频 · 本机 ffprobe 实测</p>
+      </div>
+    </div>
+
+    <div class="era" style="--lc:var(--navy-2)">
+      <div class="era-y">10-16<small>定稿</small></div>
+      <div class="era-b">
+        <h3>封面与整张专辑的设计文档补齐，第 7 首的终验报告打满勾</h3>
+        <p>终验报告逐条打了勾：节拍契合、惊喜设计、音色匹配、乐器变化弧线、无括号、结构随机、呼吸节奏；
+          押韵一栏写的是 N/A，理由是“叙事驱动，意象密度补足”。</p>
+        <p class="who">专辑设计文档 · 歌曲 7 终验报告</p>
+      </div>
+    </div>
+
+    <div class="era" style="--lc:var(--navy-2)">
+      <div class="era-y">10-20<small>重述</small></div>
+      <div class="era-b">
+        <h3>MV 剧本写出来，而它记的时长是 288.740 秒——和音频一致，和设计文档不一致</h3>
+        <p>剧本的一句话是：一个房间，从下午到天黑，只有一种光，没有人在场。它把“光在地板上画一条线”当成镜头表。</p>
+        <p class="who">该曲 MV 剧本</p>
+      </div>
+    </div>
+
+    <div class="note rv">
+      <b>为什么位置重要：</b>专辑的情感弧线是「躁 → 否认 → 慢燃 → 假装开派对 → 赤裸 → 对峙 → 安静的接受 → 回到开头」。
+      第 7 首正好是“安静的接受”那一格，第 8 首《Same Rooftop》要回到开头。它被放在一个必须最轻的位置上，
+      这不是审美偏好，是结构需求。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="mechanism">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">03 / 机制</span>
+      <h2>它靠的不是“小声”，是十一块之间几乎不涨的能量</h2>
+      <p>“没有高潮”通常被理解成“编曲很素”。实测不是这样：它每一层都在，但每一层都没越界。这一节把设计承诺和测量结果并排放。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:30%">设计文档承诺</th><th style="width:22%">实测</th><th>判定</th></tr></thead>
+        <tbody>
+          <tr><td>96 BPM</td><td class="mono">184.6 BPM</td><td class="mid">节拍检测锁到了双倍拍（半时值 92.3），落在 96 附近；这是检测器的倍频歧义，不是歌跑偏</td></tr>
+          <tr><td>G minor</td><td class="mono">G# major（r=0.83）</td><td class="cross">差一个半音且调式不同，自动调性在密集混音上不可信，见 06 存疑</td></tr>
+          <tr><td>时长 3:40</td><td class="mono">4:48.74</td><td class="cross">长出 68.7 秒，交付明显超过设计</td></tr>
+          <tr><td>S11 · 11 块</td><td class="mono">11 段</td><td class="tick">结构切分与设计完全吻合</td></tr>
+          <tr><td>没有打击乐高潮、没有 Drop</td><td class="mono">起音强度 1.1–1.3</td><td class="tick">全曲十段 30 秒窗口内几乎持平，最后 30 秒最低（0.7）</td></tr>
+          <tr><td>break = silence</td><td class="mono">无数字静音段</td><td class="cross">全曲唯一低于 −50 dB 的只有尾部淡出，见 05 误区</td></tr>
+          <tr><td>不插电：指弹吉他 / 刷鼓 / 立式贝斯</td><td class="mono">低 61% · 中 35% · 高 4%</td><td class="mid">中频占了三成半更像原声乐器，但低频过半，混音并不“瘦”</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="bar-note" style="margin-top:14px">口径：频段占比按功率（STFT 幅度平方求和）计算，分界 30–250 Hz / 250–2000 Hz / 2000–8000 Hz；mono、22.05 kHz 重采样。相关性与判定为人工判断，非程序输出。</p>
+
+    <div class="bars rv">
+      <div class="bar-row" style="--bc:var(--p4)">
+        <div class="bar-lb">低频<small>30–250 Hz</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="61"></div></div>
+        <div class="bar-v">61%</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p2)">
+        <div class="bar-lb">中频<small>250–2000 Hz</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="35"></div></div>
+        <div class="bar-v">35%</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p3)">
+        <div class="bar-lb">高频<small>2000–8000 Hz</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="4"></div></div>
+        <div class="bar-v">4%</div>
+      </div>
+    </div>
+    <p class="bar-note">口径：全曲平均功率占比，非峰值；高频占比低说明镲片与气声被压得很靠后。</p>
+
+    <div class="quote rv">
+      <span class="qlabel">机制一句话</span>
+      <p>它把“情绪”放在了<strong>编曲密度</strong>上，而不是音量上：吉他泛音进来的那一刻、贝斯与刷鼓第一次进入的那个副歌、Solo 之后突然只剩人声——这些是它的“起”，只是没有一个“落”到响度上。</p>
+    </div>
+
+    <div class="note rv">
+      <b>为什么这样才撑得住 4 分 48 秒：</b>靠音量起伏的歌，听众的情绪由响度带着走；靠密度起伏的歌，听众必须靠注意力跟上。
+      后者在 3 分钟以内很难维持，所以它反过来利用了“慢”——96 BPM 给了每小节足够的空间，让层与层的进入被听见。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="structure">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">04 / 结构</span>
+      <h2>十一段的整体响度只差 5 LU，最响的一刻在第 3 分 48 秒</h2>
+      <p>这一节把音频切成段，逐段量响度与低频占比。它回答的是“安静是怎么分布的”，而不是“安静吗”。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="rv" style="margin:6px 0 10px">
+      <svg viewBox="0 0 1000 200" width="100%" height="auto" role="img" aria-label="全曲 4 分 48 秒的 RMS 响度包络，纵轴为分贝" style="display:block;border:1px solid var(--rule);border-radius:12px;background:var(--paper-2)">
+        <polyline points="6,123 12,132 18,106 24,107 29,89 35,86 41,81 47,90 53,72 59,76 64,81 70,83 76,87 82,87 88,72 94,79 100,105 105,80 111,67 117,67 123,76 129,103 135,62 140,70 146,71 152,71 158,78 164,90 170,71 176,59 181,81 187,71 193,87 199,39 205,62 211,83 216,41 222,53 228,83 234,76 240,82 246,69 252,60 257,78 263,86 269,57 275,94 281,71 287,62 292,55 298,49 304,65 310,72 316,52 322,54 328,57 333,53 339,62 345,62 351,63 357,79 363,43 368,61 374,60 380,71 386,72 392,40 398,50 404,52 409,44 415,61 421,76 427,60 433,65 439,69 444,42 450,60 456,56 462,61 468,67 474,51 480,60 485,57 491,65 497,52 503,54 509,69 515,73 520,87 526,76 532,43 538,59 544,71 550,70 556,54 561,54 567,56 573,66 579,70 585,45 591,49 596,52 602,68 608,70 614,71 620,50 626,57 632,55 637,73 643,51 649,55 655,59 661,75 667,72 672,74 678,79 684,79 690,64 696,70 702,59 708,46 713,55 719,53 725,61 731,57 737,63 743,55 748,59 754,67 760,59 766,60 772,64 778,42 784,56 789,66 795,45 801,40 807,31 813,143 819,94 824,73 830,76 836,78 842,77 848,99 854,72 860,60 865,58 871,74 877,82 883,54 889,45 895,62 900,50 906,95 912,148 918,61 924,59 930,70 936,83 941,57 947,54 953,85 959,62 965,73 971,88 976,77 982,92 988,131 994,185" fill="none" stroke="var(--navy-2)" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+      <p class="bar-note">全曲 RMS 包络（578 点降采样到 170 点，横轴 0–288.7 s，纵轴 −55…−5 dB）。两个明显的下陷在 3 分 32 秒与 4 分 30 秒附近，不是静音，是编曲让位。</p>
+    </div>
+
+    <div class="tbl-wrap compact rv">
+      <table>
+        <thead><tr><th style="width:8%">段</th><th style="width:20%">起止</th><th style="width:12%">时长</th><th style="width:18%">整体响度</th><th>低频占比</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td class="mono">0:00–1:09</td><td class="mono">69.2 s</td><td class="mono">−17.1 LUFS</td><td>42%</td></tr>
+          <tr><td class="mono">2</td><td class="mono">1:09–1:24</td><td class="mono">15.2 s</td><td class="mono">−15.3 LUFS</td><td>41%</td></tr>
+          <tr><td class="mono">3</td><td class="mono">1:24–2:05</td><td class="mono">40.7 s</td><td class="mono">−15.1 LUFS</td><td>53%</td></tr>
+          <tr><td class="mono">4</td><td class="mono">2:05–3:28</td><td class="mono">83.0 s</td><td class="mono">−15.7 LUFS</td><td>63%</td></tr>
+          <tr><td class="mono">5</td><td class="mono">3:28–3:36</td><td class="mono">7.9 s</td><td class="mono">−15.8 LUFS</td><td>56%</td></tr>
+          <tr><td class="mono">6</td><td class="mono">3:36–3:44</td><td class="mono">7.9 s</td><td class="mono">−16.7 LUFS</td><td>51%</td></tr>
+          <tr><td class="mono">7</td><td class="mono">3:44–3:55</td><td class="mono">11.1 s</td><td class="mono">−12.8 LUFS</td><td>71%</td></tr>
+          <tr><td class="mono">8</td><td class="mono">3:55–4:10</td><td class="mono">14.7 s</td><td class="mono">−17.8 LUFS</td><td>39%</td></tr>
+          <tr><td class="mono">9</td><td class="mono">4:10–4:16</td><td class="mono">5.9 s</td><td class="mono">−16.5 LUFS</td><td>89%</td></tr>
+          <tr><td class="mono">10</td><td class="mono">4:16–4:22</td><td class="mono">6.4 s</td><td class="mono">−13.6 LUFS</td><td>93%</td></tr>
+          <tr><td class="mono">11</td><td class="mono">4:22–4:48</td><td class="mono">26.7 s</td><td class="mono">−16.0 LUFS</td><td>25%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="bar-note">口径：段落边界由 MFCC + chroma 聚类切成 11 段（与设计的 S11 十一块数量一致，边界不完全等同歌词段落）；响度为 EBU R128 短段积分；低频占比为段内 30–250 Hz 功率占比。</p>
+
+    <div class="note rv">
+      <b>三个可以直接描出来的点：</b>最长的一段有 83 秒（2:05–3:28），几乎相当于一整首歌的长度；
+      最响的一段是 3:44–3:55 的 −12.8 LUFS，也是低频最高的 71% 之一；第 9、10 段低频占到 89% 与 93%，
+      说明 4:10 之后有一个明显的低频主导段落，随后第 11 段掉到 25%——那是尾奏在把东西一件件撤掉。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="myth">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">05 / 误区</span>
+      <h2>“安静”“没有 Hook”“有个静音 break”这三句话都经不起测量</h2>
+      <p>这三条在听感上都不算错，但一旦当成技术事实去复述，就会把这首歌讲成另一种东西。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--p1)">
+      <span class="fm-n">常见说法</span>
+      <div>
+        <h3>“没有高潮”等于“编曲很素、几乎没放东西”</h3>
+        <p>实测频段三层都在动：中频占 35%，高频只有 4%。真正被压的是高频（镲片、气声、齿音），
+          不是整体密度。整曲块响度区间 −26.0 到 −11.4 LU、LRA 约 14.6 dB，动态并不小；
+          小的是“段与段之间的差距”——十一段的整体响度只在 5 LU 内浮动。素的是<strong>起伏</strong>，不是<strong>材料</strong>。</p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--p1)">
+      <span class="fm-n">常见说法</span>
+      <div>
+        <h3>“没有 Hook”等于“没有记忆点”</h3>
+        <p>歌词文档里副歌是同一句反复三次：<span class="mono">This is the afterglow / Not the fire not the snow / Just the light that lingers</span>。
+          它的记忆点不靠旋律跳进，靠的是<strong>重复</strong>和<strong>开口韵</strong>——over / home / glow 都落在同一个元音上。
+          没有“钩子”是就“音高抓耳”而言，不是就“记住”而言。</p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--p1)">
+      <span class="fm-n">常见说法</span>
+      <div>
+        <h3>“Break 就是一段静音”</h3>
+        <p>设计 Prompt 里写的是 <span class="mono">break=silence</span>。实测全曲没有数字静音段：
+          唯一低于 −50 dBFS 的位置是结尾淡出。最安静的 5 秒窗口在 4:43（−33.3 dB），其次是开头 0:00（−31.4 dB）。
+          所谓 break 是<strong>编曲让位</strong>——把乐器撤掉，不是把声音归零。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="doubt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">06 / 存疑</span>
+      <h2>有四个数字，两份文档自己就对不上</h2>
+      <p>这一节专门放“测了但不能定案”的条目。它们不影响听感，但影响你引用这首歌时说的话。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--warn)">
+      <span class="fm-n">待核</span>
+      <div>
+        <h3>调性：设计写 G minor，自动检测给 G# major</h3>
+        <p>用 chroma + Krumhansl 模板做调性估计，最高相关是 G# 大调（r=0.83），最强音级也是 G#。
+          这与设计文档的 G minor 差一个半音、且调式不同。自动调性在密集混音、有转调或蓝调音级的流行作品上经常出错，
+          所以我把它标成待核，而不是“文档写错了”。要定案需要看 MIDI 或分轨。</p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--warn)">
+      <span class="fm-n">待核</span>
+      <div>
+        <h3>速度：设计 96 BPM，节拍检测 184.6 BPM</h3>
+        <p>184.6 几乎正好是 96 的两倍（半时 92.3）。节拍跟踪器在“每拍切两下”的律动上会锁到双倍，
+          这在刷鼓与切分贝斯里很常见。因此我不认为这首歌跑到了 184，但也没有独立证据证明它精确是 96——
+          只能说设计值与检测值在“半时/双倍”关系上自洽。</p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--warn)">
+      <span class="fm-n">已定案</span>
+      <div>
+        <h3>时长：设计 3:40，交付 4:48.7，MV 剧本 288.740 s</h3>
+        <p>两份文档里，MV 剧本的 288.740 s 与音频实测完全一致，设计文档的 3:40 与两者都不一致。
+          可以定案的是：<strong>设计文档的 3:40 是目标值，交付超出了 68.7 秒</strong>；
+          不能定案的是“多出来的 68.7 秒是模型自己加的，还是后来改过”——文件时间只能给出先后，给不出因果。</p>
+      </div>
+    </div>
+
+    <div class="fm rv" style="--lc:var(--warn)">
+      <span class="fm-n">待核</span>
+      <div>
+        <h3>尾奏：剧本说最后一句之后还有 13.2 秒音乐、画面一帧不切</h3>
+        <p>剧本写得更细：最后一句唱完是 275.52 秒，尾奏到 288.74 秒，正好 13.2 秒，且全片唯一静止。
+          实测尾段（4:22–4:48）长 26.7 秒、低频占比从 93% 掉到 25%，与“把东西一件件撤掉”的尾奏相符。
+          但人声在哪一秒结束，需要分轨或源分离才能确认，仅凭混音无法验证那 13.2 秒的起点。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="listen">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">07 / 入门</span>
+      <h2>按你愿意花的时间，分三档听</h2>
+      <p>这一节给的是动作，不是知识。三档互不依赖，从最短的开始也行。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">3 分钟</div><h3>只听开头 20 秒</h3></div>
+        <div class="pcard-b">
+          <p>前三行歌词是三个声音碎片：楼梯上的脚步、关不上的门、一次呼吸。听这三样有没有被做成“空间”，
+            而不是被唱成“句子”。这一段是全曲密度最低的地方，也是它敢用 4 分 48 秒的底气。</p>
+          <div class="kv">0:00–0:20 · 只听，不看歌词</div>
+        </div>
+        <div class="pcard-f">避坑：别在通勤路上听，这一段会被环境音吃掉</div>
+      </div>
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">15 分钟</div><h3>整曲一遍，只标记一件事</h3></div>
+        <div class="pcard-b">
+          <p>播完整首，唯一要做的是记住“你觉得最响的那一下”出现在哪里，然后对照 04 的表：
+            实测最响在 <span class="mono">3:44–3:55</span>（−12.8 LUFS）。如果你的印象比这个早很多，
+            说明你记住的是编曲变密，而不是音量变大——那正是这首歌的手法。</p>
+          <div class="kv">4:48 一遍 · 记一个时间点</div>
+        </div>
+        <div class="pcard-f">避坑：不要边做别的事边听，密度变化会被忽略</div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">30 分钟</div><h3>从 4:35 倒着听到结尾</h3></div>
+        <div class="pcard-b">
+          <p>先听最后 14 秒，再回到 4:22，再回到 3:55。你会听到尾奏是“减法”：低频从 93% 掉到 25%，
+            整体响度却没有掉多少（−13.6 → −16.0 LUFS）。这个组合是它最像“人走空房间”的地方。</p>
+          <div class="kv">4:22–4:48 · 三段倒听</div>
+        </div>
+        <div class="pcard-f">避坑：用外放听这一段会听不出低频的撤走</div>
+      </div>
+    </div>
+
+    <div class="note warn rv">
+      <b>听之前先知道：</b>这首是生成模型产出的成品，不是现场录音；混音里的“房间感”是制作出来的，
+      所以不必去猜“这是哪个录音棚”。把它当作品听，不要当演奏听。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="sources">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">08 / 附录</span>
+      <h2>来源与核对说明</h2>
+      <p>每条结论对应的材料写在这里。本页所有数字都来自下列文件或本机实测，没有引用二手评论。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <ul class="src-list rv">
+      <li><b>写作意图、歌词、Prompt、参数、终验报告</b>：专辑设计文档的歌曲 7 全模块（约 130 行）。
+        <span class="pub">项目内部文档 · 2026-10</span></li>
+      <li><b>调性 G minor、BPM 96、S11 十一块、时长参考 3:40</b>：同文档“歌曲信息 / 参数设置”两节。</li>
+      <li><b>专辑设定（isolation + tenderness、rooftop at 3am、一封没寄到的信、8 首）</b>：专辑企划文件里的创意基因组与曲目表。</li>
+      <li><b>MV 时长 288.740 s、96 BPM、光的镜头表、13.2 秒尾奏</b>：该曲 MV 剧本开头的参数表与结构段。</li>
+      <li><b>音频全部实测数据</b>：该曲交付音频（256 kbps / 44.1 kHz / 立体声 / 288.74 s）。
+        测量工具 librosa 1.0.0、pyloudnorm 0.2.0；响度按 EBU R128 积分，频段按 STFT 功率求和，段落按 MFCC + chroma 聚类。</li>
+    </ul>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>核对说明与已知偏差：</b>
+      <br>① 复核中改掉的一处：频段占比最初按“每 bin 平均幅度”算，得到低频 81%，这个算法会让 bin 数少的低频段系统性偏高；
+      改用功率求和后是 61%，本页用的是后者。
+      <br>② 标为待核的三条（调性、速度、13.2 秒尾奏）都需要分轨或 MIDI 才能定案，当前证据只支持“测量值是这样”，不支持“作品就是这样”。
+      <br>③ 文件时间（07-27 / 10-03 / 10-16 / 10-20）取自文件系统修改时间，只能说明先后，不能当作创作日期。
+      <br>④ 本页截至 2026-10-29；后续若有新版本音频或文档，数字需重测。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fl">关于本页</div>
+    <p>这是一页单曲分析：把《Unsent》第 7 首 Afterglow 的设计文档、MV 剧本和音频实测对齐，看哪些说法经得起测量。</p>
+    <p class="disc">免责声明：本页为资料整理与测量记录，不是学术论文。标注为“存疑 / 待核”的条目，表示流传广泛但证据不足，请勿当作事实引用；音频分析受混音与编码影响，数值有测量误差。</p>
+    <p style="margin-top:16px; font-size:11.5px; color:var(--ink-4)">Afterglow 实测 · Unsent 第 7 首 &nbsp;·&nbsp; 2026-10-29</p>
+  </div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   app.js — 科普/技术讲解页的通用行为层
+   与 design-system.css 配套。全部可选组件都做了存在性判断，
+   没有对应 DOM 也不会报错。无外部依赖。
+
+   提供的行为：
+     1. 深浅主题切换（含 aria 状态与 localStorage 记忆）
+     2. 顶部滚动进度条       [需要 #prog]
+     3. 滚动淡入             [需要 .rv]
+     4. 章节导航高亮         [需要 #nav a → 章节 id]
+     5. 分层折叠卡           [需要 .layer[data-layer] + #d-<key>]
+     6. 条形图入场填充       [需要 .bar-f[data-w]]
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+
+  /* ---------- 1. 主题切换 ---------- */
+  var tgl = document.getElementById('tgl');
+  function syncTheme() {
+    if (!tgl) return;
+    var dark = root.getAttribute('data-theme') === 'dark';
+    tgl.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    tgl.title = dark ? '切换到浅色主题' : '切换到深色主题';
+  }
+  syncTheme();
+  if (tgl) {
+    tgl.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('evo-theme', next); } catch (e) {}
+      syncTheme();
+    });
+  }
+
+  /* ---------- 2. 滚动进度条 ---------- */
+  var prog = document.getElementById('prog');
+  if (prog) {
+    var ticking = false;
+    var onScroll = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        prog.style.width = Math.max(0, Math.min(100, h > 0 ? (pageYOffset / h) * 100 : 0)) + '%';
+        ticking = false;
+      });
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    onScroll();
+  }
+
+  /* ---------- 3. 滚动淡入 ---------- */
+  var reduce = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reveal = [].slice.call(document.querySelectorAll('.rv'));
+  if (reveal.length) {
+    if (reduce || !('IntersectionObserver' in window)) {
+      reveal.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en, i) {
+          if (!en.isIntersecting) return;
+          var el = en.target;
+          setTimeout(function () { el.classList.add('in'); }, Math.min(i * 50, 200));
+          io.unobserve(el);
+        });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.07 });
+      reveal.forEach(function (el) { io.observe(el); });
+    }
+  }
+
+  /* ---------- 4. 章节导航高亮 ---------- */
+  var links = [].slice.call(document.querySelectorAll('#nav a'));
+  var targets = links.map(function (a) {
+    var id = a.getAttribute('href').slice(1);
+    return { a: a, el: document.getElementById(id) };
+  }).filter(function (t) { return t.el; });
+
+  if ('IntersectionObserver' in window && targets.length) {
+    var vis = {};
+    var navObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        vis[en.target.id] = en.isIntersecting ? en.intersectionRatio : 0;
+      });
+      var best = null, bv = 0;
+      targets.forEach(function (t) {
+        var v = vis[t.el.id] || 0;
+        if (v > bv) { bv = v; best = t; }
+      });
+      if (best) {
+        links.forEach(function (a) { a.classList.remove('active'); });
+        best.a.classList.add('active');
+      }
+    }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.3, 0.6] });
+    targets.forEach(function (t) { navObs.observe(t.el); });
+  }
+
+  /* ---------- 5. 分层折叠卡 ---------- */
+  var layers = [].slice.call(document.querySelectorAll('.layer[data-layer]'));
+  function toggleLayer(btn) {
+    var key = btn.getAttribute('data-layer');
+    var panel = document.getElementById('d-' + key);
+    var isOpen = btn.classList.contains('on');
+    layers.forEach(function (b) {
+      b.classList.remove('on');
+      b.setAttribute('aria-expanded', 'false');
+      var p = document.getElementById('d-' + b.getAttribute('data-layer'));
+      if (p) p.classList.remove('show');
+    });
+    if (!isOpen && panel) {
+      btn.classList.add('on');
+      btn.setAttribute('aria-expanded', 'true');
+      panel.classList.add('show');
+    }
+  }
+  layers.forEach(function (btn) {
+    btn.addEventListener('click', function () { toggleLayer(btn); });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggleLayer(btn);
+      }
+    });
+  });
+
+  /* ---------- 6. 条形图入场填充 ---------- */
+  var bars = [].slice.call(document.querySelectorAll('.bar-f[data-w]'));
+  if (bars.length) {
+    var fill = function () {
+      bars.forEach(function (b) { b.style.width = b.getAttribute('data-w') + '%'; });
+    };
+    var chart = document.querySelector('.bars');
+    if ('IntersectionObserver' in window && chart) {
+      var bo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { fill(); bo.disconnect(); }
+        });
+      }, { threshold: 0.2 });
+      bo.observe(chart);
+    } else {
+      fill();
+    }
+  }
+})();
+</script>
+</body>
+</html>
