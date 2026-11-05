@@ -157,6 +157,7 @@ crossorigin="anonymous"></script>
   .card:nth-child(9) { --d: .96s; }
   .card:nth-child(10) { --d: 1.08s; }
   .card:nth-child(11) { --d: 1.2s; }
+  .card:nth-child(12) { --d: 1.32s; }
 
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes fadeIn { to { opacity: 1; } }
@@ -501,6 +502,36 @@ crossorigin="anonymous"></script>
           </g>
         </svg>
         <span class="p-desc">一首歌的三份材料对齐：写作意图、音频实测、视觉重述。</span>
+        <span class="p-arrow" aria-hidden="true">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="folia-explained/">
+      <div class="poster" style="background:linear-gradient(160deg, #ece6f5, #d5c9ea)">
+        <div class="p-head">
+          <div class="p-row">
+            <span class="p-num">12</span>
+            <span class="p-name">Folia 拆解</span>
+          </div>
+          <span class="p-tag">研究</span>
+        </div>
+        <svg class="p-art" viewBox="0 0 80 80" role="img" aria-label="Folia 歌词播放器技术拆解">
+          <g class="art-inner">
+            <rect class="draw" pathLength="1" x="8" y="14" width="64" height="52" rx="7"/>
+            <path class="draw" pathLength="1" d="M8 27 H72"/>
+            <circle class="fade" cx="15" cy="20.5" r="1.4" fill="var(--faint)"/>
+            <circle class="fade" cx="20" cy="20.5" r="1.4" fill="var(--faint)"/>
+            <g class="spiral">
+              <circle class="draw" pathLength="1" cx="27" cy="44" r="9"/>
+              <path class="draw" pathLength="1" d="M24.5 39.5 L32 44 L24.5 48.5 Z"/>
+              <circle class="fade gold" cx="27" cy="44" r="2"/>
+            </g>
+            <path class="draw" pathLength="1" d="M42 38 H64"/>
+            <path class="draw" pathLength="1" d="M42 45 H58"/>
+            <path class="speed" d="M42 52 H64"/>
+          </g>
+        </svg>
+        <span class="p-desc">74 万行代码拆开看：17 种歌词动画、9 种音源与两套音频引擎。</span>
         <span class="p-arrow" aria-hidden="true">→</span>
       </div>
     </a>

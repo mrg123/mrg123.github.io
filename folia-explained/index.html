@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一个歌词播放器，为什么写了 74 万行代码 · Folia 技术科普</title>
+<meta name="description" content="用 12 节拆开开源音乐播放器 Folia：17 种歌词动画、9 种音源、两套音频引擎、端侧神经网络、模组平台与 AI 原生工程体系。所有数字带出处、口径与三态标注。">
+<meta name="color-scheme" content="light dark">
+<script>
+  (function () {
+    try {
+      var t = null;
+      try { t = localStorage.getItem('evo-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   design-system.css — 科普/技术讲解类单文件 HTML 的组件样式库
+   ──────────────────────────────────────────────────────────────────
+   来源：两次实战验证（《碳基→硅基》推演报告、浏览器智能体架构讲解）。
+   用法：把本文件内容整段粘进目标 HTML 的 <style> 里。不要外链——
+        交付物必须是单文件、可离线打开。
+
+   【必需的文档骨架】
+     <html lang="zh-CN" data-theme="light">
+     <head>  ...下面这 3 段必须照抄...  </head>
+     <body>
+       <div class="progress" id="prog"></div>
+       <header class="topbar">…</header>
+       <div class="hero">…</div>
+       <section class="band" id="section-id"><div class="wrap">…</div></section>
+       <footer>…</footer>
+
+   【1. 首屏防闪烁脚本】放在 <head> 里、样式之前：
+     <script>(function(){try{var t=null;try{t=localStorage.getItem('evo-theme')}catch(e){}
+       if(t!=='light'&&t!=='dark')t=matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+       document.documentElement.setAttribute('data-theme',t)}catch(e){}})();</script>
+
+   【2. 字体：异步加载 + 系统兜底，断网不能白屏】
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+           media="print" onload="this.media='all'">
+
+   【3. viewport 与配色提示】
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <meta name="color-scheme" content="light dark">
+
+   【标题层级 —— 必须遵守，否则验收会报"跳级"】
+     章节标题 h2  →  组件卡标题 h3  →  卡内子标题 h4
+     不要跳过中间层级。卡片直接用 h4 会让 h2→h4 跳级。
+
+   【组件】清单超过 30 行用 .tbl-wrap.compact；时间线用 .era（左年份右内容）。
+   【组件】用 .story 放轶事/考据，用 .note 讲补充说明，两者语气不同。
+
+   【主题】改 :root / [data-theme="dark"] 里的令牌即可整体换肤。
+          每节配色用行内 --lc 传入语义色，例如 style="--lc:var(--p2)"。
+          四套语义色：--p1 红 / --p2 青 / --p3 紫 / --p4 蓝。
+   【打印】已含 @media print：强制白底、隐藏导航、卡片禁止跨页断裂。
+   【动效】.rv 元素进入视口淡入；已处理 prefers-reduced-motion。
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ============================================================
+   0. 设计令牌 —— 与《碳基→硅基》推演报告同一套语言
+   ============================================================ */
+:root{
+  --paper:#ffffff; --paper-2:#f7f8fa; --paper-3:#eef0f4;
+  --ink:#0e141b; --ink-2:#39454f; --ink-3:#6b7885; --ink-4:#98a3ae;
+  --rule:#e3e7eb; --rule-2:#ccd4dc;
+  --navy:#12305a; --navy-2:#1d4e89; --navy-3:#2f6fb0; --navy-soft:#eaf1f9;
+  --gold:#8f6b16; --gold-2:#b8912b; --gold-bg:#fbf7ea;
+  --p1:#a32e27; --p1-bg:#fbf0ef;
+  --p2:#14615d; --p2-bg:#eaf4f3;
+  --p3:#6b4a8c; --p3-bg:#f3eff8;
+  --p4:#1d4e89; --p4-bg:#ecf2f9;
+  --ok:#1c6b45; --warn:#a55a00; --bad:#992d22;
+  --shadow-1:0 1px 2px rgba(16,24,32,.05), 0 2px 8px rgba(16,24,32,.04);
+  --shadow-2:0 2px 6px rgba(16,24,32,.06), 0 14px 36px rgba(16,24,32,.07);
+  --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --maxw:1080px;
+  --r:10px; --r-sm:6px;
+}
+[data-theme="dark"]{
+  --paper:#0f141a; --paper-2:#151b23; --paper-3:#1c242e;
+  --ink:#edf1f5; --ink-2:#c0cad4; --ink-3:#8d99a6; --ink-4:#6b7885;
+  --rule:#252f3a; --rule-2:#33404d;
+  --navy:#0c1f38; --navy-2:#4d8fd6; --navy-3:#6ba6e6; --navy-soft:#16232f;
+  --gold:#d4ae52; --gold-2:#d4ae52; --gold-bg:#1f1c12;
+  --p1:#e0736a; --p1-bg:#241715;
+  --p2:#4fb3ab; --p2-bg:#10201f;
+  --p3:#a98ad0; --p3-bg:#1d1727;
+  --p4:#6ba6e6; --p4-bg:#131f2c;
+  --ok:#4bbd85; --warn:#e0a13a; --bad:#e0736a;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 2px 6px rgba(0,0,0,.4), 0 14px 36px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  font-variant-numeric:tabular-nums;
+  transition:background-color .25s ease, color .25s ease;
+}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:700; line-height:1.28; margin:0; letter-spacing:-.01em}
+p{margin:0 0 1em}
+a{color:var(--navy-2); text-decoration:none; border-bottom:1px solid color-mix(in srgb, var(--navy-2) 30%, transparent)}
+a:hover{border-bottom-color:var(--navy-2)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--navy-2); outline-offset:2px; border-radius:3px}
+code{font-family:var(--mono); font-size:.88em; background:var(--paper-3);
+  padding:1px 5px; border-radius:4px; color:var(--ink)}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px}
+@media(max-width:640px){.wrap{padding:0 20px}}
+
+/* ---------- 顶栏 ---------- */
+.progress{position:fixed; top:0; left:0; height:2px; width:0; z-index:120;
+  background:linear-gradient(90deg,var(--navy-2),var(--gold-2)); transition:width .1s linear}
+.topbar{position:sticky; top:0; z-index:100;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(14px); -webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--rule)}
+.topbar-in{max-width:var(--maxw); margin:0 auto; padding:0 28px; height:58px; display:flex; align-items:center; gap:18px}
+@media(max-width:640px){.topbar-in{padding:0 20px; gap:10px}}
+.brand{display:flex; align-items:center; gap:10px; min-width:0}
+.brand-mark{width:21px; height:21px; flex:none}
+.brand-txt{font-family:var(--serif); font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.nav{display:flex; gap:1px; margin-left:auto; align-items:center; overflow-x:auto; scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{border:0; font-size:12.3px; color:var(--ink-3); padding:6px 9px; border-radius:var(--r-sm);
+  font-weight:500; white-space:nowrap; letter-spacing:.02em; transition:.16s}
+.nav a:hover{color:var(--ink); background:var(--paper-3)}
+.nav a.active{color:var(--navy-2); background:var(--navy-soft)}
+@media(max-width:1000px){.nav{display:none}}
+.tgl{border:1px solid var(--rule-2); background:transparent; color:var(--ink-2);
+  width:34px; height:34px; border-radius:var(--r-sm); cursor:pointer; flex:none;
+  display:grid; place-items:center; transition:.16s}
+.tgl:hover{background:var(--paper-3); color:var(--ink)}
+.tgl svg{width:16px; height:16px}
+[data-theme="light"] .i-moon,[data-theme="dark"] .i-sun{display:none}
+
+/* ---------- Hero ---------- */
+.hero{position:relative; overflow:hidden;
+  background:
+    radial-gradient(900px 380px at 80% -10%, rgba(47,111,176,.28), transparent 62%),
+    radial-gradient(680px 340px at 6% 106%, rgba(184,145,43,.14), transparent 60%),
+    linear-gradient(168deg,#0a1729 0%,#102542 46%,#0e1f38 100%);
+  color:#eef3f9; border-bottom:1px solid var(--rule)}
+.hero::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.45;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 20%,#000 70%,transparent)}
+.hero-in{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:66px 28px 56px}
+@media(max-width:640px){.hero-in{padding:46px 20px 40px}}
+.eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:11px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:#9dc0e6;
+  border:1px solid rgba(157,192,230,.30); background:rgba(157,192,230,.08);
+  padding:6px 13px; border-radius:100px; margin-bottom:22px}
+.eyebrow .dot{width:5px; height:5px; border-radius:50%; background:var(--gold-2); flex:none;
+  box-shadow:0 0 0 3px rgba(184,145,43,.20)}
+.hero h1{font-size:clamp(28px,4.8vw,50px); font-weight:900; letter-spacing:-.025em;
+  line-height:1.14; color:#fff; margin-bottom:20px; max-width:20ch}
+.hero h1 .accent{background:linear-gradient(100deg,#e8c86a,#c9a227 60%);
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.hero .lede{font-size:clamp(14.5px,1.5vw,17px); color:#b9cade; max-width:60ch;
+  line-height:1.82; font-weight:300; margin-bottom:28px}
+.hero .lede strong{color:#e9f1f9; font-weight:500}
+.hero-meta{display:flex; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,.13); padding-top:20px}
+.hero-meta div{padding-right:32px; margin-right:32px; border-right:1px solid rgba(255,255,255,.13)}
+.hero-meta div:last-child{border-right:0; margin-right:0; padding-right:0}
+@media(max-width:720px){
+  .hero-meta{gap:16px 0}
+  .hero-meta div{padding-right:18px; margin-right:18px}
+  .hero-meta div:nth-child(3){border-right:0}
+}
+.hero-meta dt{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:#7f9cb8; margin-bottom:4px; font-weight:500}
+.hero-meta dd{margin:0; font-size:14px; color:#dee9f4; font-weight:500; font-family:var(--serif)}
+
+/* ---------- 区块 ---------- */
+section.band{padding:64px 0; border-bottom:1px solid var(--rule)}
+@media(max-width:640px){section.band{padding:44px 0}}
+.band.alt{background:var(--paper-2)}
+.sec-head{margin-bottom:34px}
+.sec-num{font-family:var(--mono); font-size:11.5px; font-weight:500; letter-spacing:.18em;
+  color:var(--ink-4); display:block; margin-bottom:9px}
+.sec-head h2{font-size:clamp(22px,2.9vw,30px); margin-bottom:12px; letter-spacing:-.015em}
+.sec-head p{color:var(--ink-3); max-width:72ch; font-size:15px; margin:0}
+.rule-gold{width:36px; height:2px; background:var(--gold-2); margin:18px 0 0; border-radius:2px}
+
+/* ---------- 标签 ---------- */
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500;
+  letter-spacing:.06em; padding:2px 7px; border-radius:4px; white-space:nowrap;
+  border:1px solid transparent; font-family:var(--sans); vertical-align:middle}
+.tag-src{color:var(--navy-2); background:var(--navy-soft); border-color:color-mix(in srgb,var(--navy-2) 24%, transparent)}
+.tag-ours{color:var(--gold); background:var(--gold-bg); border-color:color-mix(in srgb,var(--gold-2) 34%, transparent)}
+.tag-vend{color:var(--warn); background:color-mix(in srgb,var(--warn) 8%, transparent); border-color:color-mix(in srgb,var(--warn) 26%, transparent)}
+
+/* ---------- 引用/提示 ---------- */
+.quote{border-left:3px solid var(--gold-2); background:var(--gold-bg);
+  padding:16px 20px; border-radius:0 var(--r) var(--r) 0; margin:0}
+.quote .qlabel{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; display:block; margin-bottom:6px}
+.quote p{margin:0; font-size:15px; color:var(--ink-2); line-height:1.78}
+.quote p strong{color:var(--ink); font-weight:500}
+
+.note{border:1px solid var(--rule); border-left:3px solid var(--navy-2);
+  background:var(--paper-2); border-radius:0 var(--r) var(--r) 0;
+  padding:15px 20px; font-size:13.8px; line-height:1.74; color:var(--ink-2); margin-top:22px}
+.note b{color:var(--ink); font-weight:600}
+
+/* 故事框 —— 用来放轶事、考据、来历。与 .note 区分：note 讲道理，story 讲事 */
+.story{border:1px solid var(--rule); border-left:3px solid var(--gold-2);
+  background:var(--gold-bg); border-radius:0 var(--r) var(--r) 0;
+  padding:18px 22px; margin:22px 0}
+.story-t{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); font-weight:700; margin-bottom:9px; font-family:var(--mono)}
+.story p{font-size:14px; color:var(--ink-2); line-height:1.78; margin:0 0 10px}
+.story p:last-child{margin:0}
+.story b{color:var(--ink); font-weight:600}
+.note.warn{border-left-color:var(--warn); background:color-mix(in srgb,var(--warn) 6%, var(--paper))}
+
+/* ---------- 代码块 ---------- */
+.code{position:relative; margin:18px 0; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper-2); overflow:hidden}
+.code-bar{display:flex; align-items:center; gap:8px; padding:9px 15px;
+  border-bottom:1px solid var(--rule); background:var(--paper-3)}
+.code-bar .dot{width:9px; height:9px; border-radius:50%; background:var(--rule-2); flex:none}
+.code-bar .fn{font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  letter-spacing:.03em; margin-left:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.code-bar .lb{margin-left:auto; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; flex:none}
+pre{margin:0; padding:16px 0 16px 0; overflow-x:auto; counter-reset:ln;
+  font-family:var(--mono); font-size:12.8px; line-height:1.72; tab-size:2}
+pre .l{display:block; padding:0 18px 0 52px; position:relative; white-space:pre}
+pre .l::before{counter-increment:ln; content:counter(ln); position:absolute; left:0; width:38px;
+  text-align:right; color:var(--ink-4); opacity:.6; font-size:11px; user-select:none}
+pre .l.mark{background:color-mix(in srgb,var(--gold-2) 10%, transparent)}
+.cm{color:var(--ink-4); font-style:normal}
+.kw{color:var(--p3); font-weight:500}
+.st{color:var(--p2)}
+.fn2{color:var(--navy-2)}
+.nm{color:var(--p1)}
+[data-theme="dark"] .kw{color:#c9a9ee}
+[data-theme="dark"] .st{color:#7fd8ce}
+[data-theme="dark"] .fn2{color:#7fb6ea}
+[data-theme="dark"] .nm{color:#e79b93}
+
+/* ---------- 分层架构 ---------- */
+.stack{display:grid; gap:10px; margin:8px 0 30px}
+.layer{display:grid; grid-template-columns:56px 1fr auto; gap:18px; align-items:center;
+  padding:20px 22px; background:var(--paper); border:1px solid var(--rule);
+  border-left:3px solid var(--lc); cursor:pointer; transition:.18s; position:relative;
+  width:100%; border-radius:var(--r)}
+.layer:hover{background:color-mix(in srgb,var(--lc) 5%, var(--paper))}
+.layer:focus-visible{outline:2px solid var(--lc); outline-offset:2px}
+.layer.on{background:color-mix(in srgb,var(--lc) 9%, var(--paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 40%, transparent);
+  border-radius:var(--r) var(--r) 0 0; border-bottom-color:transparent}
+.layer-mid{min-width:0}
+.layer-ico{width:40px; height:40px; border-radius:8px; display:grid; place-items:center;
+  background:color-mix(in srgb,var(--lc) 12%, transparent); border:1px solid color-mix(in srgb,var(--lc) 30%, transparent)}
+.layer-ico svg{width:19px; height:19px; stroke:var(--lc); fill:none; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round}
+.layer :is(h3,h4){font-size:16px; margin-bottom:2px; font-family:var(--serif)}
+.layer .role{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono)}
+.layer .io{font-size:13px; color:var(--ink-3); line-height:1.6; margin-top:5px}
+.layer .chev{color:var(--ink-4); font-size:16px; transition:transform .2s; flex:none}
+.layer.on .chev{transform:rotate(90deg); color:var(--lc)}
+@media(max-width:620px){
+  .layer{grid-template-columns:44px 1fr; gap:14px; padding:16px}
+  .layer .chev{display:none}
+  .layer-ico{width:34px;height:34px}
+}
+
+.ldetail{display:none; margin-top:-10px; padding:22px 24px;
+  border:1px solid var(--rule); border-top:0; border-left:3px solid var(--lc);
+  border-radius:0 0 var(--r) var(--r);
+  background:var(--paper-2)}
+.ldetail.show{display:block; animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){.ldetail.show{animation:none}}
+.ldetail :is(h4,h5){font-family:var(--serif); font-size:14.5px; margin:0 0 8px;
+  color:var(--ink); display:flex; align-items:center; gap:8px}
+.ldetail :is(h4,h5)::before{content:""; width:3px; height:14px; background:var(--lc); border-radius:2px; flex:none}
+.ldetail p{font-size:13.8px; color:var(--ink-2); margin:0 0 10px; line-height:1.74}
+.ldetail p:last-child{margin:0}
+.ldetail ul{margin:0 0 12px; padding-left:18px}
+.ldetail li{font-size:13.4px; color:var(--ink-2); line-height:1.72; margin-bottom:5px}
+.ldetail li:last-child{margin-bottom:0}
+.ldetail code{font-size:12px}
+
+/* ---------- 循环图 ---------- */
+.cyc{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:6px 0 8px;
+  position:relative}
+@media(max-width:760px){.cyc{grid-template-columns:repeat(2,1fr)}}
+.cyc-s{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 16px; box-shadow:var(--shadow-1); position:relative; overflow:hidden}
+.cyc-s::before{content:attr(data-n); position:absolute; top:8px; right:11px;
+  font-family:var(--mono); font-size:26px; font-weight:700; color:var(--lc);
+  opacity:.10; line-height:1}
+.cyc-s .ct{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; margin-bottom:7px; font-family:var(--mono)}
+.cyc-s :is(h3,h4){font-size:14.5px; margin-bottom:6px}
+.cyc-s p{font-size:12.6px; color:var(--ink-3); margin:0; line-height:1.62}
+.cyc-s code{font-size:11px; padding:0 3px}
+.cyc-loop{display:flex; align-items:center; gap:10px; justify-content:center;
+  margin:14px 0 0; font-size:12.2px; color:var(--ink-4); font-family:var(--mono)}
+.cyc-loop .arw{flex:1; height:1px; background:var(--rule-2); position:relative; max-width:220px}
+.cyc-loop .arw::after{content:""; position:absolute; right:0; top:-3.5px;
+  border:4px solid transparent; border-left-color:var(--rule-2)}
+
+/* ---------- 表格 ---------- */
+.tbl-wrap{overflow-x:auto; margin:18px 0; border:1px solid var(--rule);
+  border-radius:var(--r); background:var(--paper)}
+table{border-collapse:collapse; width:100%; font-size:13.4px; min-width:560px}
+th,td{text-align:left; padding:11px 15px; border-bottom:1px solid var(--rule);
+  vertical-align:top; line-height:1.64}
+th{background:var(--paper-3); font-weight:600; font-size:11.5px; letter-spacing:.05em;
+  color:var(--ink-2); white-space:nowrap; text-transform:uppercase; font-family:var(--sans)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--navy-2) 3%, transparent)}
+td b{font-weight:600; color:var(--ink)}
+td code{font-size:11.6px; white-space:nowrap}
+.tick{color:var(--ok); font-weight:700}
+
+/* 密集表格 —— 几十行以上的清单（正典全表、改编总表）用，行高收紧 */
+.tbl-wrap.compact table{font-size:12.7px; min-width:640px}
+.tbl-wrap.compact th,.tbl-wrap.compact td{padding:7px 12px; line-height:1.52}
+.tbl-wrap.compact th{font-size:10.8px}
+.tbl-wrap.compact td code{font-size:11px; white-space:normal}
+
+/* 年代轴 —— 影视史/时间线。左栏年份，右栏内容，用 --lc 上色 */
+.era{display:grid; grid-template-columns:96px 1fr; gap:20px;
+  padding:20px 0; border-top:1px solid var(--rule)}
+.era:first-child{border-top:0; padding-top:0}
+.era:last-child{padding-bottom:0}
+.era-y{font-family:var(--mono); font-size:12.5px; font-weight:700; color:var(--lc);
+  letter-spacing:.02em; line-height:1.5; padding-top:2px}
+.era-y small{display:block; font-weight:400; font-size:10.5px; color:var(--ink-4);
+  letter-spacing:.06em; margin-top:3px}
+.era-b h3{font-size:15.5px; margin-bottom:6px}
+.era-b p{font-size:13.5px; color:var(--ink-2); margin:0 0 8px; line-height:1.72}
+.era-b p:last-child{margin:0}
+.era-b .who{font-size:12.4px; color:var(--ink-3); font-family:var(--mono)}
+@media(max-width:620px){
+  .era{grid-template-columns:1fr; gap:6px; padding:16px 0}
+  .era-y{padding-top:0}
+}
+.cross{color:var(--bad); font-weight:700}
+.mid{color:var(--warn); font-weight:700}
+
+/* ---------- 感知三选一卡 ---------- */
+.perc{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0}
+@media(max-width:840px){.perc{grid-template-columns:1fr}}
+.pcard{background:var(--paper); border:1px solid var(--rule); border-radius:var(--r);
+  box-shadow:var(--shadow-1); overflow:hidden; display:flex; flex-direction:column}
+.pcard-h{padding:15px 18px; border-bottom:1px solid var(--rule);
+  background:color-mix(in srgb,var(--lc) 7%, var(--paper))}
+.pcard-h .pt{font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--lc); font-weight:700; font-family:var(--mono); margin-bottom:4px}
+.pcard-h :is(h3,h4){font-size:15px}
+.pcard-b{padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:11px}
+.pcard-b p{font-size:13px; color:var(--ink-2); margin:0; line-height:1.7}
+.pcard-b .kv{font-size:12.2px; color:var(--ink-3); line-height:1.6}
+.pcard-b .kv b{color:var(--ink); font-weight:600}
+.pcard-b .cd{font-family:var(--mono); font-size:11px; background:var(--paper-3);
+  padding:6px 8px; border-radius:4px; color:var(--ink-2); word-break:break-all; line-height:1.55}
+.pcard-f{padding:11px 18px; border-top:1px solid var(--rule); background:var(--paper-2);
+  font-size:11.8px; color:var(--ink-3); line-height:1.6}
+.pcard-f b{color:var(--bad); font-weight:600}
+
+/* ---------- 使用分布 ---------- */
+.bars{margin:16px 0 8px}
+.bar-row{display:grid; grid-template-columns:172px 1fr 48px; gap:13px; align-items:center;
+  padding:7px 0; border-bottom:1px solid color-mix(in srgb,var(--rule) 60%, transparent)}
+.bar-row:last-child{border-bottom:0}
+@media(max-width:620px){.bar-row{grid-template-columns:112px 1fr 42px; gap:9px}}
+.bar-lb{font-size:13px; color:var(--ink-2); line-height:1.4}
+.bar-lb small{display:block; font-size:10.5px; color:var(--ink-4); font-family:var(--mono)}
+.bar-tr{height:20px; background:var(--paper-3); border-radius:4px; overflow:hidden}
+.bar-f{height:100%; border-radius:4px; background:var(--bc);
+  width:0; transition:width .9s cubic-bezier(.2,.7,.3,1)}
+.bar-v{font-family:var(--mono); font-size:13px; font-weight:700; color:var(--bc); text-align:right}
+.bar-note{font-size:12px; color:var(--ink-4); margin-top:12px; line-height:1.7}
+
+/* ---------- 失效映射 ---------- */
+.fmap{display:grid; gap:10px; margin-top:16px}
+.fm{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start;
+  padding:16px 18px; border:1px solid var(--rule); border-radius:var(--r);
+  background:var(--paper); border-left:3px solid var(--lc)}
+.fm-n{font-family:var(--mono); font-size:11px; font-weight:700; color:#fff;
+  background:var(--lc); border-radius:4px; padding:2px 7px; height:fit-content; white-space:nowrap; margin-top:2px}
+[data-theme="dark"] .fm-n{color:#0f141a}
+.fm :is(h3,h4){font-size:14.5px; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.fm p{font-size:13.2px; color:var(--ink-2); margin:0 0 7px; line-height:1.7}
+.fm p:last-child{margin:0}
+.fm .diag{font-size:12.4px; color:var(--ink-3); padding-top:7px;
+  border-top:1px dashed var(--rule-2)}
+.fm .diag b{color:var(--lc); font-weight:600}
+
+/* ---------- 步骤清单 ---------- */
+.steps{counter-reset:st; list-style:none; margin:16px 0 0; padding:0}
+.steps li{counter-increment:st; position:relative; padding:0 0 18px 42px; margin:0;
+  border-left:1px solid var(--rule-2); margin-left:13px}
+.steps li:last-child{border-left-color:transparent; padding-bottom:0}
+.steps li::before{content:counter(st); position:absolute; left:-13px; top:1px;
+  width:26px; height:26px; border-radius:50%; background:var(--navy-2); color:#fff;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11.5px;
+  font-weight:700; border:2px solid var(--paper)}
+.steps :is(h3,h4){font-size:14.5px; margin-bottom:4px}
+.steps p{font-size:13.4px; color:var(--ink-2); margin:0; line-height:1.72}
+.steps code{font-size:11.8px}
+
+/* ---------- 公式 ---------- */
+.formula{background:var(--paper-2); border:1px solid var(--rule); border-radius:var(--r);
+  padding:18px 22px; margin:16px 0; text-align:center; overflow-x:auto}
+.formula .fx{font-family:var(--mono); font-size:14px; color:var(--ink);
+  display:inline-block; white-space:nowrap; letter-spacing:.01em}
+.formula .fx .num{border-bottom:1px solid var(--ink-3); padding:0 6px 3px}
+.formula .fx .den{padding:6px 6px 0}
+.formula .cap{font-size:11.8px; color:var(--ink-4); margin-top:10px; line-height:1.6}
+
+/* ---------- 来源 ---------- */
+.src-list{list-style:none; margin:0; padding:0}
+.src-list li{position:relative; padding-left:30px; margin-bottom:13px;
+  font-size:13px; line-height:1.66; color:var(--ink-2)}
+.src-list li::before{content:"▸"; position:absolute; left:0; top:0;
+  color:var(--gold-2); font-size:12px}
+.src-list li b{color:var(--ink); font-weight:600}
+.src-list li a{word-break:break-all; font-size:12.3px}
+.src-list li .pub{display:block; color:var(--ink-4); font-size:11.8px; margin-top:1px}
+
+footer{background:var(--paper-2); padding:38px 0; border-top:1px solid var(--rule)}
+footer p{font-size:12.4px; color:var(--ink-3); line-height:1.74; margin:0 0 8px}
+footer .fl{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-4); font-weight:700; margin-bottom:9px}
+.disc{border-left:2px solid var(--gold-2); padding-left:14px; font-size:12.2px;
+  color:var(--ink-3); line-height:1.74}
+
+/* ---------- 动效 ---------- */
+.rv{opacity:0; transform:translateY(14px);
+  transition:opacity .55s cubic-bezier(.2,.7,.3,1), transform .55s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1; transform:none; transition:none}
+  .bar-f{transition:none}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  :root{--paper:#fff; --paper-2:#fff; --paper-3:#f4f4f4; --ink:#000; --ink-2:#222;
+    --ink-3:#444; --rule:#bbb; --rule-2:#999; --shadow-1:none; --shadow-2:none}
+  .topbar,.progress,.tgl,.cyc-loop{display:none !important}
+  .hero{background:#fff !important; color:#000}
+  .hero h1{color:#000}
+  .hero h1 .accent{color:#8a6a18; -webkit-text-fill-color:#8a6a18}
+  .hero .lede{color:#333} .hero .lede strong{color:#000}
+  .hero::after{display:none}
+  .eyebrow{color:#333; border-color:#999; background:none}
+  .hero-meta dt{color:#555} .hero-meta dd{color:#000}
+  .hero-meta div{border-color:#bbb}
+  .rv{opacity:1 !important; transform:none !important}
+  .ldetail{display:block !important}
+  section.band{padding:20px 0}
+  .layer,.pcard,.fm,.cyc-s,.tbl-wrap{break-inside:avoid}
+  a{color:#000; border-bottom:0}
+  body{font-size:10pt; line-height:1.45}
+  pre{font-size:9pt}
+  .bar-f{width:var(--w) !important}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="prog" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.1" fill="var(--gold-2)"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3" transform="rotate(60 12 12)"/>
+        <ellipse cx="12" cy="12" rx="10.4" ry="4.3" stroke="var(--navy-2)" stroke-width="1.3" transform="rotate(120 12 12)"/>
+      </svg>
+      <span class="brand-txt">Folia 技术科普</span>
+    </div>
+    <nav class="nav" id="nav" aria-label="章节导航">
+      <a href="#overview">导览</a>
+      <a href="#origin">来历</a>
+      <a href="#visual">视觉</a>
+      <a href="#audio">音频</a>
+      <a href="#music">音源</a>
+      <a href="#desktop">桌面</a>
+      <a href="#mods">模组</a>
+      <a href="#meta">工程</a>
+      <a href="#myths">误区</a>
+      <a href="#open">存疑</a>
+      <a href="#start">入门</a>
+      <a href="#sources">来源</a>
+    </nav>
+    <button class="tgl" id="tgl" type="button" aria-label="切换深色 / 浅色主题" title="切换主题">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.4M12 19.4v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.2 12h2.4M19.4 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="eyebrow"><span class="dot"></span>开源项目 · Folia · 2025-11 → 2026-11 · 完整克隆 3,125 次提交</div>
+    <h1>一个「歌词播放器」<br>写出了 <span class="accent">74 万行</span>代码</h1>
+    <p class="lede">
+      2026 年 10 月这一个月，这个仓库提交了 <strong>1,186 次</strong>；一年累计 3,125 次提交、59 位作者、177 个版本标签。
+      它对外只叫「音乐播放器」，但代码的大头不在播放：把歌词做成 17 种图形引擎级的动画、把拍点检测和人声分离做成端侧神经网络、把壁纸模式写进三个操作系统的窗口系统。
+      本页把它拆成产品、技术、生态、方法四层，每个结论都标出处与口径，并区分「已定案」「待核」「已推翻」。
+    </p>
+    <dl class="hero-meta">
+      <div><dt>提交</dt><dd>3,125 次（一年）</dd></div>
+      <div><dt>代码</dt><dd>约 74 万行（含注释）</dd></div>
+      <div><dt>歌词动画</dt><dd>17 种 + 6 背景</dd></div>
+      <div><dt>阅读</dt><dd>约 18 分钟</dd></div>
+    </dl>
+  </div>
+</div>
+
+<section class="band" id="overview">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">01 / 导览</span>
+      <h2>先把「厉害」拆成四层，否则只能记住一堆数字</h2>
+      <p>这一节不铺细节，只给一张地图：同一个项目，功能表解释不了它为什么重、为什么稳，四层拆开才解释得了。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">第 1 层</div><h3>产品层：它到底能干什么</h3></div>
+        <div class="pcard-b">
+          <p>9 种音源（7 个在线平台 + Navidrome + 本地库）、17 种全屏歌词动画、桌面三平台 + Web + PWA、三条发布通道。这些是用户看得见的部分，也是最容易被误当成「全部」的部分。</p>
+          <div class="kv"><b>量级：</b>一次正式发版产出 11 个平台安装包。</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">第 2 层</div><h3>技术层：三个引擎拼在一起</h3></div>
+        <div class="pcard-b">
+          <p>视觉引擎（17 个插件、11.4 万行）、音频引擎（Web Audio 双 deck + mpv HiFi + 两个神经网络）、桌面外壳（Electron 主进程 8 千行 + 三套系统级壁纸实现）。</p>
+          <div class="kv"><b>量级：</b>视觉系统单目录 634 个文件、114,268 行。</div>
+        </div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">第 3 层</div><h3>生态层：别人可以接进来</h3></div>
+        <div class="pcard-b">
+          <p>Folium 模组平台（11 种注册表）、Stage API（12 个 HTTP 接口 + 1 个 WebSocket）、OBS 浏览器源、歌词 HTTP 接口、跨设备同步服务、四种服务端部署形态。</p>
+          <div class="kv"><b>量级：</b>模组系统 116 个文件、约 2.16 万行。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">第 4 层 / 一句话判据</span>
+      <p>前三层任何一层单拎出来，都够一个团队做半年；真正让它少见的是<strong>第四层：为「代码规模 × AI 参与」造出的工程体系</strong>——生成物取代手维护清单、测试盯住契约、代码地图变成可查询工具。所以本页的读法不是「数功能」，而是「看每层做到了什么程度」。</p>
+    </div>
+
+    <div class="note rv">
+      <b>这份文档怎么读：</b>想弄懂「为什么这么重」，读 02–04（来历、视觉、音频）；想弄懂「为什么这么广」，读 05–07（音源、桌面、模组）；想知道「为什么这么多代码还没散架」，直接读 08；只想避坑和入门，跳到 09–11；每个数字的出处与口径在 12。
+    </div>
+
+    <div class="note warn rv">
+      <b>一个必须先说明的量级问题：</b>本页基于一次完整克隆（4,494 个受控文件、3,125 次提交）与四条主线的抽样精读：视觉渲染、音源与音频内核、桌面与发布、AI·模组·工具链。四条线之外的约 1,400 个文件只做了结构与测试层面的扫描，没有逐文件读。行数统计含注释与样式文件，只用于量级比较，不等于「有效代码行」。所有数据快照截止 2026-11-01。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="origin">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">02 / 来历</span>
+      <h2>答案不在功能表里：它用一年时间把每件事都做到底</h2>
+      <p>先看时间线。提交节奏和版本密度能解释一部分「重」：不是一次性堆出 74 万行，而是持续一年、每月上千次地改。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--navy-2)">
+      <div class="era-y">2025-11<small>首提交</small></div>
+      <div class="era-b">
+        <h3>仓库从「init」开始</h3>
+        <p>2025 年 11 月 28 日出现第一个提交。这是版本历史的起点，不等于创意的起点：首提交之后大量功能是逐步长出来的。</p>
+        <p class="who">来源：本地 git log 最早提交（clone 快照）</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p4)">
+      <div class="era-y">2026-07<small>密集期</small></div>
+      <div class="era-b">
+        <h3>单月提交 462 次，三条主线成型</h3>
+        <p>视觉、本地资料库、桌面端三条线在这一时期同时高速推进。代码量不是一次设计出来的，而是被真实需求一轮轮压出来的。</p>
+        <p class="who">来源：git log 按月统计（本地克隆）</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p1)">
+      <div class="era-y">2026-10<small>峰值月</small></div>
+      <div class="era-b">
+        <h3>单月 1,186 次提交，峰值单日 75 次</h3>
+        <p>这是 v0.7.25 发布的月份。一个月 1,186 次提交意味着平均每天约 38 次；这个节奏下，没有自动化与测试体系是撑不住的。</p>
+        <p class="who">来源：git log --format=%ad 统计（本地克隆）</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p2)">
+      <div class="era-y">2026-10-30<small>版本</small></div>
+      <div class="era-b">
+        <h3>v0.7.25 发布：mac / Windows / Linux 全平台</h3>
+        <p>正式版提供 Windows 安装包、macOS 双架构 dmg/zip、Linux 的 tar.gz / deb / rpm；另有 Nightly 与 Canary 两条预览通道。</p>
+        <p class="who">来源：GitHub Releases（v0.7.25 资产清单）</p>
+      </div>
+    </div>
+
+    <div class="era rv" style="--lc:var(--p3)">
+      <div class="era-y">2026-11-01<small>快照</small></div>
+      <div class="era-b">
+        <h3>研究快照：59 位作者、177 个 tag、3,125 次提交</h3>
+        <p>HEAD 是 PR #984 之后的合并提交。177 个 tag 说明发版频率极高：平均每两天就有一个版本标记。</p>
+        <p class="who">来源：本地 git shortlog / git tag 统计</p>
+      </div>
+    </div>
+
+    <div class="story rv">
+      <div class="story-t">一个常见的误读</div>
+      <p>看到这种完成度，很多人第一反应是「一个人写的吧」。数据不支持这个说法：主作者提交 2,286 次，约占 73%；另有多位长期贡献者（动画、平台接入、工具链），作者名单里还能看到 all-contributors 与 GitHub Actions 这类机器人，以及显式署名的 AI 提交。</p>
+      <p><b>它不是单人神话，而是「一个主作者 + 自动化 + AI 助手」的现代协作样本。</b>这也是为什么它的工程体系值得看：规模已经不是靠个人记忆能兜住的了。</p>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">读法</span>
+      <p>高频发版不是勤奋的证明，是<strong>工程体系能承受高频</strong>的证明：三条发布通道、草稿 Release、自动更新元数据、按平台产物的自检——这些基础设施让「一个月 1,186 次提交」没有变成「一个月 1,186 个事故」。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="visual">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">03 / 视觉</span>
+      <h2>17 种歌词动画不是 17 套 if-else，而是 17 个热插拔插件</h2>
+      <p>这一节纠正「动画多等于堆人力」的直觉：规模来自注册表加共享契约，中心代码里没有 17 条分支。它也是全仓最大的单目录。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="code rv">
+      <div class="code-bar"><span class="dot"></span><span class="fn">歌词 → 屏幕：一条共享管线</span><span class="lb">pipeline</span></div>
+      <pre><span class="l"><span class="cm">// 1. 解析：7 种格式统一成 Line[]（行、词、翻译、罗马音）</span></span><span class="l"><span class="fn2">LyricParserFactory</span>.parse(source) → <span class="fn2">ensureLyricDataRenderHints</span>()</span><span class="l"><span class="cm">// 2. 每帧只算一个数：当前行索引，且读的是渲染提示里的结束时间</span></span><span class="l"><span class="fn2">findLatestActiveLineIndex</span>(lines, t) → currentLineIndex</span><span class="l"><span class="cm">// 3. 组装 40 多个共享 props，交给注册表找到的样式插件</span></span><span class="l"><span class="fn2">useVisualizerRendererModel</span>() → <span class="fn2">VisualizerRenderer</span></span><span class="l"><span class="cm">// 4. 懒加载 + useDeferredValue：新样式的代码到位后，才把旧样式换下</span></span><span class="l"><span class="fn2">registry</span>[mode].render(props) → 17 个 entry.tsx 之一</span><span class="l"><span class="cm">// 5. 样式内再派生：字素级时间轴、中文语义分词、布局单位</span></span><span class="l"><span class="fn2">buildLineGraphemeTimeline</span>() · <span class="fn2">segmentLyricWords</span>()</span></pre>
+    </div>
+
+    <p class="rv" style="color:var(--ink-3); font-size:13px; line-height:1.75; max-width:78ch">为什么这套管线重要：它把「渲染一个样式」所需知道的一切都收进契约里（<span class="mono">definition.ts</span> 的共享 props 加 <span class="mono">tuning.ts</span> 的声明式设置）。加一种新动画只需新建一个目录、写一个 <span class="mono">entry.tsx</span> 和一个 <span class="mono">tuning.ts</span>，注册表用构建期 glob 自动发现，不需要碰任何中心代码——这是它能容纳 17 种风格的前提。</p>
+
+    <div class="tbl-wrap compact rv">
+      <table>
+        <thead><tr><th style="width:22%">样式（中文名）</th><th style="width:24%">渲染基质</th><th>它难在哪</th></tr></thead>
+        <tbody>
+          <tr><td><b>静止</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">still</span></td><td>DOM/CSS</td><td>唯一不挂背景的样式，只做文字排版，是最小样板（129 行）。</td></tr>
+          <tr><td><b>流光</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">classic</span></td><td>DOM/CSS</td><td>逐词动画 + 共享 GlowWord 组件；Canvas 只用来量字宽。</td></tr>
+          <tr><td><b>心象</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">cadenza</span></td><td>Canvas2D</td><td>先用文本测量预排，再整屏 Canvas 逐帧绘制。</td></tr>
+          <tr><td><b>云阶</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">partita</span></td><td>DOM/CSS</td><td>先把歌词编译成分块/分栏排版，再逐词入场。</td></tr>
+          <tr><td><b>浮名</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">fume</span></td><td>Canvas2D</td><td>把整首歌排成一篇文章，相机在其中穿行；布局分片计算、快照缓存。</td></tr>
+          <tr><td><b>莫奈</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">monet</span></td><td>DOM/CSS + Worker</td><td>歌词栏加逐字扫光；背景图放进 OffscreenCanvas worker 里调色编码。</td></tr>
+          <tr><td><b>群唱</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">cappella</span></td><td>DOM/CSS</td><td>群聊式消息行/气泡与逐字显现，头像、表情是用户可替换资源。</td></tr>
+          <tr><td><b>倾诉</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">tilt</span></td><td>DOM/CSS</td><td>用文本测量库断行，逐字素做运动，按 1–4 行分栏。</td></tr>
+          <tr><td><b>回环</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">claddagh</span></td><td>DOM/CSS</td><td>环形 SVG 行 + 时间线，绕环排字本身就要自己算坐标。</td></tr>
+          <tr><td><b>镜台</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">diorama</span></td><td>three.js / R3F</td><td>走廊式 3D 文字：弃用 SDF、用 Canvas 双遍光栅化保证笔画与辉光对齐；点云自发光 shader。</td></tr>
+          <tr><td><b>时计</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">pendolo</span></td><td>DOM + WebGL2/Canvas2D</td><td>歌词是 DOM，机芯优先 WebGL2、退回 Canvas2D。</td></tr>
+          <tr><td><b>商籁</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">sonnet</span></td><td>PixiJS</td><td>段落→镜头编译，60 个文件的分镜/排版/后处理族。</td></tr>
+          <tr><td><b>凝彩</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">tempera</span></td><td>PixiJS</td><td>121 种镜头类型、拼贴排版、difference 滤镜反色。</td></tr>
+          <tr><td><b>绘光</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">lumiere</span></td><td>PixiJS</td><td>编译整首的「段落-镜头-光位」，体积光、线稿、浮尘。</td></tr>
+          <tr><td><b>雾笺</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">nebbia</span></td><td>原生 WebGL2</td><td>雨夜车窗写字：6 个 program 后台编译、楼群环形缓存、笔顺数据。</td></tr>
+          <tr><td><b>花火</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">hanabi</span></td><td>PixiJS</td><td>烟花 MG + 拼贴 + 全屏 bloom，世界持续上升。</td></tr>
+          <tr><td><b>町景</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">machi</span></td><td>three.js（原生）</td><td>程序化街角微缩模型、手写散景景深、8 级画质自动降级。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bars rv">
+      <div class="bar-row" style="--bc:var(--p1)">
+        <div class="bar-lb">町景<small>machi</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="100"></div></div>
+        <div class="bar-v">14,762</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p2)">
+        <div class="bar-lb">花火<small>hanabi</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="92"></div></div>
+        <div class="bar-v">13,641</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p3)">
+        <div class="bar-lb">凝彩<small>tempera</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="85"></div></div>
+        <div class="bar-v">12,566</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p4)">
+        <div class="bar-lb">商籁<small>sonnet</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="79"></div></div>
+        <div class="bar-v">11,697</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--gold-2)">
+        <div class="bar-lb">绘光<small>lumiere</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="77"></div></div>
+        <div class="bar-v">11,332</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--ink-4)">
+        <div class="bar-lb">静止<small>still</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="1"></div></div>
+        <div class="bar-v">129</div>
+      </div>
+    </div>
+    <p class="bar-note">口径：各样式目录内 ts/tsx/css 行数（wc -l，含注释与样式），仅作量级比较；「静止」是最小样板，用来对照一个样式最少需要多少代码。</p>
+
+    <div class="note rv">
+      <b>让它像「引擎」的其实是一组约束：</b>首帧前把所有 shader 并行预编译好，避免开场卡顿；Pixi 纹理按 2 的幂分桶，1.5 倍分辨率会浪费 71% 显存，桶对齐后显存降到约四分之一；换样式时旧场景不整批销毁，而是一帧退役一个；全站统一帧率闸门（60/90/120/关闭）；WebGL 上下文有预算（Chromium 每页约 16 个，播放页峰值 14，所以小图预览串行生成）。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">一句话</span>
+      <p>真正难的不是「画出 17 种效果」，而是<strong>让 17 种效果共用一套时间语义、设置系统与性能预算</strong>，还能在播放页、选择器缩略图、OBS 源、模组导出页四个宿主里复用。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="audio">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">04 / 音频</span>
+      <h2>播放路径上不只有解码器：还有两个神经网络和一个乐理引擎</h2>
+      <p>这一节纠正「音乐播放器就是 HTML5 audio 加个进度条」的直觉。它的播放链路里同时有实时音频图、端侧模型推理和一套按乐理做决定的自动混音。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="code rv">
+      <div class="code-bar"><span class="dot"></span><span class="fn">Web 引擎的信号链（两曲之和 → 一只喇叭）</span><span class="lb">web audio</span></div>
+      <pre><span class="l">deck A ┐</span><span class="l">deck B ┴→ mix → EQ → effects → volume → fade → analyser → out</span><span class="l"><span class="cm">// 三个非显然的决定：</span></span><span class="l"><span class="cm">// 1. 两个 deck 先汇合，再经同一份 EQ / 分析器 —— 过渡时音色不跳</span></span><span class="l"><span class="cm">// 2. 音量推子在效果器之后 —— 黑胶噪声/bitcrush 是绝对效果，不在推子前</span></span><span class="l"><span class="cm">// 3. fade 是独立节点 —— setValueCurveAtTime 独占参数，别人再写会抛错</span></span></pre>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:16%">模型</th><th style="width:12%">体积</th><th style="width:34%">在播放器里干什么</th><th>被谁消费</th></tr></thead>
+        <tbody>
+          <tr><td><b>Beat This!</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">beat_this</span></td><td class="mono">41.1 MB</td><td>拍点与强拍检测（ISMIR 2024 论文模型）</td><td>自动混音选接点、智能动感特效、部分歌词样式的节拍驱动</td></tr>
+          <tr><td><b>htdemucs</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">htdemucs</span></td><td class="mono">91.8 MB</td><td>四轨分离：人声 / 鼓 / 贝斯 / 其他</td><td>自动混音的 stem 交接、鼓面特效、雾笺样式的人声包络</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="rv" style="color:var(--ink-3); font-size:13px; line-height:1.75; max-width:78ch">两个模型共 133 MB，随安装包分发，不联网下载；MIT 许可，权重文件的字节数与 sha256 钉死在清单里。清单注释里有一句很说明问题的话：<span class="mono">「下载成功」和「能用」是两件事——四次发布方的权重完整，却加载不了</span>。所以校验不只是防断网，是防「安静地算错拍」。</p>
+
+    <div class="note warn rv">
+      <b>更硬的一点：一份权重，两套运行时。</b>渲染进程里跑 WebGPU 的 WGSL 计算着色器；桌面版 CPU 路径用 C++ 的 MNN 推理，带 AVX2 手写卷积核。为什么不能偷懒只留一套：桌面版的原生推理必须搬进 <span class="mono">utilityProcess</span>——因为某个推理库的「异步」其实是同步实现，一首歌的模型窗口能让主进程冻结 30–45 秒；搬出去之后，主进程最长停顿从 1,450 毫秒降到 25 毫秒。
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:18%">接法</th><th style="width:38%">什么时候用</th><th>动作</th></tr></thead>
+        <tbody>
+          <tr><td><b>beatCut</b></td><td>进场曲一开始就满电平，或速度差超过阈值</td><td>出场曲直接被切，切口约 40 毫秒</td></tr>
+          <tr><td><b>bassSwap</b></td><td>两曲可重叠时的默认选择</td><td>长重叠，但低频同一时刻只属于一方</td></tr>
+          <tr><td><b>tailRide</b></td><td>出场曲有衰减尾 + 进场曲有前奏</td><td>长重叠，从尾巴底下浮上来</td></tr>
+          <tr><td><b>plainBlend</b></td><td>什么信息都不知道时的兜底</td><td>等功率交叉淡化</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="rv" style="color:var(--ink-3); font-size:13px; line-height:1.75; max-width:78ch">自动混音（automix）分四层：<b>证据层</b>测量音频事实（BPM、小节线、响度、段落），<b>决策层</b>用乐理规则产出纯数据的过渡方案，<b>执行层</b>把它变成采样级的音频节点事件，<b>绑定层</b>才是 React 与两个 audio 元素。除绑定层外整个目录不依赖 React 或 DOM，所以单元测试不需要声卡。</p>
+
+    <div class="note rv">
+      <b>桌面版还有第二套引擎：HiFi。</b>本地曲库与 Navidrome 的歌可以交给 <span class="mono">mpv</span> 子进程，按源文件格式直接送到输出设备，并逐级报告信号链（bit-perfect、DoP、采样率直通或被转换）。代价是均衡器、音效、淡入淡出、自动混音、频谱全部不可用——它把「要音质」和「要效果」做成了两条明确互斥的路线。
+    </div>
+
+    <div class="note warn rv">
+      <b>网页版的边界要说清：</b>浏览器里没有桌面端的原生推理与 stem 分离能力，自动混音会退回到交叉淡化兜底；节拍检测也退回简单的速度估计（仓库自述约 30 首里只有 20% 左右可用）。同一份代码，不同宿主能力不同，产品选择是显式降级而不是假装完整。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">反直觉</span>
+      <p>一个「播放器」最难的音频部分，不是解码，而是<strong>在播放的同时做分析，还不让分析吃掉音频线程</strong>：模型、进程、线程数、缓存、调度策略全是围绕这一条重建的。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="music">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">05 / 音源</span>
+      <h2>九种音源，一个门面：平台差异被压进数据表</h2>
+      <p>这一节纠正「每接一个平台就多一段 if-else」的想象。九个来源背后是同一层门面，差异被收进能力开关、失败分类和平台自己的目录里。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="stack rv">
+      <div class="layer" role="button" tabindex="0" data-layer="omni" aria-expanded="false" style="--lc:var(--p4)">
+        <span class="layer-ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h9"/></svg></span>
+        <div class="layer-mid"><h3>唯一门面：Omni</h3><span class="role">入口</span>
+          <div class="io">UI / hooks / store → 搜索、播放、歌词、歌单、账户</div></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-omni">
+        <h4>为什么必须有这一层</h4>
+        <p>九个来源的接口、鉴权、音质档位、歌词格式、错误文案全不同；如果让界面直接碰平台，任何一次平台改动都会穿透到 UI。Omni 把「能做什么」变成 19 个能力开关，把「失败了算什么」变成 18 种有名字的情况。</p>
+        <p>它还有一条架构测试钉着：其它层直接 import 具体平台 provider 或 transport 会失败。规则不靠自觉，靠测试。</p>
+      </div>
+
+      <div class="layer" role="button" tabindex="0" data-layer="registry" aria-expanded="false" style="--lc:var(--p2)">
+        <span class="layer-ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="4"/></svg></span>
+        <div class="layer-mid"><h3>平台清单：注册表</h3><span class="role">目录</span>
+          <div class="io">7 个在线平台 + Navidrome + 本地库</div></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-registry">
+        <h4>注册表是运行时可变的数据</h4>
+        <p>网易云、酷狗、QQ、波点、YouTube Music、Spotify、汽水音乐，加上作为独立 Subsonic 服务的 Navidrome 与本地音乐库——每个来源登记自己的 id 与能力。模组甚至可以在运行时注册或注销 provider，界面会自动失效对应的入口。</p>
+      </div>
+
+      <div class="layer" role="button" tabindex="0" data-layer="provider" aria-expanded="false" style="--lc:var(--p3)">
+        <span class="layer-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg></span>
+        <div class="layer-mid"><h3>平台适配器</h3><span class="role">翻译</span>
+          <div class="io">平台的话 → 统一的歌曲 / 歌词 / 登录状态</div></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-provider">
+        <h4>一个平台的规则只留在自己的目录</h4>
+        <p>「看着像就合并成通用规则」是这类项目最常见的坏味道。这里的规矩相反：平台的怪癖写在该平台目录里，并有一个测试统计平台名在目录外出现的次数，防止泄漏。</p>
+      </div>
+
+      <div class="layer" role="button" tabindex="0" data-layer="transport" aria-expanded="false" style="--lc:var(--p1)">
+        <span class="layer-ico"><svg viewBox="0 0 24 24"><path d="M4 17l6-6 4 4 6-8"/></svg></span>
+        <div class="layer-mid"><h3>传输层：只有它碰原始请求</h3><span class="role">边界</span>
+          <div class="io">HTTP / 内嵌 Node 服务 / IPC 桥</div></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="ldetail" id="d-transport">
+        <h4>同一平台，桌面与网页两条路</h4>
+        <p>桌面版：网易云在主进程 worker 里起一个只听 127.0.0.1 的 Node 服务；酷狗直接进程内调用；QQ 的包自己起 HTTP 服务；波点、YouTube Music、Spotify、汽水通过 IPC 桥，凭据不出主进程。网页版：网易云/酷狗/QQ 必须指向外部已部署的 API；桌面专属平台直接显示「不可用」，不假装可用。</p>
+      </div>
+    </div>
+
+    <div class="tbl-wrap compact rv">
+      <table>
+        <thead><tr><th style="width:18%">来源</th><th style="width:10%">逐字歌词</th><th style="width:10%">探索页</th><th style="width:10%">云盘</th><th style="width:10%">听歌上报</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td><b>网易云</b></td><td class="tick">有</td><td class="tick">有</td><td class="tick">有</td><td class="tick">有</td><td>唯一支持播报听歌记录的平台</td></tr>
+          <tr><td><b>酷狗</b></td><td class="tick">有</td><td class="cross">无</td><td class="tick">有</td><td class="cross">无</td><td>桌面版进程内调用，网页版需自部署 API</td></tr>
+          <tr><td><b>QQ 音乐</b></td><td class="tick">有</td><td class="tick">有</td><td class="tick">有</td><td class="cross">无</td><td>登录态由服务端加密，扫码有三种形态</td></tr>
+          <tr><td><b>波点音乐</b></td><td class="tick">有</td><td class="cross">无</td><td class="cross">无</td><td class="cross">无</td><td>仅桌面端；收藏写入尚未实现</td></tr>
+          <tr><td><b>YouTube Music</b></td><td class="cross">无</td><td class="tick">有</td><td class="cross">无</td><td class="cross">无</td><td>仅桌面端；有隐藏沙箱窗承载第三方登录</td></tr>
+          <tr><td><b>Spotify</b></td><td class="cross">无</td><td class="tick">有</td><td class="cross">无</td><td class="cross">无</td><td>仅桌面端；歌词只取行级</td></tr>
+          <tr><td><b>汽水音乐</b></td><td class="tick">有</td><td class="tick">有</td><td class="cross">无</td><td class="cross">无</td><td>仅桌面端；车机协议，没有专辑能力</td></tr>
+          <tr><td><b>Navidrome</b></td><td class="mid">取决于文件</td><td class="cross">无</td><td class="cross">无</td><td class="cross">无</td><td>独立 Subsonic 服务，不走 Omni</td></tr>
+          <tr><td><b>本地音乐库</b></td><td class="mid">取决于文件</td><td class="cross">无</td><td class="cross">无</td><td class="cross">无</td><td>本地索引，不上传文件内容</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="bar-note" style="margin-top:8px">口径：能力开关以仓库 <span class="mono">ProviderCapabilities</span> 与各平台 provider 的声明为准（快照 2026-11-01）；「逐字歌词」指平台能否提供词级时间，本地/Navidrome 取决于歌词文件本身。</p>
+
+    <div class="note rv">
+      <b>失败被当成一等公民：</b>播放失败被分成 18 种有名字的情况，每种决定「要不要停」「能不能重试」「自动跳过时跳不跳」；平台说「稍后再试」并给了时长，到点前不再请求它的地址；播放失败永远不会回写歌曲可用性、预取或缓存——把「这一次坏了」和「这首歌坏了」分开，是流媒体客户端最容易做错的事。
+    </div>
+
+    <div class="note warn rv">
+      <b>凭据只认系统加密：</b>登录态用操作系统提供的加密能力（DPAPI / Keychain / libsecret）整包加密，只存在主进程；Linux 上如果只拿到「伪加密」后端，程序会直接拒绝落盘——宁可不记住登录，也不写近似明文。诊断报告里凭据、IP、账号会先洗掉再进日志。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">判断</span>
+      <p>「支持九个平台」不是九个开发量，而是<strong>九套失败语义、九套登录态、九套音质档位的统一建模</strong>。这一层的价值不在功能表，在把不确定性关进笼子。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="desktop">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">06 / 桌面</span>
+      <h2>把播放器沉进桌面：三个系统，三套完全不同的实现</h2>
+      <p>这一节纠正「Electron 就是套个壳」。它的桌面部分有系统级窗口黑魔法、独立音频引擎、170 个渲染进程接口，以及三条互不干扰的发布流水线。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap compact rv">
+      <table>
+        <thead><tr><th style="width:14%">系统</th><th style="width:30%">实现机制</th><th>只有做过才知道的坑</th></tr></thead>
+        <tbody>
+          <tr><td><b>Linux</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Wayland / X11</span></td><td>外部程序把窗口重新包装成「桌面层表面」，启动方式是把整个进程重新包一层再自重启</td><td>上游把每个顶层窗口都变成全屏壁纸层，遥控窗和右键菜单会一起沉底；还有一个补丁专门修「不支持的系统请求被当致命错误」，否则右键一弹就断开连接。补丁共 484 行。</td></tr>
+          <tr><td><b>Windows</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">WorkerW</span></td><td>一个 1,828 行的 Rust 常驻进程，把窗口挂进桌面图标层下面，并转发鼠标事件</td><td>必须在挂载前先取窗口所在显示器，否则壁纸会被永久钉到另一块屏；鼠标不能直接投递消息（系统会立刻判定离开），只能由主进程注入输入事件。</td></tr>
+          <tr><td><b>macOS</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">Cocoa / CGEventTap</span></td><td>用 FFI 把活着的窗口沉到 Finder 桌面层之下，另建只旁听的鼠标事件监听，再加一层透明面板处理台前调度</td><td>辅助功能权限按「进程身份」判定，派生的子进程不被信任，所以吞掉桌面点击必须留在主进程里（一个 289 行的 Swift 组件）；桌面上真的点得到控件，但不能点到桌面本身。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note rv">
+      <b>通信面有多大、边界在哪：</b>渲染进程到主进程的桥只暴露一个命名空间，共 170 个 API、217 个绑定；主进程注册 136 条通道，一一显式映射——没有裸的 IPC 对象，也没有「传任意通道名」的通用逃生口。所有窗口都开启渲染器隔离、关闭 Node 集成；外部链接只允许 http/https。代价是接口面很大，好处是它可以被审计。
+    </div>
+
+    <div class="note rv">
+      <b>音频另有一条桌面专属路线</b>（详见 04 的 HiFi）：本地库和多设备音乐服务器交给 mpv 子进程，逐级报告从源文件到声卡的每一层——桌面版因此同时存在「效果优先的 Web 引擎」和「音质优先的直通引擎」两套播放路线，按歌曲来源自动选择，失败按单曲回退。
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:24%">发布通道</th><th style="width:26%">面向</th><th>更新方式</th></tr></thead>
+        <tbody>
+          <tr><td><b>稳定版</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">latest</span></td><td>普通用户</td><td>正式发版；版本号、提交信息、发布标记三处必须一致才允许打包</td></tr>
+          <tr><td><b>Nightly</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">beta</span></td><td>想尝鲜的用户</td><td>每日定时构建；版本号用时间戳，避免并发冲突</td></tr>
+          <tr><td><b>Canary</b><br><span class="mono" style="font-size:11px;color:var(--ink-4)">alpha</span></td><td>贡献者 / 回归测试</td><td>任意分支推送触发，可只出安装包不发布</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="rv" style="color:var(--ink-3); font-size:13px; line-height:1.75; max-width:78ch">每次正式发版约 11 个平台产物。一个容易被忽略的细节：<b>只有 Windows 是真「应用内自动更新」</b>；macOS 与 Linux 只是定期拉取版本元数据，发现新版本后打开下载页——因为 macOS 包没有开发者签名和公证，系统需要用户手动移除隔离属性（官方文档专门写了这一节）。</p>
+
+    <div class="quote rv">
+      <span class="qlabel">诚实降级</span>
+      <p>Wayland 下「窗口置顶」这个 API 会返回成功但什么都不做（合成器根本收不到请求）。它的处理不是假装可用，而是<strong>把置顶开关全部置灰</strong>，文档里教用户改用窗口管理器的规则，或显式切到 X11 兼容层并说明代价。工程品味常常体现在「承认做不到」。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="mods">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">07 / 模组</span>
+      <h2>模组不是沙箱，而是一套「内容绑定 + 主进程确认」的信任模型</h2>
+      <p>这一节纠正「给了权限就等于隔离」。官方文档的原话是：模组是可信代码，不是沙箱。那它靠什么保证安全？靠确认、绑定和自救。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="tbl-wrap rv">
+      <table>
+        <thead><tr><th style="width:26%">机制</th><th>具体做法</th></tr></thead>
+        <tbody>
+          <tr><td><b>11 种注册表</b></td><td>歌词动画、调参、命令、背景、播放页图层、设置分区、播放面板页签、首页页签、进度条按钮/图层、样式——模组往这些位置加东西，而不是改宿主代码。</td></tr>
+          <tr><td><b>12 个权限，先拒绝后声明</b></td><td>未知权限直接拒绝安装；写权限必须同时声明读权限；未声明就调用会立刻报 <span class="mono">permission-denied</span>，不会静默失败。</td></tr>
+          <tr><td><b>主进程原生确认窗</b></td><td>启用确认必须画在主进程的原生窗口里——因为模组和界面共享同一个渲染进程，渲染进程里的弹窗可能被模组伪造或自动点击。</td></tr>
+          <tr><td><b>授权绑定内容摘要</b></td><td>用户确认的结果与目录内容的 sha256 一起保存；模组文件只要变过一个字节，摘要就对不上，授权自动失效并要求重新确认。</td></tr>
+          <tr><td><b>崩溃自救</b></td><td>模组启动前写一条记录，界面完整启动后才撤销。下次启动若记录还在，说明上次没走到终点，会在任何模组代码运行前弹窗问「这次要不要不带模组启动」。</td></tr>
+          <tr><td><b>Ed25519 四态签名</b></td><td>官方认证 / 先行测试 / 未验证 / 签名无效；签名只贴标签，永远不跳过确认。签名摘要设计成跨机器逐字节一致（Unicode 规范化、按码元排序、拒绝符号链接、跳过系统垃圾文件）。</td></tr>
+          <tr><td><b>市场审核</b></td><td>作者提 issue → CI 把版本解析成具体 commit 并只取该 commit → 维护者通读代码与依赖、核对权限是否最小 → 人工签名发布。签名绑 commit 而不是 tag，tag 被移动签名即失效。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">文档原话</span>
+      <p>「<strong>签名只给模组贴标签，它从不会让模组被启用或跳过原生确认</strong>：签过名的模组仍是拥有应用完整权限的可信代码。」这句话把信任模型说透了：安全边界是用户按下的那一次确认，不是签名验证。</p>
+    </div>
+
+    <div class="note rv">
+      <b>生态的深度也是工程化的：</b>模组 API 的类型文件（2,711 行）与 API 文档（2,414 行）都由契约文件自动生成，改了契约不重新生成会被单测拦下；新增一个注册表种类只改一张事实表，API 构造、挂载点标记、文档生成、静态检查四处共用。仓库自带 8 个示范模组，覆盖「歌词动画」「调参」「进度条改造」「透明视频导出」等方向。
+    </div>
+
+    <div class="note warn rv">
+      <b>边界也要说明：</b>「声明式权限」只决定 API 能不能调，不限制模组代码本身；Node 入口一旦启用就拥有完整的本机能力。所以官方对模组市场定了红线（例如任何导出原始音频流的模组都不上架），并把高风险权限的审查写成流程。这不是技术保证，是治理。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="meta">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">08 / 工程</span>
+      <h2>最厉害的其实是：它为「AI 参与开发」造了一套工业体系</h2>
+      <p>这一节回答「这么多代码为什么没散架」。答案不是作者更自律，而是把「人会忘、AI 会飘」的地方全部变成了机器可检查的东西。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="bars rv">
+      <div class="bar-row" style="--bc:var(--p4)">
+        <div class="bar-lb">src 前端<small>41.7 万行</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="56"></div></div>
+        <div class="bar-v">56%</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p2)">
+        <div class="bar-lb">test 测试<small>23.5 万行</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="32"></div></div>
+        <div class="bar-v">32%</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--p3)">
+        <div class="bar-lb">electron 主进程<small>4.0 万行</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="5"></div></div>
+        <div class="bar-v">5%</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--gold-2)">
+        <div class="bar-lb">dev 开发工具<small>3.2 万行</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="4"></div></div>
+        <div class="bar-v">4%</div>
+      </div>
+      <div class="bar-row" style="--bc:var(--ink-4)">
+        <div class="bar-lb">其余<small>共享/服务端/原生</small></div>
+        <div class="bar-tr"><div class="bar-f" data-w="3"></div></div>
+        <div class="bar-v">3%</div>
+      </div>
+    </div>
+    <p class="bar-note">口径：按目录统计 ts/tsx/cjs/mjs/js/rs/cpp/h 行数（wc -l，含注释），四舍五入到整数百分比，仅用于说明「测试与工具占了四成以上」。</p>
+
+    <div class="tbl-wrap compact rv">
+      <table>
+        <thead><tr><th style="width:24%">手段</th><th>它替代了什么人的工作</th></tr></thead>
+        <tbody>
+          <tr><td><b>生成式代码地图</b></td><td>手维护的目录清单必然过期。代码地图由编译器生成，<span class="mono">main</span> 分支自动重生成并提交；所有计数向下取整到 2 的幂、排序用码元序，从根上消掉「数字变一格就产生一次假提交」的噪声。</td></tr>
+          <tr><td><b>自研代码查询工具</b></td><td>把仓库自带的 TypeScript 编译器包成 11 个查询工具：查符号、查调用链、查影响面。一个 3,080 行的文件直接读 12.5 万字节，用结构大纲只要 3,377 字节——省 37 倍。</td></tr>
+          <tr><td><b>13 个仓库内技能文档</b></td><td>把「怎么改代码」「怎么定位」「怎么测」写成 AI 可加载的 skill，入口文件只做索引；文档里禁止写死路径（因为路径必然过期），只写查询方法。</td></tr>
+          <tr><td><b>契约测试</b></td><td>用源码文本而不是运行行为检查三件事：存储键改名（会静默丢用户设置）、状态模块循环依赖、把逐帧动画值写进全局状态（会导致帧率级重渲染）。</td></tr>
+          <tr><td><b>1,071 个单测文件</b></td><td>约 10,901 条用例 + 92 个浏览器端测试。测试不是「覆盖率装饰」，而是把上面这些规则变成会红的门禁。</td></tr>
+          <tr><td><b>13 条 CI 流水线</b></td><td>PR 跑类型检查、单测、服务端构建、Docker 冒烟；专门的「arm64 打包路径检查」在 PR 上提前暴露打包回归；代码地图自动同步；issue/PR 用大模型自动分类。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note rv">
+      <b>为什么这套东西对「AI 原生开发」特别重要：</b>AI 写代码的速度很快，但它不会记得「这个设置键不能改名」「这一层不能 import 那一层」。Folia 的答案是：把这些规则从人的记忆迁移到生成物、快照测试、边界规则和技能文档里——让错误在合并前变成机器输出，而不是在用户设备上变成 bug。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">一句话</span>
+      <p><strong>它不是「用了 AI 开发的项目」，而是「为 AI 参与开发建了基础设施的项目」</strong>：索引可查询、规则可执行、产物可复现、失败可定位——这四件事恰好也是人类团队最缺的。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="myths">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">09 / 误区</span>
+      <h2>这些「大家都这么说」的说法，其实都错了</h2>
+      <p>每一条都给出「流传说法 → 代码/文档怎么说 → 为什么会传错」。其中第一条是我们自己研究时差点写错的，顺手留在这里当纠偏样本。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fmap rv">
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「浮名样式是车窗雨刷写字」</h3>
+          <p><span class="cross">错。</span>浮名（fume）是把整首歌词排成一篇文章，让相机在文章里穿行——代码注释写得很清楚，布局按「文章 / 块 / 相机」建模。</p>
+          <p>在雾天车窗上用手指一笔一笔写字的，是<b>雾笺（nebbia）</b>：原生 WebGL2、水珠法线、擦痕遮罩按演唱时长一笔笔画出来。</p>
+          <p class="diag"><b>为什么会传错：</b>两者都叫「文字 + 雨/雾氛围」，只看截图很难分辨；最初我们的研究笔记就写反了，后来靠读 <span class="mono">fume/VisualizerFume.tsx</span> 与 <span class="mono">nebbia/</span> 的入口注释纠正。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「视觉层用了 WebGPU」</h3>
+          <p><span class="cross">错。</span>17 种歌词样式的渲染基质是 DOM/CSS、Canvas2D、PixiJS（WebGL2）、three.js（WebGL）和原生 WebGL2——没有任何一个样式用 WebGPU。</p>
+          <p>WebGPU 与 WGSL 计算着色器只出现在<b>音频分析</b>：拍点检测与四轨分离的推理。它们算出的节拍、鼓点、人声包络再喂给「智能动感模式」和各歌词样式。</p>
+          <p class="diag"><b>为什么值得强调：</b>「视觉很炫」容易被归因成「用了最新的 GPU API」；真实答案往往更朴素：把 WebGL2 用到极限，加上大量非渲染的性能工程。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「17 种动画背后是 17 套 if-else」</h3>
+          <p><span class="cross">错。</span>每个样式是独立目录里的一个插件入口，由构建期 glob 自动注册；共享的是 props 契约、时间语义、设置系统与性能预算。</p>
+          <p>衡量标准写在项目规范里：加一个同类功能，要改的地方越少越好。注册表、调参声明、设置面板、导出/同步/OBS 都从同一份 declaration 自动生成。</p>
+          <p class="diag"><b>机制：</b>「同类的东西只动它自己的目录 + 注册点」，而不是在总入口里加分支。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「模组权限 = 安全沙箱」</h3>
+          <p><span class="cross">错。</span>官方文档原话：<b>模组是可信代码，不是沙箱</b>；权限是给用户在确认框里看的声明，不是运行时隔离。</p>
+          <p>真正的边界是：主进程绘制的原生确认窗 + 授权绑定目录内容摘要 + 崩溃自救 + 签名四态标签。<span class="mid">签名有效也永远不会跳过确认。</span></p>
+          <p class="diag"><b>为什么这是对的取舍：</b>真正的进程沙箱会限制模组能做的事（改歌词、加动画、调 ffmpeg 导出），对创作型生态来说代价可能比收益大；但代价是必须承认「你在安装一个人的代码」。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「AI 功能就是调一下 API」</h3>
+          <p><span class="cross">错</span>——它是一层有协议适配、尝试阶梯和三层降级的推理网关：10 个供应商适配器、3 种协议；温度、推理开关、结构化输出、token 字段、预算全被压成数据表。</p>
+          <p><span class="mid">最典型的一处：</span>HTTP 200 但内容为空、推理 token 耗尽，被显式建模成「可降级的失败」；否则用户看到的现象是「AI 不说话」，日志里什么都没有。</p>
+          <p class="diag"><b>数字：</b>AI 相关核心文件约 40 个、适配器 10 个；主题生成、歌词分词、测试连接共用同一套规则。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「所有平台都支持应用内自动更新」</h3>
+          <p><span class="cross">错。</span>只有 Windows 走真正的自动更新；macOS 与 Linux 只检查版本、然后打开 Release 页面。</p>
+          <p>原因写在发布代码里：macOS 包没有开发者签名与公证，必须用户手动移除下载隔离属性；Linux 不发布自动更新元数据。<b>这是能力边界，不是 bug。</b></p>
+          <p class="diag"><b>推论：</b>看到「自动更新」字样时，先问「哪个平台、走什么协议」，再决定要不要相信。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--p1)">
+        <span class="fm-n">纠偏</span>
+        <div>
+          <h3>「这种完成度，肯定是一个人写的」</h3>
+          <p><span class="cross">不准确。</span>主作者提交 2,286 次（约 73%），但仓库有 59 位作者、177 个版本标签；还有自动化机器人，以及显式署名的 AI 提交。</p>
+          <p>更准确的描述是：<b>一个主作者主导 + 自动化 + AI 助手 + 社区贡献</b>。理解这一点，才能解释它为什么能在一年里把这么多条线同时推进。</p>
+          <p class="diag"><b>数据来源：</b>本地 <span class="mono">git shortlog -sn</span> 与 <span class="mono">git rev-list --count</span> 统计，快照 2026-11-01。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note rv">
+      <b>误区的共同结构：</b>把它们放在一起看，七条里有五条都是「把工程结果误认成某项单一技术」。这也是本页存在的意义：看见结果很容易，看见结果背后那一整套约束很难。
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="open">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">10 / 存疑</span>
+      <h2>哪些还没定案：证据到哪一步，就说到哪一步</h2>
+      <p>这一节把「已定案」「待核」「作者自述未实测」分开。科普页最容易犯的错，是把「看起来对」写成「已证实」。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="fmap rv">
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">待核</span>
+        <div>
+          <h3>全仓找不到内容安全策略（CSP）</h3>
+          <p>安全代码注释把 CSP 列为既有防线，但全仓检索不到任何 CSP 声明（页面 head 里没有，主进程也没有注入响应头）。可能是构建产物或部署层补上，也可能文档与实现漂移。</p>
+          <p class="diag"><b>证据强度：</b>代码检索事实明确；「是否在别处补上」未验证。结论只能写到「存在缺口或文档漂移」，不能写成「没有安全防护」。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">已定案</span>
+        <div>
+          <h3>歌词注音（ruby）只解析、未渲染</h3>
+          <p>TTML 歌词里的逐字注音数据被完整解析并保存在歌词行里，但目前没有任何歌词样式消费它——只有歌词重定时逻辑用到。</p>
+          <p class="diag"><b>证据强度：</b>代码检索所有 visualizer 目录，无 ruby 消费点。这是「当前实现局限」，不是 bug 也不是错误声明。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">待核</span>
+        <div>
+          <h3>模组签名吊销机制没有被真实事件检验过</h3>
+          <p>代码里有吊销名单机制，但名单目前是空的；签名密钥内置、不联网，意味着「吊销密钥或模组」必须发新版宿主。</p>
+          <p class="diag"><b>证据强度：</b>机制存在、注释清楚；是否可靠未经实战。属于设计取舍，不是缺陷，但应急成本高。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">待核</span>
+        <div>
+          <h3>主题生成的两条路由已开始漂移</h3>
+          <p>Gemini 路由与 OpenAI 兼容路由各自维护一份 prompt 与 JSON Schema（约 189 行 vs 408 行），必填字段已出现细微差异。</p>
+          <p class="diag"><b>证据强度：</b>两份文件逐行对照可见差异；这是全仓唯一明显的重复代码，值得抽公共常量，但当前未见故障报告。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">存疑</span>
+        <div>
+          <h3>「AI 广泛协助开发」的质量影响无法量化</h3>
+          <p>README 法律段自述项目「在 AI 的广泛协助下开发，仍可能存在细微或不易察觉的问题」。这是作者主动披露，不是缺陷证据。</p>
+          <p class="diag"><b>证据强度：</b>只能引用作者原话；本页不据此推断质量好坏，只提醒读者：关键路径（凭据、播放、平台接口）要自己验证。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">存疑</span>
+        <div>
+          <h3>部分能力只有作者声明、没有公开实测</h3>
+          <p>例如某些平台的高音质档位、部分平台在 Windows/Linux 上的行为、Linux 音频服务下「采样率直通」的判定——仓库自己标注了「未实测」或在文档里只读代码未跑真机。</p>
+          <p class="diag"><b>证据强度：</b>「未实测」是项目自己写的，可信；本页不把这些写成已确认能力。</p>
+        </div>
+      </div>
+
+      <div class="fm" style="--lc:var(--warn)">
+        <span class="fm-n">存疑</span>
+        <div>
+          <h3>模型权重本身没有被核对</h3>
+          <p>权重文件不进 git，随安装包分发；本次研究只能核对清单里的字节数与 sha256，无法核对文件本体（需要先运行下载脚本）。</p>
+          <p class="diag"><b>证据强度：</b>清单与校验逻辑已读；文件本体未验证。研究笔记里所有关于模型的数字都来自清单与代码，不是实测推理结果。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note warn rv">
+      <b>统计口径与已知偏差：</b>① 行数用 <span class="mono">wc -l</span> 统计，含注释与样式，不能当「有效代码」；② 四条主线之外的文件只做结构与测试扫描，未逐文件精读；③ 所有数字是 2026-11-01 的 main 分支快照，之后会变；④ 平台能力矩阵来自仓库声明，未对每个平台做真机点播验证；⑤ 本页把「我们研究时写错的点」保留在 09 节，作为纠偏样本，而不是删掉装没发生。
+    </div>
+  </div>
+</section>
+
+<section class="band" id="start">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">11 / 入门</span>
+      <h2>想研究它，别从那 7,997 行的主进程文件开始</h2>
+      <p>这一节给三条按口味分的路线和五个步骤。真实需求不是「读完全部」，而是「第一次打开就知道从哪进、多久能出结果」。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <div class="perc rv">
+      <div class="pcard" style="--lc:var(--p2)">
+        <div class="pcard-h"><div class="pt">路线 A</div><h3>视觉与前端</h3></div>
+        <div class="pcard-b">
+          <p>先读视觉目录的代码地图，再读共享契约与渲染入口，然后挑一个中等复杂度的样式精读，最后看性能约束清单。</p>
+          <div class="kv"><b>顺序：</b>视觉 README → definition.ts → VisualizerRenderer → 歌词时间提示 → 一个样式目录</div>
+        </div>
+        <div class="pcard-f"><b>避坑：</b>别从「町景」这种 1.4 万行的样式开始，先从「回环」或「静止」建立骨架认知。</div>
+      </div>
+      <div class="pcard" style="--lc:var(--p3)">
+        <div class="pcard-h"><div class="pt">路线 B</div><h3>音频与端侧 ML</h3></div>
+        <div class="pcard-b">
+          <p>先看播放图与自动混音说明，再读分析服务的目录说明，然后对照模型清单看两套运行时怎么接。</p>
+          <div class="kv"><b>顺序：</b>播放图 → 自动混音 README → 分析服务 README → 模型清单 → 桌面原生推理桥</div>
+        </div>
+        <div class="pcard-f"><b>避坑：</b>权重共 133 MB 且不进仓库；先跑模型下载脚本再谈「怎么推理」。</div>
+      </div>
+      <div class="pcard" style="--lc:var(--p4)">
+        <div class="pcard-h"><div class="pt">路线 C</div><h3>桌面与平台工程</h3></div>
+        <div class="pcard-b">
+          <p>从窗口创建函数与壁纸设计文档入手，再读 IPC 边界与模组信任模型，最后看发布工作流。</p>
+          <div class="kv"><b>顺序：</b>壁纸模式文档 → 主进程窗口函数 → IPC 守卫 → 模组系统 → 发布工作流</div>
+        </div>
+        <div class="pcard-f"><b>避坑：</b>直接读主进程 7,997 行会迷路；先读那份 200 行的壁纸设计文档。</div>
+      </div>
+    </div>
+
+    <ol class="steps rv">
+      <li><h3>先跑起来，再读代码</h3><p>装依赖（约 1.4 GB）→ 配置环境变量 → 启动 Web 版。桌面版用另一条命令。只有跑起来，才知道读到的代码对应哪块界面。</p></li>
+      <li><h3>用 30 分钟建立地图</h3><p>读项目规范索引、代码地图、技术说明三份文档。它们会告诉你区域分布、枢纽模块和动态注册点——比从入口文件硬啃快一个数量级。</p></li>
+      <li><h3>按主线精读，而不是按目录顺序读</h3><p>三条路线任选一条，每条约 10 个关键文件、2–4 小时。遇到符号问题用代码查询工具，不要用正则猜。</p></li>
+      <li><h3>做一个小实验</h3><p>加一个极简歌词样式、写一个最小模组、或跑一次自动混音决策。动手过的模块，读第二遍时结构会自己浮出来。</p></li>
+      <li><h3>跑检查，理解「为什么不能乱改」</h3><p>类型检查、单元测试、代码地图生成。看一眼契约测试在用源码文本防什么——这比读十条规范更有说服力。</p></li>
+    </ol>
+
+    <div class="note warn rv">
+      <b>四条入坑提醒：</b>① 依赖树很大，首次安装留足磁盘与时间；② 桌面版的 macOS 包没有签名和公证，运行前要移除下载隔离属性（官方文档有专门一节）；③ 许可证是 AGPL-3.0，衍生产品（含网络服务）需开源，商用前请找法务；④ 音乐内容版权归各平台，项目明确只供个人学习与非营利测试。
+    </div>
+
+    <div class="quote rv">
+      <span class="qlabel">建议的顺序</span>
+      <p>先当用户用一周（<strong>知道功能在讲什么</strong>），再按主线读两周（<strong>知道它怎么做到</strong>），最后改一个小地方（<strong>知道代价在哪</strong>）。直接读代码是最慢的入门方式。</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="sources">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-num">12 / 附录</span>
+      <h2>来源与核对说明</h2>
+      <p>每条结论对应出处；代码引用给仓库路径（可在本地克隆里直接打开），外部来源给链接。统计类数字的生成方式写在最后。</p>
+      <div class="rule-gold"></div>
+    </div>
+
+    <ul class="src-list rv">
+      <li><b>项目仓库 / 许可</b>：AGPL-3.0，2025-11 起开发；本页所有代码引用均来自该仓库 main 分支快照。
+        <a href="https://github.com/chthollyphile/folia-major" target="_blank" rel="noopener">github.com/chthollyphile/folia-major</a></li>
+      <li><b>版本与安装包</b>：v0.7.25（2026-10-30），mac/Windows/Linux 全平台资产。
+        <a href="https://github.com/chthollyphile/folia-major/releases/latest" target="_blank" rel="noopener">GitHub Releases</a></li>
+      <li><b>项目规模数据</b>：3,125 次提交、59 位作者、177 个 tag、4,494 个受控文件、约 74 万行。来源：本机完整克隆后的 git 与文件统计（快照 2026-11-01）。
+        <span class="pub">git rev-list --count / git shortlog -sn / git tag / find + wc -l</span></li>
+      <li><b>技术总览</b>：部署、环境变量、Stage API、歌词接口、技术栈。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/docs/technical.md" target="_blank" rel="noopener">docs/technical.md</a></li>
+      <li><b>代码地图</b>：区域分布、枢纽模块、动态注册点、分层边界违规（生成物，348 行）。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/docs/CODEMAP.md" target="_blank" rel="noopener">docs/CODEMAP.md</a></li>
+      <li><b>视觉系统</b>：17 个样式与 6 个背景的注册表、共享契约、性能约定。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/src/components/visualizer/README.md" target="_blank" rel="noopener">src/components/visualizer/README.md</a></li>
+      <li><b>自动混音</b>：四层架构、四种接法与实测记录（作者标注参数只由指定维护者修改）。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/src/services/automix/README.md" target="_blank" rel="noopener">src/services/automix/README.md</a></li>
+      <li><b>模型清单</b>：两个模型的字节数、sha256、许可、导出方式与双运行时说明。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/shared/modelManifest.json" target="_blank" rel="noopener">shared/modelManifest.json</a></li>
+      <li><b>模组规范</b>：清单、权限、注册表、事件、签名与市场流程。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/mods/README.md" target="_blank" rel="noopener">mods/README.md</a></li>
+      <li><b>模组 API 文档</b>：2,414 行，由契约自动生成。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/docs/folium/api.md" target="_blank" rel="noopener">docs/folium/api.md</a></li>
+      <li><b>壁纸模式</b>：三平台实现与「为什么不能用某种消息注入」等因果链。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/docs/wallpaper-mode.md" target="_blank" rel="noopener">docs/wallpaper-mode.md</a></li>
+      <li><b>macOS 未签名说明</b>：为什么提示「已损坏」、如何移除隔离属性、更新后要重做。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/docs/desktop/macos-app-damaged.md" target="_blank" rel="noopener">docs/desktop/macos-app-damaged.md</a></li>
+      <li><b>代码查询工具</b>：11 个工具、37 倍压缩收益、7 个协议坑（仓库内开发工具说明）。
+        <a href="https://github.com/chthollyphile/folia-major/blob/main/dev/mcp/ts-code-map/README.md" target="_blank" rel="noopener">dev/mcp/ts-code-map/README.md</a></li>
+      <li><b>核对方法</b>：本页结论逐条回查仓库文件与官方文档；统计类数字由完整克隆后运行 git 与文件统计命令生成，生成方式见文末「核对说明与已知偏差」。</li>
+    </ul>
+
+    <div class="note rv" style="margin-top:26px">
+      <b>核对说明与已知偏差：</b>
+      <br>① 所有「行数 / 文件数 / 提交数」均来自 2026-11-01 的本地完整克隆，用 git 与 find/wc 生成；行数含注释与样式，只用于量级比较。
+      <br>② 研究过程中修正过的错误：最初把「浮名（fume）」写成车窗写字样式，读入口注释与目录后确认应为「雾笺（nebbia）」，已在 09 节保留纠偏记录。
+      <br>③ 标为「待核 / 存疑」的条目，表示代码/文档能确认现象、但无法确认影响或可靠性；请勿当作已定案引用。
+      <br>④ 平台能力矩阵来自仓库内能力声明，不是逐平台真机点播验证；模型相关的数字来自清单与代码，不是实测推理结果。
+      <br>⑤ 本页是资料整理与科普，不是项目官方文档；项目功能与版本以官方仓库为准。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fl">关于本页</div>
+    <p>本页是对开源项目 Folia（一个以全屏沉浸式歌词为核心的跨平台音乐播放器）的技术科普与资料整理：把 74 万行代码拆成产品、技术、生态、方法四层，用 12 节讲清「为什么重、为什么广、为什么稳」，并标出证据强度与边界。</p>
+    <p class="disc">免责声明：本页为资料整理与科普，不是学术论文，也不是项目官方文档。标注为「待核 / 存疑」的条目，表示现象可确认但影响或可靠性证据不足，请勿当作已定案引用；引用代码与功能前请以官方仓库为准。</p>
+    <p style="margin-top:16px; font-size:11.5px; color:var(--ink-4)">一个歌词播放器，为什么写了 74 万行代码 &nbsp;·&nbsp; 2026-11-01 &nbsp;·&nbsp; 数据快照截止 2026-11-01</p>
+  </div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   app.js — 科普/技术讲解页的通用行为层
+   与 design-system.css 配套。全部可选组件都做了存在性判断，
+   没有对应 DOM 也不会报错。无外部依赖。
+
+   提供的行为：
+     1. 深浅主题切换（含 aria 状态与 localStorage 记忆）
+     2. 顶部滚动进度条       [需要 #prog]
+     3. 滚动淡入             [需要 .rv]
+     4. 章节导航高亮         [需要 #nav a → 章节 id]
+     5. 分层折叠卡           [需要 .layer[data-layer] + #d-<key>]
+     6. 条形图入场填充       [需要 .bar-f[data-w]]
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+
+  /* ---------- 1. 主题切换 ---------- */
+  var tgl = document.getElementById('tgl');
+  function syncTheme() {
+    if (!tgl) return;
+    var dark = root.getAttribute('data-theme') === 'dark';
+    tgl.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    tgl.title = dark ? '切换到浅色主题' : '切换到深色主题';
+  }
+  syncTheme();
+  if (tgl) {
+    tgl.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('evo-theme', next); } catch (e) {}
+      syncTheme();
+    });
+  }
+
+  /* ---------- 2. 滚动进度条 ---------- */
+  var prog = document.getElementById('prog');
+  if (prog) {
+    var ticking = false;
+    var onScroll = function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        prog.style.width = Math.max(0, Math.min(100, h > 0 ? (pageYOffset / h) * 100 : 0)) + '%';
+        ticking = false;
+      });
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    onScroll();
+  }
+
+  /* ---------- 3. 滚动淡入 ---------- */
+  var reduce = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reveal = [].slice.call(document.querySelectorAll('.rv'));
+  if (reveal.length) {
+    if (reduce || !('IntersectionObserver' in window)) {
+      reveal.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en, i) {
+          if (!en.isIntersecting) return;
+          var el = en.target;
+          setTimeout(function () { el.classList.add('in'); }, Math.min(i * 50, 200));
+          io.unobserve(el);
+        });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.07 });
+      reveal.forEach(function (el) { io.observe(el); });
+    }
+  }
+
+  /* ---------- 4. 章节导航高亮 ---------- */
+  var links = [].slice.call(document.querySelectorAll('#nav a'));
+  var targets = links.map(function (a) {
+    var id = a.getAttribute('href').slice(1);
+    return { a: a, el: document.getElementById(id) };
+  }).filter(function (t) { return t.el; });
+
+  if ('IntersectionObserver' in window && targets.length) {
+    var vis = {};
+    var navObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        vis[en.target.id] = en.isIntersecting ? en.intersectionRatio : 0;
+      });
+      var best = null, bv = 0;
+      targets.forEach(function (t) {
+        var v = vis[t.el.id] || 0;
+        if (v > bv) { bv = v; best = t; }
+      });
+      if (best) {
+        links.forEach(function (a) { a.classList.remove('active'); });
+        best.a.classList.add('active');
+      }
+    }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.3, 0.6] });
+    targets.forEach(function (t) { navObs.observe(t.el); });
+  }
+
+  /* ---------- 5. 分层折叠卡 ---------- */
+  var layers = [].slice.call(document.querySelectorAll('.layer[data-layer]'));
+  function toggleLayer(btn) {
+    var key = btn.getAttribute('data-layer');
+    var panel = document.getElementById('d-' + key);
+    var isOpen = btn.classList.contains('on');
+    layers.forEach(function (b) {
+      b.classList.remove('on');
+      b.setAttribute('aria-expanded', 'false');
+      var p = document.getElementById('d-' + b.getAttribute('data-layer'));
+      if (p) p.classList.remove('show');
+    });
+    if (!isOpen && panel) {
+      btn.classList.add('on');
+      btn.setAttribute('aria-expanded', 'true');
+      panel.classList.add('show');
+    }
+  }
+  layers.forEach(function (btn) {
+    btn.addEventListener('click', function () { toggleLayer(btn); });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggleLayer(btn);
+      }
+    });
+  });
+
+  /* ---------- 6. 条形图入场填充 ---------- */
+  var bars = [].slice.call(document.querySelectorAll('.bar-f[data-w]'));
+  if (bars.length) {
+    var fill = function () {
+      bars.forEach(function (b) { b.style.width = b.getAttribute('data-w') + '%'; });
+    };
+    var chart = document.querySelector('.bars');
+    if ('IntersectionObserver' in window && chart) {
+      var bo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { fill(); bo.disconnect(); }
+        });
+      }, { threshold: 0.2 });
+      bo.observe(chart);
+    } else {
+      fill();
+    }
+  }
+})();
+</script>
+</body>
+</html>

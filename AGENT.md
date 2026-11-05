@@ -20,6 +20,7 @@
 | 09 | 谁为存在付费        | `/who-pays-for-existence/`  | 研究 | 科普长文：从智能体循环问到病毒、宇宙观察者与硅基生命                                    |
 | 10 | 福尔摩斯导览        | `/sherlock-holmes-guide/`   | 研究 | 正典 60 部逐条 + 影视百年 + 观影顺序 + 二创谱系 + 形象考据与版权史                        |
 | 11 | Afterglow 实测 | `/afterglow/`           | 研究 | 单曲实测：设计文档、MV 剧本与音频测量三方对齐，含段落响度 / 频段 / 起音密度数据 |
+| 12 | Folia 拆解 | `/folia-explained/`     | 研究 | 开源音乐播放器技术科普：17 种歌词动画、9 种音源、端侧 AI 与工程体系 |
 | —  | Melomancy App | `/Melomancy App/`       | 建设中 | iOS AI 音乐应用，目前仅有法务文档（privacy / terms），**暂无导航卡片**，未来完成后再单独做介绍页 |
 | —  | 企业官网模板        | `/enterprise-template/` | 本地  | 通信 / 物流企业可复用单页模板。**已在 `.gitignore`（`/enterprise-template`）：不部署、无导航卡片、不入 sitemap**，仅作本地开发素材 |
 
